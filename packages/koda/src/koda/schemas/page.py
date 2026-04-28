@@ -1,19 +1,6 @@
-"""Configuration and models for Koda."""
-
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
-
-__all__ = ["ScrapeOptions", "ScrapeResponse", "Action", "KodaError", "ScrapeError", "WebhookConfig"]
-
-class KodaError(Exception):
-    """Base exception class for all errors raised by the koda module."""
-    pass
-
-class ScrapeError(KodaError):
-    """Exception raised when an error occurs during scraping."""
-    pass
 
 @dataclass
 class Action:
@@ -29,23 +16,11 @@ class Action:
     value: Optional[Any] = None
 
 @dataclass
-class WebhookConfig:
-    """Configuration for a webhook callback.
+class ScrapeRequest:
+    """Configuration and target for a scraping job.
     
     Attributes:
-        url: The URL to send the webhook to.
-        headers: Optional dictionary of headers to include.
-        metadata: Optional dictionary of metadata to append to the root payload.
-    """
-    url: str
-    headers: Optional[Dict[str, str]] = None
-    metadata: Optional[Dict[str, Any]] = None
-
-@dataclass
-class ScrapeOptions:
-    """Configuration options for a scraping job.
-    
-    Attributes:
+        url: The URL or local file path to scrape.
         formats: A list of formats to extract, e.g. ["markdown", "screenshot", "metadata"].
         only_main_content: Whether to filter out noise like headers, footers, and sidebars.
         actions: A list of actions to perform on the page before scraping.
@@ -53,12 +28,13 @@ class ScrapeOptions:
         s3_config: Optional S3 configuration dictionary for uploading screenshots.
         webhook: Optional webhook configuration for callbacks.
     """
+    url: str
     formats: List[str] = field(default_factory=lambda: ["markdown", "screenshot"])
     only_main_content: bool = True
     actions: List[Action] = field(default_factory=list)
     timeout: int = 30000
     s3_config: Optional[Dict[str, Any]] = None
-    webhook: Optional[WebhookConfig] = None
+    webhook: Optional[Any] = None
 
 @dataclass
 class ScrapeResponse:
