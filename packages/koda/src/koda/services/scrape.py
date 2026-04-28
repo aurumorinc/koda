@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import io
+import os
 import asyncio
+import tempfile
+import uuid
+import re
 from typing import Optional
 from pathlib import Path
 
@@ -12,8 +16,14 @@ from PIL import Image
 
 from ..config import ScrapeOptions, ScrapeResponse, KodaError, ScrapeError
 from ..utils import images_are_identical, extract_metadata, html_to_markdown
+from .file import FileService
 
 __all__ = ["Scraper"]
+
+def _sanitize_filename(url: str) -> str:
+    sanitized_name = re.sub(r"^https?://", "", url)
+    sanitized_name = re.sub(r"[^a-zA-Z0-9]", "_", sanitized_name)
+    return sanitized_name[:200]
 
 class Scraper:
     """Service responsible for extracting data from a Playwright Page."""
@@ -53,8 +63,31 @@ class Scraper:
                 )
                 
             if "screenshot" in options.formats:
-                response.screenshot = await cls._capture_full_page_screenshot(page)
+                if not options.s3_config:
+                    raise ScrapeError("s3_config is required in ScrapeOptions to extract screenshots.")
+                    
+                screenshot_bytes = await cls._capture_full_page_screenshot(page)
                 
+                # Write to temp file and upload to S3
+                fd, temp_path = tempfile.mkstemp(suffix=".jpg")
+                try:
+                    with open(temp_path, "wb") as f:
+                        f.write(screenshot_bytes)
+                        
+                    object_name = f"{_sanitize_filename(url)}_{uuid.uuid4().hex[:8]}.jpg"
+                    
+                    presigned_url = await asyncio.to_thread(
+                        FileService.upload_and_presign,
+                        file_path=temp_path,
+                        object_name=object_name,
+                        mimetype="image/jpeg",
+                        s3_config=options.s3_config
+                    )
+                    response.screenshot = presigned_url
+                finally:
+                    os.close(fd)
+                    os.remove(temp_path)
+                    
         except Exception as e:
             raise ScrapeError(f"Failed to extract content from {url}: {str(e)}") from e
             
