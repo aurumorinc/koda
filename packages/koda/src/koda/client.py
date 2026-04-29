@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from typing import Union, List, Dict, Any, Optional
 from pathlib import Path
 
-from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+from playwright.async_api import async_playwright, Browser, Page
 
-from .config import ScrapeOptions, ScrapeResponse, Action, KodaError
-from .services.scrape import Scraper
-from .services.webhook import WebhookService
+from .exceptions import KodaError
+from .schemas.page import ScrapeRequest, ScrapeResponse, Action
+from .schemas.webhook import WebhookConfig
+from .utils import sanitize_filename
+from .services import page, file, webhook
 
 __all__ = ["KodaClient"]
 
@@ -66,89 +69,86 @@ class KodaClient:
             await self._playwright.stop()
             self._playwright = None
             
-    async def _execute_actions(self, page: Page, actions: List[Action]) -> None:
-        """Execute a list of predefined actions on the page before scraping.
-        
-        Args:
-            page: The Playwright Page object.
-            actions: List of Action objects.
-        """
+    async def _execute_actions(self, playwright_page: Page, actions: List[Action]) -> None:
+        """Execute a list of predefined actions on the page before scraping."""
         for action in actions:
             if action.type == "wait" and isinstance(action.value, (int, float)):
                 await asyncio.sleep(action.value / 1000.0)
             elif action.type == "wait_for_selector" and action.selector:
-                await page.wait_for_selector(action.selector)
+                await playwright_page.wait_for_selector(action.selector)
             elif action.type == "click" and action.selector:
-                await page.click(action.selector)
+                await playwright_page.click(action.selector)
             elif action.type == "type" and action.selector and action.value:
-                await page.fill(action.selector, str(action.value))
+                await playwright_page.fill(action.selector, str(action.value))
 
     async def scrape(
         self,
-        url: Union[str, Path],
-        options: Optional[ScrapeOptions] = None,
-        **kwargs: Any
+        request: ScrapeRequest
     ) -> ScrapeResponse:
-        """Scrape a URL or local file and extract the requested formats.
+        """Scrape a URL or local file and extract the requested domains.
         
         Args:
-            url: The HTTP URL or local Path to an MHTML/HTML file.
-            options: Configuration options for extraction.
-            **kwargs: Override specific ScrapeOptions fields (e.g., formats=["markdown"]).
+            request: Configuration and target for the scraping job.
             
         Returns:
             A ScrapeResponse containing the requested data.
-            
-        Raises:
-            KodaError: If the browser is not started or extraction fails.
         """
         if self._browser is None:
             raise KodaError("Browser is not started. Call start() or use 'async with KodaClient():'")
             
-        if options is None:
-            options = ScrapeOptions()
-            
-        # Allow overriding options via kwargs
-        for key, value in kwargs.items():
-            if hasattr(options, key):
-                setattr(options, key, value)
-                
-        context: Optional[BrowserContext] = None
-        page: Optional[Page] = None
+        playwright_page: Optional[Page] = None
+        context = None
         
         try:
             context = await self._browser.new_context()
-            page = await context.new_page()
-            page.set_default_timeout(options.timeout or self.global_timeout)
+            playwright_page = await context.new_page()
+            playwright_page.set_default_timeout(request.timeout or self.global_timeout)
             
-            target_url = str(url)
-            if isinstance(url, Path) or (isinstance(url, str) and not url.startswith("http")):
-                # Ensure it's a valid file URI
-                path_obj = Path(url)
-                if path_obj.exists():
-                    target_url = path_obj.absolute().as_uri()
+            target_url = request.url
+            url_path = Path(request.url)
+            if url_path.exists() and not request.url.startswith("http"):
+                target_url = url_path.absolute().as_uri()
                     
-            await page.goto(target_url, wait_until="networkidle")
+            await playwright_page.goto(target_url, wait_until="networkidle")
             
-            if options.actions:
-                await self._execute_actions(page, options.actions)
+            if request.actions:
+                await self._execute_actions(playwright_page, request.actions)
                 
-            response = await Scraper.extract(page, str(url), options)
+            # 1. Page Domain handles the extraction logic
+            response = await page.scrape(playwright_page, request)
             
-            if options.webhook:
-                # Await to ensure dispatch finishes before returning
-                await WebhookService.dispatch(options.webhook, response)
+            # 2. File Domain handles persistence side-effects
+            if hasattr(response, "_screenshot_bytes") and request.s3_config:
+                screenshot_bytes = getattr(response, "_screenshot_bytes")
+                object_name = f"{sanitize_filename(request.url)}_{uuid.uuid4().hex[:8]}.jpg"
+                
+                await asyncio.to_thread(
+                    file.upload,
+                    data=screenshot_bytes,
+                    object_name=object_name,
+                    mimetype="image/jpeg",
+                    s3_config=request.s3_config
+                )
+                
+                response.screenshot = file.generate_presigned_url(
+                    object_name=object_name,
+                    s3_config=request.s3_config
+                )
+            
+            # 3. Webhook Domain handles outbound notifications
+            if request.webhook:
+                await webhook.handle(request.webhook, response)
                 
             return response
             
         except Exception as e:
-            error_response = ScrapeResponse(url=str(url), error=str(e))
-            if options and options.webhook:
-                await WebhookService.dispatch(options.webhook, error_response)
+            error_response = ScrapeResponse(url=request.url, error=str(e))
+            if request.webhook:
+                await webhook.handle(request.webhook, error_response)
             return error_response
             
         finally:
-            if page:
-                await page.close()
+            if playwright_page:
+                await playwright_page.close()
             if context:
                 await context.close()
