@@ -1,16 +1,16 @@
 """Koda - Web scraping and extraction engine."""
 
-from .config import ScrapeOptions, ScrapeResponse, Action, KodaError, ScrapeError, WebhookConfig
+from .exceptions import KodaError, ScrapeError
+from .schemas.page import ScrapeRequest, ScrapeResponse, Action
+from .schemas.webhook import WebhookConfig
 from .client import KodaClient
-from .services.scrape import Scraper
 
 __all__ = [
     "KodaClient",
-    "ScrapeOptions",
+    "ScrapeRequest",
     "ScrapeResponse",
     "Action",
     "KodaError",
     "ScrapeError",
-    "Scraper",
     "WebhookConfig",
 ]
