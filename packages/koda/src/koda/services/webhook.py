@@ -7,8 +7,8 @@ import urllib.request
 import urllib.error
 from typing import Dict, Any
 
-from ..schemas.webhook import WebhookConfig
-from ..schemas.page import ScrapeResponse
+from koda.schemas.webhook import WebhookConfig
+from koda.schemas.page import ScrapeResponse
 
 __all__ = ["handle"]
 

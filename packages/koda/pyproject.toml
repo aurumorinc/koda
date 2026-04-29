@@ -1,0 +1,28 @@
+[project]
+name = "koda"
+version = "0.1.0"
+description = "Koda - The Firecrawl Alternative"
+authors = [{name = "Aurumor", email = "koda@example.com"}]
+requires-python = ">=3.9"
+dependencies = [
+    "playwright>=1.42.0",
+    "Pillow>=10.2.0",
+    "markdownify>=0.11.6",
+    "beautifulsoup4>=4.12.3",
+    "boto3>=1.42.97",
+    "botocore>=1.42.97",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.5",
+]
+[dependency-groups]
+dev = [
+    "mkinit>=1.2.0",
+]

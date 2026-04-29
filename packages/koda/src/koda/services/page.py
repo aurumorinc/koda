@@ -10,8 +10,8 @@ from PIL import Image
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
-from ..utils import images_are_identical
-from ..schemas.page import ScrapeRequest, ScrapeResponse
+from koda.utils import images_are_identical
+from koda.schemas.page import ScrapeRequest, ScrapeResponse
 
 __all__ = ["scrape"]
 

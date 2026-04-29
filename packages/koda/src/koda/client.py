@@ -9,11 +9,11 @@ from pathlib import Path
 
 from playwright.async_api import async_playwright, Browser, Page
 
-from .exceptions import KodaError
-from .schemas.page import ScrapeRequest, ScrapeResponse, Action
-from .schemas.webhook import WebhookConfig
-from .utils import sanitize_filename
-from .services import page, file, webhook
+from koda.exceptions import KodaError
+from koda.schemas.page import ScrapeRequest, ScrapeResponse, Action
+from koda.schemas.webhook import WebhookConfig
+from koda.utils import sanitize_filename
+from koda.services import page, file, webhook
 
 __all__ = ["KodaClient"]
 
