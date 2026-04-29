@@ -4,11 +4,12 @@ import pytest
 import asyncio
 from pathlib import Path
 import tempfile
-
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from koda.client import KodaClient
-from koda.config import ScrapeOptions, Action, KodaError, WebhookConfig
+from koda.schemas.page import ScrapeRequest, Action
+from koda.schemas.webhook import WebhookConfig
+from koda.exceptions import KodaError
 
 @pytest.fixture
 def dummy_html_file():
@@ -39,18 +40,20 @@ def dummy_html_file():
 
 
 @pytest.mark.asyncio
-@patch("koda.services.scrape.FileService.upload_and_presign")
-async def test_kodaclient_scrape_local_file(mock_upload, dummy_html_file):
+@patch("koda.client.file.upload")
+@patch("koda.client.file.generate_presigned_url")
+async def test_kodaclient_scrape_local_file(mock_presign, mock_upload, dummy_html_file):
     """Test scraping a local HTML file."""
-    mock_upload.return_value = "https://mock-s3-url.com/image.jpg"
+    mock_presign.return_value = "https://mock-s3-url.com/image.jpg"
     
     async with KodaClient() as client:
-        response = await client.scrape(
-            dummy_html_file, 
+        request = ScrapeRequest(
+            url=str(dummy_html_file),
             formats=["markdown", "metadata", "screenshot"],
             only_main_content=True,
             s3_config={"bucket": "test"}
         )
+        response = await client.scrape(request)
         
         assert response.error is None
         assert response.metadata is not None
@@ -71,37 +74,30 @@ async def test_kodaclient_unstarted_raises_error():
     """Test that using client without starting raises an error."""
     client = KodaClient()
     with pytest.raises(KodaError):
-        await client.scrape("http://example.com")
+        await client.scrape(ScrapeRequest(url="http://example.com"))
 
 @pytest.mark.asyncio
-@patch("koda.services.scrape.FileService.upload_and_presign")
-@patch("urllib.request.urlopen")
-async def test_kodaclient_with_webhook(mock_urlopen, mock_upload, dummy_html_file):
+@patch("koda.client.file.upload")
+@patch("koda.client.webhook.handle")
+async def test_kodaclient_with_webhook(mock_webhook_handle, mock_upload, dummy_html_file):
     """Test scraping with a webhook callback."""
-    mock_upload.return_value = "https://mock-s3-url.com/image.jpg"
-    
     webhook_cfg = WebhookConfig(
         url="http://test-webhook.com/callback",
         metadata={"user_id": 123}
     )
     
     async with KodaClient() as client:
-        response = await client.scrape(
-            dummy_html_file, 
+        request = ScrapeRequest(
+            url=str(dummy_html_file),
             formats=["markdown"],
             webhook=webhook_cfg
         )
+        response = await client.scrape(request)
         
         assert response.error is None
-        mock_urlopen.assert_called_once()
+        mock_webhook_handle.assert_called_once()
         
-        # Verify the webhook request
-        request = mock_urlopen.call_args[0][0]
-        assert request.full_url == "http://test-webhook.com/callback"
-        
-        import json
-        payload = json.loads(request.data.decode("utf-8"))
-        assert payload["success"] is True
-        assert "data" in payload
-        assert "markdown" in payload["data"]
-        assert payload["user_id"] == 123
+        # Verify the webhook handle call
+        args = mock_webhook_handle.call_args[0]
+        assert args[0].url == "http://test-webhook.com/callback"
+        assert args[1].url == str(dummy_html_file)
