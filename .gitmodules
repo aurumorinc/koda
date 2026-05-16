@@ -1,0 +1,16 @@
+[submodule "third_party/windmill"]
+	path = third_party/windmill
+[submodule "third_party/crawlee-python"]
+	path = third_party/crawlee-python
+[submodule "third_party/crawl4ai"]
+	path = third_party/crawl4ai
+[submodule "third_party/posthog-python"]
+	path = third_party/posthog-python
+[submodule "third_party/stalwart"]
+	path = third_party/stalwart
+[submodule "third_party/sentry-python"]
+	path = third_party/sentry-python
+[submodule "third_party/posthog-js"]
+	path = third_party/posthog-js
+[submodule "third_party/camoufox"]
+	path = third_party/camoufox
