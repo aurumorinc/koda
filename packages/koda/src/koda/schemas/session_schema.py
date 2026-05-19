@@ -55,7 +55,6 @@ class SessionModel(BaseModel):
     blocked_status_codes: List[int] = Field(default_factory=lambda: [401, 403, 429], alias='blockedStatusCodes')
 
     # Koda Specific Fields
-    provider: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
