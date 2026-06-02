@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from crawl4ai.content_filter_strategy import PruningContentFilter
 
-from koda.schemas.page_schema import ScrapeRequest, ScrapeResponse
+from koda.modules.page.schema import ScrapeRequest, ScrapeResponse
 
 __all__ = ["scrape"]
 
