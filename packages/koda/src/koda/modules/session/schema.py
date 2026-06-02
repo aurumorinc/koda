@@ -7,18 +7,12 @@ from typing import Any, Dict, List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class CookieParam(BaseModel):
-    """Dictionary representation of cookies."""
-    model_config = ConfigDict(populate_by_name=True)
-
-    name: str
-    value: str
-    domain: Optional[str] = None
-    path: Optional[str] = None
-    secure: Optional[bool] = None
-    http_only: Optional[bool] = Field(None, alias='httpOnly')
-    expires: Optional[int] = None
-    same_site: Optional[Literal['Lax', 'None', 'Strict']] = Field(None, alias='sameSite')
+class BrowserParam(BaseModel):
+    """Configuration for the browser session."""
+    type: Literal['invisible_playwright', 'cloakbrowser'] = Field(default='invisible_playwright')
+    name: Literal['firefox', 'chromium'] = Field(default='firefox', description="The underlying browser engine")
+    config: Dict[str, Any] = Field(default_factory=dict)
+    user_data_dir: Optional[str] = Field(default=None, alias='userDataDir', description="Path or S3 key for the profile directory")
 
 
 class MFAParam(BaseModel):
@@ -51,8 +45,8 @@ class SessionModel(BaseModel):
     usage_count: int = Field(0, alias='usageCount')
     max_usage_count: int = Field(50, alias='maxUsageCount')
     error_score: float = Field(0.0, alias='errorScore')
-    cookies: List[CookieParam] = Field(default_factory=list)
     blocked_status_codes: List[int] = Field(default_factory=lambda: [401, 403, 429], alias='blockedStatusCodes')
+    browser: BrowserParam = Field(default_factory=BrowserParam)
 
     # Koda Specific Fields
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -76,11 +70,6 @@ class Session:
     def user_data(self) -> UserDataParam:
         """Return the user data."""
         return self.model.user_data
-
-    @property
-    def cookies(self) -> List[CookieParam]:
-        """Return the cookies."""
-        return self.model.cookies
 
     @property
     def error_score(self) -> float:

@@ -1,15 +1,18 @@
 import logging
+import os
 import re
+import shutil
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Tuple
 
 import pyotp
 
 from koda.exceptions import KodaError, SessionExhaustedError
-from koda.repositories.email import imap, jmap
-from koda.repositories.lock import redis
-from koda.repositories.storage import windmill
-from koda.schemas.session_schema import Session
+from koda.modules.browser.service import launch_browser
+from koda.modules.session.repositories.email import imap, jmap
+from koda.modules.session.repositories.lock import redis
+from koda.modules.session.repositories.storage import s3, windmill
+from koda.modules.session.schema import Session
 
 logger = logging.getLogger(__name__)
 
@@ -70,27 +73,46 @@ async def release_session(session: Session, lock_token: str) -> None:
 
 
 @asynccontextmanager
-async def session_scope(metadata: dict[str, Any]) -> AsyncGenerator[Session, None]:
+async def browser_session_scope(metadata: dict[str, Any]) -> AsyncGenerator[Tuple[Session, Any], None]:
     """
-    Async context manager for safely using a session.
-    Automatically handles locking, state updates (mark_good/mark_bad), and releasing.
+    Async context manager for safely using a browser session.
+    Automatically handles locking, S3 profile sync, browser launch, state updates, and releasing.
     
     Args:
         metadata: A dictionary of metadata key-value pairs to filter sessions by.
         
     Yields:
-        A locked, usable Session object.
+        A tuple containing the locked Session object and the browser context.
     """
     session, token = await get_session(metadata)
+    local_profile_dir = f"/tmp/koda_profiles/{session.id}"
     
     try:
-        yield session
+        if session.model.browser.user_data_dir:
+            await s3.download_profile(session.model.browser.user_data_dir, local_profile_dir)
+        else:
+            os.makedirs(local_profile_dir, exist_ok=True)
+            
+        async with launch_browser(
+            session.model.browser.type,
+            local_profile_dir,
+            session.model.browser.config
+        ) as browser_context:
+            yield session, browser_context
+            session.mark_good()
     except Exception:
         session.mark_bad()
         raise
-    else:
-        session.mark_good()
     finally:
+        try:
+            s3_key = await s3.upload_profile(local_profile_dir, session.id)
+            session.model.browser.user_data_dir = s3_key
+        except Exception as e:
+            logger.error(f"Failed to upload profile for session {session.id}", exc_info=True)
+            
+        if os.path.exists(local_profile_dir):
+            shutil.rmtree(local_profile_dir, ignore_errors=True)
+            
         await release_session(session, token)
 
 

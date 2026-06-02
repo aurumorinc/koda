@@ -3,7 +3,7 @@ from typing import List, Optional, Any, Dict
 import httpx
 
 from koda.config.main import settings
-from koda.schemas.session_schema import SessionModel
+from koda.modules.session.schema import SessionModel
 
 
 async def list_sessions(metadata: Optional[Dict[str, Any]] = None) -> List[SessionModel]:
@@ -20,7 +20,7 @@ async def list_sessions(metadata: Optional[Dict[str, Any]] = None) -> List[Sessi
     )
     headers = {"Authorization": f"Bearer {settings.windmill_token}"}
     params = {
-        "resource_type": "koda_session",
+        "resource_type": "koda.modules.session",
         "per_page": 100,  # Fetch up to 100 sessions at once
     }
 
