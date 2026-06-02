@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from typing import Any, Dict
 
@@ -12,15 +13,33 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from koda.config.main import settings
 
 
+def _extract_and_store_windmill_trace_context() -> None:
+    """Extracts trace_id and span_id from TRACEPARENT and stores in settings."""
+    traceparent = os.getenv("TRACEPARENT")
+    if traceparent:
+        parts = traceparent.split("-")
+        if len(parts) >= 3:
+            settings.trace_id = parts[1]
+            settings.span_id = parts[2]
+
+
 def add_otel_context(
     logger: logging.Logger, method_name: str, event_dict: Dict[str, Any]
 ) -> Dict[str, Any]:
     """Injects OpenTelemetry trace_id and span_id into the log record."""
+    # 1. Try to get it from the active OTel span
     span = trace.get_current_span()
     if span and span.get_span_context().is_valid:
         ctx = span.get_span_context()
         event_dict["trace_id"] = format(ctx.trace_id, "032x")
         event_dict["span_id"] = format(ctx.span_id, "016x")
+    else:
+        # 2. Fallback to the context stored in settings (from Windmill)
+        if settings.trace_id:
+            event_dict["trace_id"] = settings.trace_id
+        if settings.span_id:
+            event_dict["span_id"] = settings.span_id
+            
     return event_dict
 
 
@@ -37,8 +56,15 @@ def _setup_otel_logger_provider() -> LoggerProvider:
     return logger_provider
 
 
+# Export get_logger for use throughout the application
+get_logger = structlog.get_logger
+
+
 def setup_logging(log_level: int = logging.INFO) -> None:
     """Configures structlog and routes standard logging through it."""
+    # Extract Windmill context before configuring loggers
+    _extract_and_store_windmill_trace_context()
+
     shared_processors = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
