@@ -7,3 +7,7 @@ class KodaError(Exception):
 class ScrapeError(KodaError):
     """Exception raised when an error occurs during scraping."""
     pass
+
+class SessionExhaustedError(KodaError):
+    """Exception raised when no usable sessions are available for a provider."""
+    pass
