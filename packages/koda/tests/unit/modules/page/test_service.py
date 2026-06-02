@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from koda.services.page_service import scrape, _execute_actions_hook
-from koda.schemas.page_schema import ScrapeRequest, Action
+from koda.modules.page.service import scrape, _execute_actions_hook
+from koda.modules.page.schema import ScrapeRequest, Action
 
 @pytest.mark.asyncio
 async def test_execute_actions_hook():
@@ -59,10 +59,10 @@ async def test_scrape_basic():
     mock_result.html = "<h1>Hello</h1>"
     mock_result.metadata = {"title": "Test"}
     
-    with patch("koda.services.page_service.AsyncWebCrawler") as mock_crawler_cls:
-        mock_crawler = AsyncMock()
+    with patch("koda.modules.page.service.AsyncWebCrawler") as mock_crawler_cls:
+        mock_crawler = MagicMock()
+        mock_crawler.arun = AsyncMock(return_value=mock_result)
         mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
-        mock_crawler.arun.return_value = mock_result
         
         response = await scrape(request)
         
@@ -80,10 +80,10 @@ async def test_scrape_with_screenshot():
     mock_result.success = True
     mock_result.screenshot = "YmFzZTY0" # base64 for "base64"
     
-    with patch("koda.services.page_service.AsyncWebCrawler") as mock_crawler_cls:
-        mock_crawler = AsyncMock()
+    with patch("koda.modules.page.service.AsyncWebCrawler") as mock_crawler_cls:
+        mock_crawler = MagicMock()
+        mock_crawler.arun = AsyncMock(return_value=mock_result)
         mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
-        mock_crawler.arun.return_value = mock_result
         
         response = await scrape(request)
         

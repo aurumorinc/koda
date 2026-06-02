@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timedelta, timezone
-from koda.schemas.session_schema import SessionModel, Session, UserDataParam, MFAParam, CookieParam
+from koda.modules.session.schema import SessionModel, Session, UserDataParam, MFAParam
 
 def test_session_model_validation():
     """Test that SessionModel correctly validates and handles aliases."""
@@ -21,9 +21,6 @@ def test_session_model_validation():
         "usageCount": 10,
         "maxUsageCount": 100,
         "errorScore": 2.5,
-        "cookies": [
-            {"name": "sessionid", "value": "abc", "domain": "example.com"}
-        ],
         "blockedStatusCodes": [401, 403],
         "metadata": {"provider": "windmill", "key": "value"}
     }
@@ -35,8 +32,6 @@ def test_session_model_validation():
     assert model.user_data.username == "user"
     assert model.user_data.mfa.strategy == "totp"
     assert model.error_score == 2.5
-    assert len(model.cookies) == 1
-    assert model.cookies[0].name == "sessionid"
     assert model.metadata.get("provider") == "windmill"
 
 def test_session_wrapper_methods():

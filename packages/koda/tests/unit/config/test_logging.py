@@ -19,10 +19,16 @@ def capture_stdout(capsys):
 @pytest.fixture
 def mock_otlp_env():
     """Fixture to mock OTLP endpoint environment variable."""
-    with patch("koda.config.logging.settings") as mock_settings:
-        mock_settings.otel_exporter_otlp_endpoint = "http://localhost:4317"
-        mock_settings.otel_exporter_otlp_logs_endpoint = None
-        yield
+    from koda.config.main import settings
+    original_endpoint = settings.otel_exporter_otlp_endpoint
+    original_logs_endpoint = settings.otel_exporter_otlp_logs_endpoint
+    
+    settings.otel_exporter_otlp_endpoint = "http://localhost:4317"
+    settings.otel_exporter_otlp_logs_endpoint = None
+    yield
+    
+    settings.otel_exporter_otlp_endpoint = original_endpoint
+    settings.otel_exporter_otlp_logs_endpoint = original_logs_endpoint
 
 
 def test_logging_with_otel_context(capsys, mock_otlp_env):
@@ -83,19 +89,25 @@ def test_logging_with_otel_context(capsys, mock_otlp_env):
 
 
 def test_logging_without_otel_context(capsys, mock_otlp_env):
-    """Test that logs do not contain OTel context when no valid span exists."""
+    """Test that logs do not contain OTel context when no valid span exists and no TRACEPARENT."""
     # Mock an invalid OTel span
     mock_span = MagicMock()
     mock_span.get_span_context().is_valid = False
 
     with patch("koda.config.logging.OTLPLogExporter") as mock_exporter_cls, \
-         patch("koda.config.logging.BatchLogRecordProcessor") as mock_processor_cls:
+         patch("koda.config.logging.BatchLogRecordProcessor") as mock_processor_cls, \
+         patch.dict(os.environ, {}, clear=True):
         
         mock_exporter = MagicMock()
         mock_exporter_cls.return_value = mock_exporter
         
         from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
         mock_processor_cls.side_effect = lambda exporter: SimpleLogRecordProcessor(exporter)
+        
+        # Clear settings to ensure no leftover state
+        from koda.config.main import settings
+        settings.trace_id = None
+        settings.span_id = None
         
         setup_logging()
         logger = structlog.get_logger("test_logger")
@@ -116,6 +128,49 @@ def test_logging_without_otel_context(capsys, mock_otlp_env):
         assert log_record.body["event"] == "test_message_no_span"
         assert "trace_id" not in log_record.body
         assert "span_id" not in log_record.body
+
+
+def test_logging_with_traceparent_fallback(capsys, mock_otlp_env):
+    """Test that logs use TRACEPARENT context when no valid span exists."""
+    mock_span = MagicMock()
+    mock_span.get_span_context().is_valid = False
+
+    with patch("koda.config.logging.OTLPLogExporter") as mock_exporter_cls, \
+         patch("koda.config.logging.BatchLogRecordProcessor") as mock_processor_cls, \
+         patch.dict(os.environ, {"TRACEPARENT": "00-deadbeefdeadbeefdeadbeefdeadbeef-cafebabecafebabe-01"}):
+        
+        mock_exporter = MagicMock()
+        mock_exporter_cls.return_value = mock_exporter
+        
+        from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
+        mock_processor_cls.side_effect = lambda exporter: SimpleLogRecordProcessor(exporter)
+        
+        setup_logging()
+        
+        from koda.config.main import settings
+        assert settings.trace_id == "deadbeefdeadbeefdeadbeefdeadbeef"
+        assert settings.span_id == "cafebabecafebabe"
+        
+        logger = structlog.get_logger("test_logger")
+
+        with patch("opentelemetry.trace.get_current_span", return_value=mock_span):
+            logger.info("test_message_fallback")
+
+        # 1. Check Console Output
+        captured = capsys.readouterr()
+        assert "test_message_fallback" in captured.out
+        assert "trace_id" in captured.out
+        assert "deadbeefdeadbeefdeadbeefdeadbeef" in captured.out
+        assert "span_id" in captured.out
+        assert "cafebabecafebabe" in captured.out
+
+        # 2. Check OTLP Exporter Output
+        assert mock_exporter.export.called
+        batch = mock_exporter.export.call_args[0][0]
+        log_record = batch[0].log_record
+        assert log_record.body["event"] == "test_message_fallback"
+        assert log_record.body["trace_id"] == "deadbeefdeadbeefdeadbeefdeadbeef"
+        assert log_record.body["span_id"] == "cafebabecafebabe"
 
 
 def test_standard_logging_routing(capsys, mock_otlp_env):

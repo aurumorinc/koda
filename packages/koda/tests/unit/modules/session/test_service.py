@@ -2,9 +2,9 @@ import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta, timezone
 
-from koda.schemas.session_schema import SessionModel, Session, UserDataParam, MFAParam
+from koda.modules.session.schema import SessionModel, Session, UserDataParam, MFAParam, BrowserParam
 from koda.exceptions import SessionExhaustedError, KodaError
-from koda.services.session_service import get_session, release_session, session_scope, resolve_mfa
+from koda.modules.session.service import get_session, release_session, browser_session_scope, resolve_mfa
 
 
 def create_mock_session_model(
@@ -13,9 +13,12 @@ def create_mock_session_model(
     usage_count: int = 0, 
     error_score: float = 0.0,
     is_blocked: bool = False,
-    mfa: MFAParam = None
+    mfa: MFAParam = None,
+    browser: BrowserParam = None
 ) -> SessionModel:
     """Helper to create a mock SessionModel."""
+    if browser is None:
+        browser = BrowserParam()
     return SessionModel(
         id=id,
         metadata={"provider": provider},
@@ -23,13 +26,14 @@ def create_mock_session_model(
         usageCount=usage_count,
         errorScore=error_score,
         maxErrorScore=3.0 if not is_blocked else 0.0, # Force blocked if needed
-        createdAt=datetime.now(timezone.utc)
+        createdAt=datetime.now(timezone.utc),
+        browser=browser
     )
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.redis.acquire_lock", new_callable=AsyncMock)
-@patch("koda.services.session_service.windmill.list_sessions", new_callable=AsyncMock)
+@patch("koda.modules.session.service.redis.acquire_lock", new_callable=AsyncMock)
+@patch("koda.modules.session.service.windmill.list_sessions", new_callable=AsyncMock)
 async def test_get_session_success(mock_list_sessions, mock_acquire_lock):
     # Arrange
     model1 = create_mock_session_model(id="1", usage_count=10)
@@ -49,8 +53,8 @@ async def test_get_session_success(mock_list_sessions, mock_acquire_lock):
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.redis.acquire_lock", new_callable=AsyncMock)
-@patch("koda.services.session_service.windmill.list_sessions", new_callable=AsyncMock)
+@patch("koda.modules.session.service.redis.acquire_lock", new_callable=AsyncMock)
+@patch("koda.modules.session.service.windmill.list_sessions", new_callable=AsyncMock)
 async def test_get_session_skips_locked(mock_list_sessions, mock_acquire_lock):
     # Arrange
     model1 = create_mock_session_model(id="1", usage_count=1)
@@ -70,8 +74,8 @@ async def test_get_session_skips_locked(mock_list_sessions, mock_acquire_lock):
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.redis.acquire_lock", new_callable=AsyncMock)
-@patch("koda.services.session_service.windmill.list_sessions", new_callable=AsyncMock)
+@patch("koda.modules.session.service.redis.acquire_lock", new_callable=AsyncMock)
+@patch("koda.modules.session.service.windmill.list_sessions", new_callable=AsyncMock)
 async def test_get_session_exhausted(mock_list_sessions, mock_acquire_lock):
     # Arrange
     model1 = create_mock_session_model(id="1", usage_count=1)
@@ -85,8 +89,8 @@ async def test_get_session_exhausted(mock_list_sessions, mock_acquire_lock):
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.redis.release_lock", new_callable=AsyncMock)
-@patch("koda.services.session_service.windmill.update_session", new_callable=AsyncMock)
+@patch("koda.modules.session.service.redis.release_lock", new_callable=AsyncMock)
+@patch("koda.modules.session.service.windmill.update_session", new_callable=AsyncMock)
 async def test_release_session(mock_update_session, mock_release_lock):
     # Arrange
     model = create_mock_session_model(id="1")
@@ -102,41 +106,81 @@ async def test_release_session(mock_update_session, mock_release_lock):
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.release_session", new_callable=AsyncMock)
-@patch("koda.services.session_service.get_session", new_callable=AsyncMock)
-async def test_session_scope_success(mock_get_session, mock_release_session):
+@patch("koda.modules.session.service.shutil.rmtree")
+@patch("koda.modules.session.service.os.path.exists", return_value=True)
+@patch("koda.modules.session.service.os.makedirs")
+@patch("koda.modules.session.service.s3.upload_profile", new_callable=AsyncMock)
+@patch("koda.modules.session.service.s3.download_profile", new_callable=AsyncMock)
+@patch("koda.modules.session.service.launch_browser")
+@patch("koda.modules.session.service.release_session", new_callable=AsyncMock)
+@patch("koda.modules.session.service.get_session", new_callable=AsyncMock)
+async def test_browser_session_scope_success(
+    mock_get_session, mock_release_session, mock_launch_browser,
+    mock_download_profile, mock_upload_profile, mock_makedirs, mock_exists, mock_rmtree
+):
     # Arrange
-    model = create_mock_session_model(id="1", usage_count=0, error_score=1.0)
+    browser_param = BrowserParam(type="invisible_playwright", userDataDir="s3_key_123")
+    model = create_mock_session_model(id="1", usage_count=0, error_score=1.0, browser=browser_param)
     session = Session.from_model(model)
     mock_get_session.return_value = (session, "token-123")
     
+    mock_context = MagicMock()
+    mock_launch_browser.return_value.__aenter__.return_value = mock_context
+    mock_upload_profile.return_value = "new_s3_key_123"
+    
     # Act
-    async with session_scope({"provider": "test_provider"}) as s:
+    async with browser_session_scope({"provider": "test_provider"}) as (s, ctx):
         assert s.id == "1"
+        assert ctx == mock_context
         
     # Assert
     assert session.usage_count == 1 # mark_good increments usage
     assert session.error_score == 0.5 # mark_good decrements error score
+    assert session.model.browser.user_data_dir == "new_s3_key_123"
+    
+    mock_download_profile.assert_called_once_with("s3_key_123", "/tmp/koda_profiles/1")
+    mock_launch_browser.assert_called_once_with("invisible_playwright", "/tmp/koda_profiles/1", {})
+    mock_upload_profile.assert_called_once_with("/tmp/koda_profiles/1", "1")
+    mock_rmtree.assert_called_once_with("/tmp/koda_profiles/1", ignore_errors=True)
     mock_release_session.assert_called_once_with(session, "token-123")
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.release_session", new_callable=AsyncMock)
-@patch("koda.services.session_service.get_session", new_callable=AsyncMock)
-async def test_session_scope_exception(mock_get_session, mock_release_session):
+@patch("koda.modules.session.service.shutil.rmtree")
+@patch("koda.modules.session.service.os.path.exists", return_value=True)
+@patch("koda.modules.session.service.os.makedirs")
+@patch("koda.modules.session.service.s3.upload_profile", new_callable=AsyncMock)
+@patch("koda.modules.session.service.launch_browser")
+@patch("koda.modules.session.service.release_session", new_callable=AsyncMock)
+@patch("koda.modules.session.service.get_session", new_callable=AsyncMock)
+async def test_browser_session_scope_exception(
+    mock_get_session, mock_release_session, mock_launch_browser,
+    mock_upload_profile, mock_makedirs, mock_exists, mock_rmtree
+):
     # Arrange
-    model = create_mock_session_model(id="1", usage_count=0, error_score=0.0)
+    browser_param = BrowserParam(type="invisible_playwright", user_data_dir=None)
+    model = create_mock_session_model(id="1", usage_count=0, error_score=0.0, browser=browser_param)
     session = Session.from_model(model)
     mock_get_session.return_value = (session, "token-123")
     
+    mock_context = MagicMock()
+    mock_launch_browser.return_value.__aenter__.return_value = mock_context
+    mock_upload_profile.return_value = "new_s3_key_123"
+    
     # Act & Assert
     with pytest.raises(ValueError, match="Test error"):
-        async with session_scope({"provider": "test_provider"}) as s:
+        async with browser_session_scope({"provider": "test_provider"}) as (s, ctx):
             raise ValueError("Test error")
             
     # Assert
     assert session.usage_count == 1 # mark_bad increments usage
     assert session.error_score == 1.0 # mark_bad increments error score
+    assert session.model.browser.user_data_dir == "new_s3_key_123"
+    
+    mock_makedirs.assert_called_once_with("/tmp/koda_profiles/1", exist_ok=True)
+    mock_launch_browser.assert_called_once_with("invisible_playwright", "/tmp/koda_profiles/1", {})
+    mock_upload_profile.assert_called_once_with("/tmp/koda_profiles/1", "1")
+    mock_rmtree.assert_called_once_with("/tmp/koda_profiles/1", ignore_errors=True)
     mock_release_session.assert_called_once_with(session, "token-123")
 
 
@@ -154,7 +198,7 @@ async def test_resolve_mfa_no_mfa():
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.pyotp.TOTP")
+@patch("koda.modules.session.service.pyotp.TOTP")
 async def test_resolve_mfa_totp(mock_totp):
     # Arrange
     mock_totp_instance = MagicMock()
@@ -174,7 +218,7 @@ async def test_resolve_mfa_totp(mock_totp):
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.imap.get_latest_email", new_callable=AsyncMock)
+@patch("koda.modules.session.service.imap.get_latest_email", new_callable=AsyncMock)
 async def test_resolve_mfa_imap(mock_get_latest_email):
     # Arrange
     mock_get_latest_email.return_value = "Your code is 654321."
@@ -192,7 +236,7 @@ async def test_resolve_mfa_imap(mock_get_latest_email):
 
 
 @pytest.mark.asyncio
-@patch("koda.services.session_service.jmap.get_latest_email", new_callable=AsyncMock)
+@patch("koda.modules.session.service.jmap.get_latest_email", new_callable=AsyncMock)
 async def test_resolve_mfa_jmap_custom_pattern(mock_get_latest_email):
     # Arrange
     mock_get_latest_email.return_value = "Code: 9876"
