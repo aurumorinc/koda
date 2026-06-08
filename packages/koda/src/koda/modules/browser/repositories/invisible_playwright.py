@@ -1,7 +1,10 @@
 from typing import Any, AsyncGenerator, Dict
 from contextlib import asynccontextmanager
 
-from invisible_playwright.async_api import InvisiblePlaywright
+try:
+    from invisible_playwright.async_api import InvisiblePlaywright
+except ImportError:
+    InvisiblePlaywright = None
 
 @asynccontextmanager
 async def launch(user_data_dir: str, config: Dict[str, Any]) -> AsyncGenerator[Any, None]:
