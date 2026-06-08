@@ -1,7 +1,10 @@
 from typing import Any, AsyncGenerator, Dict
 from contextlib import asynccontextmanager
 
-from cloakbrowser.browser import launch_persistent_context_async
+try:
+    from cloakbrowser.browser import launch_persistent_context_async
+except ImportError:
+    launch_persistent_context_async = None
 
 @asynccontextmanager
 async def launch(user_data_dir: str, config: Dict[str, Any]) -> AsyncGenerator[Any, None]:

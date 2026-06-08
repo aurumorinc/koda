@@ -22,8 +22,6 @@ dependencies = [
     "camoufox>=0.4.11",
     "sentry-sdk>=2.61.0",
     "aioboto3>=13.0.0",
-    "invisible-playwright",
-    "cloakbrowser",
 ]
 
 [build-system]
@@ -45,6 +43,3 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_default_test_loop_scope = "function"
 
-[tool.uv.sources]
-invisible-playwright = { path = "../../third_party/invisible_playwright" }
-cloakbrowser = { path = "../../third_party/CloakBrowser" }
