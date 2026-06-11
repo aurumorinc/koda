@@ -1,5 +1,4 @@
-from koda.modules.cache.repositories import (get, logger,)
 from koda.modules.cache.schema import (CacheEntry,)
-from koda.modules.cache.service import (get, logger,)
+from koda.modules.cache.service import (CacheService, logger,)
 
-__all__ = ['CacheEntry', 'get', 'logger']
+__all__ = ['CacheEntry', 'CacheService', 'logger']
