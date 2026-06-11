@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from koda.modules.page.service import scrape, _execute_actions_hook
+from koda.modules.page.service import ScrapeJob
 from koda.modules.page.schema import ScrapeRequest, Action
 
 @pytest.mark.asyncio
@@ -27,9 +27,8 @@ async def test_execute_actions_hook():
     mock_page.content.return_value = "<html></html>"
     mock_page.url = "https://example.com"
     
-    kwargs = {"request": request, "shared_state": {}}
-    
-    await _execute_actions_hook(mock_page, None, **kwargs)
+    job = ScrapeJob(request)
+    await job.execute_actions_hook(mock_page, None)
     
     # Verify actions were executed
     mock_page.click.assert_called_once_with("#btn")
@@ -41,7 +40,7 @@ async def test_execute_actions_hook():
     mock_page.content.assert_called_once()
     
     # Verify results were stored
-    results = kwargs["shared_state"]["action_results"]
+    results = job.action_results
     assert len(results["screenshots"]) == 1
     assert len(results["pdfs"]) == 1
     assert len(results["javascriptReturns"]) == 1
@@ -64,7 +63,8 @@ async def test_scrape_basic():
         mock_crawler.arun = AsyncMock(return_value=mock_result)
         mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
         
-        response = await scrape(request)
+        job = ScrapeJob(request)
+        response = await job.run()
         
         assert response.error is None
         assert response.markdown == "# Hello"
@@ -85,7 +85,8 @@ async def test_scrape_with_screenshot():
         mock_crawler.arun = AsyncMock(return_value=mock_result)
         mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
         
-        response = await scrape(request)
+        job = ScrapeJob(request)
+        response = await job.run()
         
         assert response.error is None
         assert getattr(response, "_screenshot_bytes") == b"base64"

@@ -1,30 +1,40 @@
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from koda.modules.site.schema import CrawlRequest
-from koda.modules.site.service import crawl, _is_valid_link
+from koda.modules.site.service import CrawlJob
 
 def test_is_valid_link():
-    base_url = "https://example.com/docs"
+    request = CrawlRequest(url="https://example.com/docs")
+    job = CrawlJob(request)
     
     # Test external links
-    assert _is_valid_link("https://other.com", base_url, None, None, False, False, True, False) is True
-    assert _is_valid_link("https://other.com", base_url, None, None, False, False, False, False) is False
+    job.request.allowExternalLinks = True
+    assert job._is_valid_link("https://other.com") is True
+    job.request.allowExternalLinks = False
+    assert job._is_valid_link("https://other.com") is False
     
     # Test subdomains
-    assert _is_valid_link("https://sub.example.com", base_url, None, None, True, False, False, False) is True
-    assert _is_valid_link("https://sub.example.com", base_url, None, None, False, False, False, False) is False
+    job.request.allowSubdomains = True
+    assert job._is_valid_link("https://sub.example.com") is True
+    job.request.allowSubdomains = False
+    assert job._is_valid_link("https://sub.example.com") is False
     
     # Test domain scope
-    assert _is_valid_link("https://example.com/blog", base_url, None, None, False, True, False, False) is True
-    assert _is_valid_link("https://example.com/blog", base_url, None, None, False, False, False, False) is False
-    assert _is_valid_link("https://example.com/docs/api", base_url, None, None, False, False, False, False) is True
+    job.request.crawlEntireDomain = True
+    assert job._is_valid_link("https://example.com/blog") is True
+    job.request.crawlEntireDomain = False
+    assert job._is_valid_link("https://example.com/blog") is False
+    assert job._is_valid_link("https://example.com/docs/api") is True
     
     # Test exclude paths
-    assert _is_valid_link("https://example.com/docs/api", base_url, None, ["/api"], False, False, False, False) is False
+    job.request.excludePaths = ["/api"]
+    assert job._is_valid_link("https://example.com/docs/api") is False
+    job.request.excludePaths = None
     
     # Test include paths
-    assert _is_valid_link("https://example.com/docs/api", base_url, ["/api"], None, False, False, False, False) is True
-    assert _is_valid_link("https://example.com/docs/other", base_url, ["/api"], None, False, False, False, False) is False
+    job.request.includePaths = ["/api"]
+    assert job._is_valid_link("https://example.com/docs/api") is True
+    assert job._is_valid_link("https://example.com/docs/other") is False
 
 @pytest.mark.asyncio
 async def test_crawl_basic():
@@ -47,7 +57,8 @@ async def test_crawl_basic():
         # First batch returns root, second batch returns page1
         mock_crawler.arun_many.side_effect = [[mock_result_1], [mock_result_2]]
         
-        response = await crawl(request)
+        job = CrawlJob(request)
+        response = await job.run()
         
         assert response.success is True
         assert response.total_pages_crawled == 2
@@ -76,7 +87,8 @@ async def test_crawl_with_webhook():
         mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
         mock_crawler.arun_many.return_value = [mock_result]
         
-        await crawl(request)
+        job = CrawlJob(request)
+        await job.run()
         
         assert mock_dispatch.call_count == 3
         calls = mock_dispatch.call_args_list
