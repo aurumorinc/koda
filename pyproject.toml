@@ -16,3 +16,21 @@ members = [
     "packages/*",
     "apps/*"
 ]
+
+[tool.bumpver]
+current_version = "26.6.0"
+version_pattern = "YY.MM.INC0"
+commit = false
+tag = false
+push = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"',
+]
+"packages/koda/pyproject.toml" = [
+    'version = "{version}"',
+]
+"packages/koda/src/koda/__init__.py" = [
+    '__version__ = "{version}"',
+]
