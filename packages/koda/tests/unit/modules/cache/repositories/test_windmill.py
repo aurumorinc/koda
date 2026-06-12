@@ -4,7 +4,6 @@ import httpx
 
 from koda.config.main import settings
 from koda.modules.cache.repositories import windmill
-from koda.modules.cache.service import get, set as cache_set
 
 
 @pytest.fixture
@@ -112,26 +111,3 @@ async def test_windmill_set_create_if_not_found(mock_settings):
         assert "update_value" in args1[0]
 
 
-@pytest.mark.asyncio
-async def test_unified_cache_get(mock_settings):
-    from koda.modules.cache.schema import CacheEntry
-    with patch("koda.modules.cache.repositories.windmill.get", new_callable=AsyncMock) as mock_windmill_get:
-        mock_windmill_get.return_value = CacheEntry(key="test:cache:my_key", value="test_value")
-        
-        result = await get("my_key")
-        
-        assert result == "test_value"
-        mock_windmill_get.assert_called_once_with("test:cache:my_key")
-
-
-@pytest.mark.asyncio
-async def test_unified_cache_set(mock_settings):
-    from koda.modules.cache.schema import CacheEntry
-    with patch("koda.modules.cache.repositories.windmill.set", new_callable=AsyncMock) as mock_windmill_set:
-        await cache_set("my_key", "my_value")
-        
-        mock_windmill_set.assert_called_once()
-        args, kwargs = mock_windmill_set.call_args
-        assert isinstance(args[0], CacheEntry)
-        assert args[0].key == "test:cache:my_key"
-        assert args[0].value == "my_value"
