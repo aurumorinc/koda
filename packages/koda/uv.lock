@@ -1507,7 +1507,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "sentry-sdk", specifier = ">=2.61.0" },
-    { name = "structlog", specifier = ">=24.1.0" },
+    { name = "structlog", specifier = ">=26.6.0" },
     { name = "upstash-redis", specifier = ">=1.7.0" },
 ]
 

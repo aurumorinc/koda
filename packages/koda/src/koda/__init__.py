@@ -1,5 +1,7 @@
 """Koda - Web scraping and extraction engine."""
 
+__version__ = "26.6.0"
+
 from koda import client
 from koda import exceptions
 from koda import utils
@@ -17,3 +19,4 @@ __all__ = ['Action', 'KodaClient', 'KodaError', 'S3Config', 'ScrapeError',
            'exceptions', 'file', 'file_service', 'generate_presigned_url',
            'page', 'page_service', 'sanitize_filename', 'schemas',
            'scrape', 'services', 'upload', 'utils', 'webhook', 'dispatch_webhook']
+
