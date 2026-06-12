@@ -17,11 +17,6 @@ async def launch_stealth_browser(headless: bool = True, **kwargs: Any) -> Browse
     """Launch the InvisiblePlaywright browser (Firefox) with stealth configurations."""
     global _ip_instance
     try:
-        # Dynamically add third_party/invisible_playwright/src to sys.path if not present
-        possible_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "third_party", "invisible_playwright", "src"))
-        if possible_path not in sys.path and os.path.exists(possible_path):
-            sys.path.append(possible_path)
-            
         from invisible_playwright.async_api import InvisiblePlaywright
         
         # Merge default stealth preferences with any user-provided kwargs
