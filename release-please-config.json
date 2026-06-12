@@ -1,0 +1,16 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "extra-files": ["README.md"]
+    },
+    "packages/kdda": {
+      "release-type": "python",
+      "extra-files": ["README.md"]
+    },
+    "apps/koda-api": {
+      "release-type": "python",
+      "extra-files": ["README.md"]
+    }
+  }
+}
