@@ -1,6 +1,7 @@
-from typing import TypedDict, Optional
+from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict
 
-class S3Config(TypedDict, total=False):
+class S3Config(BaseModel):
     """Configuration for S3-compatible storage.
     
     Attributes:
@@ -12,10 +13,12 @@ class S3Config(TypedDict, total=False):
         expires_in: Optional expiration time for presigned URLs in seconds.
         path_style: Optional boolean to use path-style addressing.
     """
-    bucket: str
-    access_key: str
-    secret_key: str
-    endpoint_url: Optional[str]
-    region: Optional[str]
-    expires_in: Optional[int]
-    path_style: Optional[bool]
+    model_config = ConfigDict(populate_by_name=True)
+
+    bucket: Optional[str] = None
+    access_key: Optional[str] = Field(default=None, alias="accessKey")
+    secret_key: Optional[str] = Field(default=None, alias="secretKey")
+    endpoint_url: Optional[str] = Field(default=None, alias="endPoint")
+    region: Optional[str] = None
+    expires_in: Optional[int] = None
+    path_style: Optional[bool] = Field(default=None, alias="pathStyle")

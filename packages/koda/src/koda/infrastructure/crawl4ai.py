@@ -29,7 +29,10 @@ def patch_crawl4ai(api_key: str, host: str) -> None:
 
             # Use our stealth browser!
             from koda.modules.browser.service import get_browser
-            self.browser = await get_browser(browser_type=self.config.browser_type)
+            self.browser = await get_browser(
+                browser_type=self.config.browser_type,
+                config={"headless": self.config.headless}
+            )
             self.default_context = self.browser
 
             # Set the browser endpoint key for global page tracking
@@ -50,6 +53,13 @@ def patch_crawl4ai(api_key: str, host: str) -> None:
                 except Exception as e:
                     logger.error(f"Failed to close context during patched_close: {e}")
             
+            # Properly exit the koda context manager to prevent browser process leaks
+            if hasattr(self, 'browser') and self.browser and hasattr(self.browser, '_koda_context_manager'):
+                try:
+                    await self.browser._koda_context_manager.__aexit__(None, None, None)
+                except Exception as e:
+                    logger.error(f"Failed to close koda browser context manager: {e}")
+
             # Set self.browser to None so original_close doesn't close our shared browser
             self.browser = None
             await original_close(self)

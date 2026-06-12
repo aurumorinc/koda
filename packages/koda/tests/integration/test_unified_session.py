@@ -1,11 +1,10 @@
 import os
 import pytest
-import structlog
 from unittest.mock import patch, MagicMock
 
-from koda.config.logging import setup_logging
-from koda.services.sentry import init_sentry
-from koda.core.posthog import inject_posthog_monolith
+from python_logging.main import setup_logging, get_logger
+from koda.infrastructure.sentry import init_sentry
+from koda.infrastructure.posthog import inject_posthog_monolith
 
 @pytest.mark.asyncio
 async def test_unified_session_linking(capsys):
@@ -16,21 +15,26 @@ async def test_unified_session_linking(capsys):
     # 1. Setup: Simulate Windmill passing the OTel context via TRACEPARENT
     traceparent = "00-integrationtrace123456789012345-integrationspan1-01"
     
+    from koda.config.main import settings
+    import python_logging.config
+    
     with patch.dict(os.environ, {"TRACEPARENT": traceparent}), \
-         patch("koda.config.logging.OTLPLogExporter"), \
-         patch("koda.config.logging.BatchLogRecordProcessor"), \
-         patch("koda.services.sentry.sentry_sdk.init") as mock_sentry_init, \
-         patch("koda.services.sentry.sentry_sdk.set_tag") as mock_sentry_set_tag, \
+         patch.object(settings, "traceparent", traceparent), \
+         patch.object(python_logging.config.settings, "traceparent", traceparent), \
+         patch("python_logging.integrations.otel.OTLPLogExporter"), \
+         patch("python_logging.integrations.otel.BatchLogRecordProcessor"), \
+         patch("koda.infrastructure.sentry.sentry_sdk.init") as mock_sentry_init, \
+         patch("koda.infrastructure.sentry.sentry_sdk.set_tag") as mock_sentry_set_tag, \
          patch("os.path.exists", return_value=True), \
          patch("builtins.open", MagicMock()):
         
         # 2. Logging: Call setup_logging() and verify trace_id is extracted
-        setup_logging()
+        setup_logging(settings)
         
-        from koda.config.main import settings
-        assert settings.trace_id == "integrationtrace123456789012345"
+        from python_logging.integrations.windmill import get_windmill_context
+        assert get_windmill_context().get("trace_id") == "integrationtrace123456789012345"
         
-        logger = structlog.get_logger("test_unified_session")
+        logger = get_logger("test_unified_session")
         logger.info("test_unified_log")
         
         captured = capsys.readouterr()
@@ -61,5 +65,3 @@ async def test_unified_session_linking(capsys):
             
         # Cleanup
         settings.sentry_dsn = None
-        settings.trace_id = None
-        settings.span_id = None

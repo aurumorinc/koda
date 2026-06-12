@@ -1,9 +1,11 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field, ConfigDict
 
-@dataclass
-class Action:
+from koda.modules.file.schema import S3Config
+from koda.modules.webhook.schema import WebhookConfig
+
+class Action(BaseModel):
     """Represents an action to be taken on the page before scraping.
     
     Attributes:
@@ -39,8 +41,7 @@ class Action:
     landscape: Optional[bool] = None
     scale: Optional[float] = None
 
-@dataclass
-class ScrapeRequest:
+class ScrapeRequest(BaseModel):
     """Configuration and target for a scraping job.
     
     Attributes:
@@ -52,16 +53,17 @@ class ScrapeRequest:
         s3_config: Optional S3 configuration dictionary for uploading screenshots.
         webhook: Optional webhook configuration for callbacks.
     """
-    url: str
-    formats: List[str] = field(default_factory=lambda: ["markdown", "screenshot"])
-    only_main_content: bool = True
-    actions: List[Action] = field(default_factory=list)
-    timeout: int = 30000
-    s3_config: Optional[Dict[str, Any]] = None
-    webhook: Optional[Any] = None
+    model_config = ConfigDict(populate_by_name=True)
 
-@dataclass
-class ScrapeResponse:
+    url: str
+    formats: List[str] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    only_main_content: bool = Field(default=True, alias="onlyMainContent")
+    actions: List[Action] = Field(default_factory=list)
+    timeout: int = 30000
+    s3_config: Optional[S3Config] = None
+    webhook: Optional[WebhookConfig] = None
+
+class ScrapeResponse(BaseModel):
     """The result of a scraping job.
     
     Attributes:

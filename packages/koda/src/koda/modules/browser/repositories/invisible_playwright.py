@@ -12,11 +12,14 @@ async def launch(user_data_dir: str, config: Dict[str, Any]) -> AsyncGenerator[A
     Launch invisible_playwright with a persistent context.
     """
     seed = config.get("seed")
+    headless = config.get("headless", False)
     
+    if InvisiblePlaywright is None:
+        raise RuntimeError("invisible_playwright is not installed.")
+
     # InvisiblePlaywright is an async context manager
     async with InvisiblePlaywright(
-        user_data_dir=user_data_dir,
         seed=seed,
-        headless=True
+        headless=headless
     ) as context:
         yield context

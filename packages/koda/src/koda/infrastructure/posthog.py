@@ -17,8 +17,9 @@ def _get_otel_trace_id() -> str:
     if span and span.get_span_context().is_valid:
         return format(span.get_span_context().trace_id, "032x")
     
-    # 2. Fallback to settings
-    return settings.trace_id or ""
+    # 2. Fallback to Windmill context
+    from python_logging.integrations.windmill import get_windmill_context
+    return get_windmill_context().get("trace_id", "")
 
 async def handle_playwright_request(url: str, method: str, data: str, content_type: Optional[str] = None) -> dict:
     """Proxy transport for posthog-js running in the browser."""

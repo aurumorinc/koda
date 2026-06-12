@@ -1,9 +1,8 @@
 from __future__ import annotations
-from dataclasses import dataclass
 from typing import Dict, Any, Optional, List
+from pydantic import BaseModel
 
-@dataclass
-class WebhookConfig:
+class WebhookConfig(BaseModel):
     """Configuration for a webhook callback.
     
     Attributes:

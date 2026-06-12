@@ -14,6 +14,7 @@ def init_sentry() -> None:
     )
 
     # Tag all subsequent Sentry events in this process with the Windmill trace_id
-    trace_id = settings.trace_id
+    from python_logging.integrations.windmill import get_windmill_context
+    trace_id = get_windmill_context().get("trace_id")
     if trace_id:
         sentry_sdk.set_tag("trace_id", trace_id)
