@@ -4,10 +4,11 @@ import io
 import boto3
 from botocore.config import Config
 from typing import Dict, Any, Union
+from koda.modules.file.schema import S3Config
 
 __all__ = ["upload", "generate_presigned_url"]
 
-def upload(data: Union[bytes, str], object_name: str, mimetype: str, s3_config: Dict[str, Any]) -> None:
+def upload(data: Union[bytes, str], object_name: str, mimetype: str, s3_config: Union[Dict[str, Any], S3Config]) -> None:
     """
     Uploads bytes or a local file to S3.
     
@@ -17,6 +18,9 @@ def upload(data: Union[bytes, str], object_name: str, mimetype: str, s3_config: 
         mimetype: The content type of the file.
         s3_config: Configuration dictionary containing bucket, endpoint_url, access_key, secret_key, region.
     """
+    if isinstance(s3_config, S3Config):
+        s3_config = s3_config.model_dump(by_alias=False, exclude_none=True)
+        
     s3_client = _get_client(s3_config)
     bucket = s3_config['bucket']
     
@@ -36,7 +40,7 @@ def upload(data: Union[bytes, str], object_name: str, mimetype: str, s3_config: 
             ExtraArgs={'ContentType': mimetype}
         )
 
-def generate_presigned_url(object_name: str, s3_config: Dict[str, Any]) -> str:
+def generate_presigned_url(object_name: str, s3_config: Union[Dict[str, Any], S3Config]) -> str:
     """
     Generates a presigned URL for an object in S3.
     
@@ -47,6 +51,9 @@ def generate_presigned_url(object_name: str, s3_config: Dict[str, Any]) -> str:
     Returns:
         A presigned URL string.
     """
+    if isinstance(s3_config, S3Config):
+        s3_config = s3_config.model_dump(by_alias=False, exclude_none=True)
+        
     s3_client = _get_client(s3_config)
     bucket = s3_config['bucket']
     
