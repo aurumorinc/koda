@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'chore: release')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install bumpver
+          curl -LsSf https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-linux-x86_64.tar.gz | tar -xz
+          sudo mv git-cliff-*/git-cliff /usr/local/bin/
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump Version
+        run: |
+          bumpver update --no-commit
+
+      - name: Extract Version
+        id: extract_version
+        run: |
+          NEW_VERSION=$(grep -oP 'current_version = "\K[^"]+' pyproject.toml)
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Generate Changelog
+        run: |
+          git-cliff --config third_party/.github/cliff.toml --tag ${{ env.NEW_VERSION }} -o CHANGELOG.md
+
+      - name: Commit & Push
+        run: |
+          git add pyproject.toml packages/koda/pyproject.toml packages/koda/src/koda/__init__.py CHANGELOG.md
+          git commit -m "chore: release ${{ env.NEW_VERSION }}"
+          git tag ${{ env.NEW_VERSION }}
+          git push origin main --tags
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.NEW_VERSION }}
+          name: Release ${{ env.NEW_VERSION }}
+          bodyFile: "CHANGELOG.md"
+          token: ${{ secrets.GITHUB_TOKEN }}
