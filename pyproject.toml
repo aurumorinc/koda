@@ -1,6 +1,6 @@
 [project]
 name = "koda-workspace"
-version = "0.0.0"
+version = "26.6.0"
 requires-python = ">=3.9"
 dependencies = [
     "camoufox>=0.4.11",
@@ -27,6 +27,7 @@ push = false
 [tool.bumpver.file_patterns]
 "pyproject.toml" = [
     'current_version = "{version}"',
+    'version = "{version}"',
 ]
 "packages/koda/pyproject.toml" = [
     'version = "{version}"',
