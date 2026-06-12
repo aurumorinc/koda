@@ -4,7 +4,7 @@ import aioboto3
 from typing import Optional
 
 from koda.config.main import settings
-from koda.config.logging import get_logger
+from python_logging.main import get_logger
 
 logger = get_logger(__name__)
 
