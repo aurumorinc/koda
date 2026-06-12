@@ -363,11 +363,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Claude
-.claude/
-AGENTS.md
-CLAUDE.md
-
 # Rune
 .rune/
 
