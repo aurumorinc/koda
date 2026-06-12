@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.2] - 2026-06-12
+
+### Build
+
+- Add windmill submodule
+
 ## [26.6.1] - 2026-06-12
 
 ### 🚀 Features
@@ -114,6 +120,7 @@ All notable changes to this project will be documented in this file.
 - Add automated release workflow
 - Configure bumpver and update project version
 - Bump version and migrate release workflow
+- Release 26.6.1
 
 ### Build
 
