@@ -5,7 +5,7 @@ import os
 import gc
 from unittest.mock import patch, MagicMock, AsyncMock
 from koda.client import KodaClient
-from koda.schemas.page_schema import ScrapeRequest, ScrapeResponse
+from koda.modules.page.schema import ScrapeRequest, ScrapeResponse
 
 @pytest.mark.asyncio
 @patch("koda.client.page.scrape")
