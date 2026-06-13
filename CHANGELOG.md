@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [26.6.2] - 2026-06-12
 
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.2
+
 ### Build
 
 - Add windmill submodule
