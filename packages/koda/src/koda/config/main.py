@@ -1,5 +1,5 @@
 from typing import Optional, Literal
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from python_logging.config import LoggingSettings
 from python_logging.main import setup_logging
@@ -11,12 +11,39 @@ class Settings(LoggingSettings, BaseSettings):
     Loads values from environment variables with sensible defaults.
     """
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(extra="ignore")
 
     # Client Configuration
     timeout: int = 30000
-    browser: str = "invisible_playwright"
-    browser_type: str = "firefox"
+    browser: Optional[Literal["invisible_playwright", "cloakbrowser"]] = None
+    browser_type: Optional[Literal["firefox", "chromium"]] = None
+
+    @model_validator(mode="after")
+    def validate_browser(self) -> "Settings":
+        # If neither is set, default to firefox + invisible_playwright
+        if self.browser is None and self.browser_type is None:
+            self.browser_type = "firefox"
+            self.browser = "invisible_playwright"
+        # If only browser_type is set, infer browser
+        elif self.browser is None and self.browser_type is not None:
+            if self.browser_type == "firefox":
+                self.browser = "invisible_playwright"
+            elif self.browser_type == "chromium":
+                self.browser = "cloakbrowser"
+        # If only browser is set, infer browser_type
+        elif self.browser is not None and self.browser_type is None:
+            if self.browser == "invisible_playwright":
+                self.browser_type = "firefox"
+            elif self.browser == "cloakbrowser":
+                self.browser_type = "chromium"
+        
+        # Validate combinations
+        if self.browser == "invisible_playwright" and self.browser_type != "firefox":
+            raise ValueError("browser 'invisible_playwright' must be used with browser_type 'firefox'")
+        if self.browser == "cloakbrowser" and self.browser_type != "chromium":
+            raise ValueError("browser 'cloakbrowser' must be used with browser_type 'chromium'")
+            
+        return self
 
     # Storage Configuration
     storage_repository: str = "windmill"
