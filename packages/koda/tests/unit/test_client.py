@@ -77,3 +77,38 @@ async def test_kodaclient_with_webhook(mock_scrape, mock_dispatch_webhook):
         assert args[0].url == "http://test-webhook.com/callback"
         assert args[1] == "scrape.completed"
         assert args[2]["data"]["markdown"] == "# Test Content"
+
+@pytest.mark.asyncio
+@patch("koda.client.dispatch_webhook")
+@patch("koda.client.page.scrape")
+async def test_kodaclient_scrape_timeout(mock_scrape, mock_dispatch_webhook):
+    """Test that the client-level timeout correctly aborts a long-running scrape."""
+    
+    async def slow_scrape(*args, **kwargs):
+        await asyncio.sleep(0.5)
+        return ScrapeResponse(url="http://example.com", markdown="Too late")
+        
+    mock_scrape.side_effect = slow_scrape
+    
+    webhook_cfg = WebhookConfig(url="http://test-webhook.com/callback")
+    
+    # Set a very short timeout (100ms)
+    async with KodaClient(timeout=100) as client:
+        request = ScrapeRequest(
+            url="http://example.com",
+            formats=["markdown"],
+            webhook=webhook_cfg
+        )
+        response = await client.scrape(request)
+        
+        # Verify the response contains a timeout error
+        assert response.error is not None
+        assert "timed out after 100ms" in response.error
+        
+        # Verify the failure webhook was dispatched
+        mock_dispatch_webhook.assert_called_once()
+        args = mock_dispatch_webhook.call_args[0]
+        assert args[0].url == "http://test-webhook.com/callback"
+        assert args[1] == "scrape.failed"
+        assert args[2]["success"] is False
+        assert "timed out after 100ms" in args[2]["error"]
