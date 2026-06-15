@@ -13,6 +13,11 @@ class Settings(LoggingSettings, BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    # Client Configuration
+    timeout: int = 30000
+    browser: str = "invisible_playwright"
+    browser_type: str = "firefox"
+
     # Storage Configuration
     storage_repository: str = "windmill"
     
