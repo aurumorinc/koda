@@ -90,12 +90,13 @@ def patch_crawl4ai(api_key: str, host: str) -> None:
             
             page.on("console", lambda msg: print(f"Browser console: {msg.text}"))
             
-            # Setup PostHog transport on context
-            await setup_playwright_transport(context)
-            
-            # Setup network capture and inject monolith on page
-            await setup_network_capture(page, api_key)
-            await inject_posthog_monolith(page, api_key, host)
+            if api_key and host:
+                # Setup PostHog transport on context
+                await setup_playwright_transport(context)
+                
+                # Setup network capture and inject monolith on page
+                await setup_network_capture(page, api_key)
+                await inject_posthog_monolith(page, api_key, host)
             
             return page, context
 
