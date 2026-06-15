@@ -41,7 +41,13 @@ async def handle_playwright_request(url: str, method: str, data: str, content_ty
 async def setup_playwright_transport(context: BrowserContext) -> None:
     """Expose the Python transport function to the browser context."""
     print(f"setup_playwright_transport called, handle_playwright_request is {handle_playwright_request}")
-    await context.expose_function("__playwright_posthog_send", handle_playwright_request)
+    try:
+        await context.expose_function("__playwright_posthog_send", handle_playwright_request)
+    except Exception as e:
+        if "has been already registered" in str(e) or "already registered" in str(e):
+            pass
+        else:
+            logger.debug(f"Error exposing function: {e}")
 
 async def setup_network_capture(page: Page, posthog_api_key: str) -> None:
     """Intercept network requests out-of-band and relay them to posthog-js."""

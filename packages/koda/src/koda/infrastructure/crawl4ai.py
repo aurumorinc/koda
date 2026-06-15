@@ -49,7 +49,10 @@ def patch_crawl4ai(api_key: str, host: str) -> None:
             # Explicitly close the context we created to prevent memory leaks
             if hasattr(self, '_koda_context') and self._koda_context:
                 try:
-                    await self._koda_context.close()
+                    if hasattr(self._koda_context, '_original_close'):
+                        await self._koda_context._original_close()
+                    else:
+                        await self._koda_context.close()
                 except Exception as e:
                     logger.error(f"Failed to close context during patched_close: {e}")
             
@@ -74,6 +77,14 @@ def patch_crawl4ai(api_key: str, host: str) -> None:
             self.config.ignore_https_errors = False
             try:
                 context = await original_create_browser_context(self, crawlerRunConfig)
+                
+                # Prevent crawl4ai from closing the shared context prematurely
+                if not hasattr(context, '_original_close'):
+                    context._original_close = context.close
+                    async def dummy_close(*args, **kwargs):
+                        pass
+                    context.close = dummy_close
+                
                 self._koda_context = context  # Save reference for cleanup
                 return context
             finally:

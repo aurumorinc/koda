@@ -36,7 +36,8 @@ class CrawlJob:
     def _is_valid_link(self, link: str) -> bool:
         """Check if a link should be crawled based on the request configuration."""
         try:
-            parsed_link = urlparse(link)
+            absolute_link = urljoin(self.base_url, link)
+            parsed_link = urlparse(absolute_link)
             parsed_base = urlparse(self.base_url)
         except Exception:
             return False
@@ -141,7 +142,7 @@ class CrawlJob:
 
             # Discover links if within depth
             if current_depth < self.request.maxDiscoveryDepth:
-                all_links = result.links.get("internal", [])
+                all_links = list(result.links.get("internal", []))
                 if self.request.allowExternalLinks:
                     all_links.extend(result.links.get("external", []))
 
