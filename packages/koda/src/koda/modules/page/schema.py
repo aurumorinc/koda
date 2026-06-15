@@ -59,7 +59,7 @@ class ScrapeRequest(BaseModel):
     formats: List[str] = Field(default_factory=lambda: ["markdown", "screenshot"])
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
-    timeout: int = 30000
+    timeout: Optional[int] = None
     s3_config: Optional[S3Config] = None
     webhook: Optional[WebhookConfig] = None
 
