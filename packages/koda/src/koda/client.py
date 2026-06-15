@@ -9,9 +9,11 @@ from pathlib import Path
 
 from koda.exceptions import KodaError
 from koda.modules.page.schema import ScrapeRequest, ScrapeResponse, Action
+from koda.modules.site.schema import CrawlRequest, CrawlResponse
 from koda.modules.webhook.schema import WebhookConfig
 from koda.utils import sanitize_filename
 from koda.modules.page import service as page
+from koda.modules.site import service as site
 from koda.modules.file import service as file
 from koda.modules.webhook.utils import dispatch_webhook
 from koda.config.main import settings
@@ -54,3 +56,22 @@ class KodaClient:
             request.url = url_path.absolute().as_uri()
             
         return await page.scrape(request)
+
+    async def crawl(
+        self,
+        request: CrawlRequest
+    ) -> CrawlResponse:
+        """Crawl a site starting from a URL and extract information.
+        
+        Args:
+            request: Configuration and target for the crawling job.
+            
+        Returns:
+            A CrawlResponse containing the summary of the crawl.
+        """
+        url_str = str(request.url)
+        url_path = Path(url_str)
+        if url_path.exists() and not url_str.startswith("http"):
+            request.url = url_path.absolute().as_uri()
+            
+        return await site.crawl(request)
