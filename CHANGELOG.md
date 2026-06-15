@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.4] - 2026-06-15
+
+### 🚀 Features
+
+- Add development dependencies and configuration
+- Add windmill and python-logging skills
+
+### 🚜 Refactor
+
+- Replace windmill trace ID with settings
+- Simplify sentry trace id tagging
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove lock file
+- Update gitignore file
+- Resolve version merge conflict
+
+### Build
+
+- Update lockfiles and exclude third party
+
+## [26.6.3] - 2026-06-13
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.3
+
 ## [26.6.2] - 2026-06-12
 
 ### ⚙️ Miscellaneous Tasks
