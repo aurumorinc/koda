@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.8] - 2026-06-15
+
+### 🚀 Features
+
+- Add browser configuration validation
+
 ## [26.6.7] - 2026-06-15
 
 ### 🚀 Features
@@ -15,6 +21,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Add orchestration logic and unit tests for scrape
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.7
 
 ## [26.6.6] - 2026-06-15
 
