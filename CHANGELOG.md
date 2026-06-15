@@ -2,11 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.9] - 2026-06-15
+
+### 🚀 Features
+
+- Add crawl method to client
+
+### 🐛 Bug Fixes
+
+- Prevent premature closure of shared browser context
+- Ignore existing playwright function registration
+- Resolve absolute links during validation
+
+### 🧪 Testing
+
+- Add end-to-end tests for scrape and crawl
+- Add integration tests for client crawl and scrape
+
 ## [26.6.8] - 2026-06-15
 
 ### 🚀 Features
 
 - Add browser configuration validation
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.8
 
 ## [26.6.7] - 2026-06-15
 
