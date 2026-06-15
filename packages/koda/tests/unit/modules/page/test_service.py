@@ -1,9 +1,11 @@
 """Tests for page extraction logic."""
 
 import pytest
+import asyncio
 from unittest.mock import patch, AsyncMock, MagicMock
-from koda.modules.page.service import ScrapeJob
+from koda.modules.page.service import ScrapeJob, scrape
 from koda.modules.page.schema import ScrapeRequest, Action
+from koda.modules.webhook.schema import WebhookConfig
 
 @pytest.mark.asyncio
 async def test_execute_actions_hook():
@@ -49,7 +51,7 @@ async def test_execute_actions_hook():
     assert results["scrapes"][0]["html"] == "<html></html>"
 
 @pytest.mark.asyncio
-async def test_scrape_basic():
+async def test_scrape_job_basic():
     request = ScrapeRequest(url="https://example.com", formats=["markdown", "html", "metadata"])
     
     mock_result = MagicMock()
@@ -73,7 +75,7 @@ async def test_scrape_basic():
         assert response.screenshot is None
 
 @pytest.mark.asyncio
-async def test_scrape_with_screenshot():
+async def test_scrape_job_with_screenshot():
     request = ScrapeRequest(url="https://example.com", formats=["screenshot"])
     
     mock_result = MagicMock()
@@ -90,3 +92,102 @@ async def test_scrape_with_screenshot():
         
         assert response.error is None
         assert getattr(response, "_screenshot_bytes") == b"base64"
+
+@pytest.mark.asyncio
+@patch("koda.modules.page.service.file.upload")
+@patch("koda.modules.page.service.file.generate_presigned_url")
+@patch("koda.modules.page.service._execute_scrape_job")
+async def test_scrape_orchestration_local_file(mock_execute, mock_presign, mock_upload):
+    """Test scraping a local HTML file with S3 upload."""
+    mock_presign.return_value = "https://mock-s3-url.com/image.jpg"
+    
+    mock_response = MagicMock()
+    mock_response.url = "file:///tmp/dummy.html"
+    mock_response.markdown = "# Test Content"
+    mock_response.metadata = {"title": "Dummy Page"}
+    mock_response.html = None
+    mock_response.links = None
+    mock_response.images = None
+    mock_response.screenshot = None
+    setattr(mock_response, "_screenshot_bytes", b"fake_bytes")
+    mock_execute.return_value = mock_response
+    
+    request = ScrapeRequest(
+        url="file:///tmp/dummy.html",
+        formats=["markdown", "metadata", "screenshot"],
+        only_main_content=True,
+        s3_config={"bucket": "test"}
+    )
+    response = await scrape(request)
+    
+    assert response.screenshot == "https://mock-s3-url.com/image.jpg"
+    mock_upload.assert_called_once()
+
+@pytest.mark.asyncio
+@patch("koda.modules.page.service.dispatch_webhook")
+@patch("koda.modules.page.service._execute_scrape_job")
+async def test_scrape_orchestration_with_webhook(mock_execute, mock_dispatch_webhook):
+    """Test scraping with a webhook callback."""
+    webhook_cfg = WebhookConfig(
+        url="http://test-webhook.com/callback",
+        metadata={"user_id": 123}
+    )
+    
+    mock_response = MagicMock()
+    mock_response.url = "http://example.com"
+    mock_response.markdown = "# Test Content"
+    mock_response.html = None
+    mock_response.links = None
+    mock_response.images = None
+    mock_response.metadata = None
+    mock_response.screenshot = None
+    mock_execute.return_value = mock_response
+    
+    request = ScrapeRequest(
+        url="http://example.com",
+        formats=["markdown"],
+        webhook=webhook_cfg
+    )
+    response = await scrape(request)
+    
+    mock_dispatch_webhook.assert_called_once()
+    
+    # Verify the webhook handle call
+    args = mock_dispatch_webhook.call_args[0]
+    assert args[0].url == "http://test-webhook.com/callback"
+    assert args[1] == "scrape.completed"
+    assert args[2]["data"]["markdown"] == "# Test Content"
+
+@pytest.mark.asyncio
+@patch("koda.modules.page.service.dispatch_webhook")
+@patch("koda.modules.page.service._execute_scrape_job")
+async def test_scrape_orchestration_timeout(mock_execute, mock_dispatch_webhook):
+    """Test that the timeout correctly aborts a long-running scrape."""
+    
+    async def slow_scrape(*args, **kwargs):
+        await asyncio.sleep(0.5)
+        return MagicMock()
+        
+    mock_execute.side_effect = slow_scrape
+    
+    webhook_cfg = WebhookConfig(url="http://test-webhook.com/callback")
+    
+    request = ScrapeRequest(
+        url="http://example.com",
+        formats=["markdown"],
+        webhook=webhook_cfg,
+        timeout=100 # Set a very short timeout (100ms)
+    )
+    response = await scrape(request)
+    
+    # Verify the response contains a timeout error
+    assert response.error is not None
+    assert "timed out after 100ms" in response.error
+    
+    # Verify the failure webhook was dispatched
+    mock_dispatch_webhook.assert_called_once()
+    args = mock_dispatch_webhook.call_args[0]
+    assert args[0].url == "http://test-webhook.com/callback"
+    assert args[1] == "scrape.failed"
+    assert args[2]["success"] is False
+    assert "timed out after 100ms" in args[2]["error"]

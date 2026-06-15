@@ -5,12 +5,17 @@ from __future__ import annotations
 import json
 import asyncio
 import base64
+import uuid
 from typing import Dict, Any, Optional
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from crawl4ai.content_filter_strategy import PruningContentFilter
 
 from koda.modules.page.schema import ScrapeRequest, ScrapeResponse
+from koda.modules.file import service as file
+from koda.modules.webhook.utils import dispatch_webhook
+from koda.config.main import settings
+from koda.utils import sanitize_filename
 
 __all__ = ["scrape"]
 
@@ -167,7 +172,7 @@ class ScrapeJob:
         return response
 
 
-async def scrape(request: ScrapeRequest) -> ScrapeResponse:
+async def _execute_scrape_job(request: ScrapeRequest) -> ScrapeResponse:
     """Extract data from a URL based on requested options using crawl4ai.
     
     This function orchestrates the extraction of markdown, metadata, and screenshots.
@@ -175,3 +180,64 @@ async def scrape(request: ScrapeRequest) -> ScrapeResponse:
     """
     job = ScrapeJob(request)
     return await job.run()
+
+async def scrape(request: ScrapeRequest) -> ScrapeResponse:
+    """Scrape a URL or local file and extract the requested domains.
+    
+    Args:
+        request: Configuration and target for the scraping job.
+        
+    Returns:
+        A ScrapeResponse containing the requested data.
+    """
+    effective_timeout = request.timeout or settings.timeout
+    request.timeout = effective_timeout
+    
+    try:
+        response = await asyncio.wait_for(
+            _execute_scrape_job(request),
+            timeout=effective_timeout / 1000.0
+        )
+        
+        # File Domain handles persistence side-effects
+        if hasattr(response, "_screenshot_bytes") and request.s3_config:
+            screenshot_bytes = getattr(response, "_screenshot_bytes")
+            object_name = f"{sanitize_filename(request.url)}_{uuid.uuid4().hex[:8]}.jpg"
+            
+            await asyncio.to_thread(
+                file.upload,
+                data=screenshot_bytes,
+                object_name=object_name,
+                mimetype="image/jpeg",
+                s3_config=request.s3_config
+            )
+            
+            response.screenshot = file.generate_presigned_url(
+                object_name=object_name,
+                s3_config=request.s3_config
+            )
+        
+        # Webhook Domain handles outbound notifications
+        if request.webhook:
+            payload = {"success": True, "data": {}}
+            if response.markdown: payload["data"]["markdown"] = response.markdown
+            if response.html: payload["data"]["html"] = response.html
+            if response.links: payload["data"]["links"] = response.links
+            if response.images: payload["data"]["images"] = response.images
+            if response.metadata: payload["data"]["metadata"] = response.metadata
+            if response.screenshot: payload["data"]["screenshot"] = response.screenshot
+            await dispatch_webhook(request.webhook, "scrape.completed", payload)
+            
+        return response
+        
+    except asyncio.TimeoutError:
+        error_msg = f"Scrape operation timed out after {effective_timeout}ms"
+        error_response = ScrapeResponse(url=request.url, error=error_msg)
+        if request.webhook:
+            await dispatch_webhook(request.webhook, "scrape.failed", {"success": False, "error": error_msg})
+        return error_response
+    except Exception as e:
+        error_response = ScrapeResponse(url=request.url, error=str(e))
+        if request.webhook:
+            await dispatch_webhook(request.webhook, "scrape.failed", {"success": False, "error": str(e)})
+        return error_response
