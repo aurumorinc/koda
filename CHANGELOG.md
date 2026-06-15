@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.5] - 2026-06-15
+
+### 🐛 Bug Fixes
+
+- Make posthog injection conditional
+
 ## [26.6.4] - 2026-06-15
 
 ### 🚀 Features
@@ -19,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Remove lock file
 - Update gitignore file
 - Resolve version merge conflict
+- Release 26.6.4
 
 ### Build
 
