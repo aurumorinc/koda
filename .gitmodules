@@ -1,3 +1,6 @@
-[submodule "third_party/windmill"]
-	path = third_party/windmill
+[submodule ".agents/skills/windmill/modules/windmill"]
+	path = .agents/skills/windmill/modules/windmill
 	url = https://github.com/windmill-labs/windmill
+[submodule ".agents/skills/python-logging/modules/python-logging"]
+	path = .agents/skills/python-logging/modules/python-logging
+	url = https://github.com/aurumorinc/python-logging
