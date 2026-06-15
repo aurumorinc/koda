@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock, ANY, mock_open
+from unittest.mock import MagicMock, patch, AsyncMock, ANY, mock_open, PropertyMock
 from playwright.async_api import Request, Response
 
 from koda.infrastructure.posthog import (
@@ -14,11 +14,9 @@ def test_get_otel_trace_id_fallback():
     mock_span = MagicMock()
     mock_span.get_span_context().is_valid = False
 
-    with patch("opentelemetry.trace.get_current_span", return_value=mock_span), patch("python_logging.integrations.windmill.get_windmill_context", return_value={"trace_id": "test_trace_123"}):
-        from koda.config.main import settings
-        # settings.trace_id = "test_trace_123"
+    with patch("opentelemetry.trace.get_current_span", return_value=mock_span), \
+         patch("koda.config.main.Settings.trace_id", new_callable=PropertyMock, return_value="test_trace_123"):
         assert _get_otel_trace_id() == "test_trace_123"
-        # settings.trace_id = None
 
 @pytest.mark.asyncio
 async def test_inject_posthog_monolith():
@@ -27,7 +25,7 @@ async def test_inject_posthog_monolith():
     
     with patch("os.path.exists", return_value=True), \
          patch("builtins.open", mock_open(read_data="console.log('monolith');")), \
-         patch("koda.infrastructure.posthog._get_otel_trace_id", return_value="test_trace_123"), patch("python_logging.integrations.windmill.get_windmill_context", return_value={"trace_id": "test_trace_123"}):
+         patch("koda.infrastructure.posthog._get_otel_trace_id", return_value="test_trace_123"):
         
         await inject_posthog_monolith(mock_page, "phc_test", "https://test.com")
         
