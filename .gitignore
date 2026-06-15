@@ -363,11 +363,9 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Rune
-.rune/
+# Mutagen
+mutagen.yml
+mutagen.yml.lock
 
-# Posthog
-third_party/posthog-js
-
-# Third Pary
-third_party/
+# Architect
+plans/
