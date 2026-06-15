@@ -18,7 +18,13 @@ members = [
 ]
 
 [tool.bumpver]
+<<<<<<< ours
+current_version = "26.06.0"
+||||||| ancestor
+current_version = "26.6.2"
+=======
 current_version = "26.6.3"
+>>>>>>> theirs
 version_pattern = "YY.MM.INC0"
 commit = false
 tag = false
@@ -34,4 +40,23 @@ push = false
 ]
 "packages/koda/src/koda/__init__.py" = [
     '__version__ = "{version}"',
+]
+
+[tool.pdm.build]
+excludes = ["third_party/**"]
+
+[tool.ruff]
+exclude = ["third_party"]
+
+[tool.mypy]
+exclude = ["^third_party/"]
+
+[tool.pytest.ini_options]
+norecursedirs = ["third_party"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.17",
+    "mypy",
+    "mkinit>=1.2.0",
 ]

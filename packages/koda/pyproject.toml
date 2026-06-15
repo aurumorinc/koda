@@ -42,3 +42,6 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_default_test_loop_scope = "function"
 
+[tool.pdm.build]
+excludes = ["third_party/**"]
+
