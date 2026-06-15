@@ -1286,7 +1286,7 @@ files = [
 name = "invisible-playwright"
 version = "0.2.0"
 git = "https://github.com/feder-cr/invisible_playwright.git"
-revision = "e52469508881d6fd436a12bbcc55ab8cd6221591"
+revision = "29262a644eae368f544b005782ce7c54701796c2"
 summary = ""
 dependencies = [
     "maxminddb",
@@ -2716,9 +2716,9 @@ files = [
 
 [[package]]
 name = "python-logging"
-version = "2026.1.2"
+version = "26.6.1"
 git = "https://github.com/aurumorinc/python-logging.git"
-revision = "c3203b80df0a2ebc69dc07d0482b009f561eddd2"
+revision = "9539b9fe23a9c131dd735f18846ab088ec8c402f"
 summary = ""
 dependencies = [
     "opentelemetry-api",
