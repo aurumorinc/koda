@@ -2,11 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.6] - 2026-06-15
+
+### 🚀 Features
+
+- [**breaking**] Add timeout logic and refactor scrape execution
+
+### 🐛 Bug Fixes
+
+- Make timeout optional in page schema
+
 ## [26.6.5] - 2026-06-15
 
 ### 🐛 Bug Fixes
 
 - Make posthog injection conditional
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.5
 
 ## [26.6.4] - 2026-06-15
 
