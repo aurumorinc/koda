@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.12] - 2026-06-17
+
+### 🐛 Bug Fixes
+
+- Set default values for browser settings
+
 ## [26.6.11] - 2026-06-17
 
 ### 🚀 Features
@@ -36,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - Remove crawl4ai monkey patching
 - Update project metadata and cleanup config
 - Remove third_party directory configuration
+- Release 26.6.11
 
 ## [26.6.10] - 2026-06-17
 
