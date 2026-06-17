@@ -2,7 +2,7 @@
 name = "koda"
 version = "26.6.10"
 description = "Koda - The Firecrawl Alternative"
-authors = [{name = "Aurumor", email = "koda@example.com"}]
+authors = [{name = "Aryan Singh", email = "aryan.singh@aurumor.com"}]
 requires-python = ">=3.11"
 dependencies = [
     "playwright>=1.42.0",
@@ -41,7 +41,3 @@ dev = [
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_default_test_loop_scope = "function"
-
-[tool.pdm.build]
-excludes = ["third_party/**"]
-
