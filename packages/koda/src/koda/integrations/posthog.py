@@ -20,9 +20,17 @@ def _get_otel_trace_id() -> str:
     # 2. Fallback to settings
     return settings.trace_id
 
-async def handle_playwright_request(url: str, method: str, data: str, content_type: Optional[str] = None) -> dict:
-    """Proxy transport for posthog-js running in the browser."""
-    print(f"handle_playwright_request called with url={url}")
+import asyncio
+
+_pending_telemetry_tasks = set()
+
+async def flush_telemetry() -> None:
+    """Wait for all pending PostHog telemetry requests to complete."""
+    if _pending_telemetry_tasks:
+        await asyncio.gather(*_pending_telemetry_tasks, return_exceptions=True)
+
+async def _send_posthog_request(url: str, method: str, data: str, content_type: Optional[str] = None) -> dict:
+    """Send the actual request to PostHog."""
     async with httpx.AsyncClient() as client:
         try:
             headers = {}
@@ -38,9 +46,15 @@ async def handle_playwright_request(url: str, method: str, data: str, content_ty
             logger.error(f"PostHog proxy transport error: {e}")
             return {"status": 500, "body": str(e)}
 
+async def handle_playwright_request(url: str, method: str, data: str, content_type: Optional[str] = None) -> dict:
+    """Proxy transport for posthog-js running in the browser."""
+    task = asyncio.create_task(_send_posthog_request(url, method, data, content_type))
+    _pending_telemetry_tasks.add(task)
+    task.add_done_callback(_pending_telemetry_tasks.discard)
+    return await task
+
 async def setup_playwright_transport(context: BrowserContext) -> None:
     """Expose the Python transport function to the browser context."""
-    print(f"setup_playwright_transport called, handle_playwright_request is {handle_playwright_request}")
     try:
         await context.expose_function("__playwright_posthog_send", handle_playwright_request)
     except Exception as e:
@@ -230,12 +244,11 @@ async def inject_posthog_monolith(page: Page, api_key: str, host: str) -> None:
                 disable_session_recording: false,
                 disable_compression: true,
                 api_transport: function(options) {{
-                    console.log("PostHog transport called with url: " + options.url);
                     if (window.__playwright_posthog_send) {{
                         window.__playwright_posthog_send(
-                            options.url, 
-                            options.method || 'POST', 
-                            typeof options.data === 'string' ? options.data : JSON.stringify(options.data), 
+                            options.url,
+                            options.method || 'POST',
+                            typeof options.data === 'string' ? options.data : JSON.stringify(options.data),
                             options.headers ? options.headers['Content-Type'] : null
                         );
                     }}
