@@ -8,15 +8,15 @@ from koda.modules.file.schema import S3Config
 from koda.modules.webhook.schema import WebhookConfig
 
 @pytest.mark.asyncio
-@patch("koda.modules.page.service.AsyncWebCrawler")
-async def test_scrape_success_with_markdown(mock_crawler_class):
+@patch("koda.modules.page.service.Crawl4AiTool")
+async def test_scrape_success_with_markdown(mock_tool_class):
     """Test successful scrape returning markdown."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     mock_result = MagicMock()
     mock_result.success = True
     mock_result.markdown = "# Test Markdown"
-    mock_crawler.arun.return_value = mock_result
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_tool.execute.return_value = mock_result
+    mock_tool_class.return_value = mock_tool
 
     async with KodaClient() as client:
         request = ScrapeRequest(url="http://example.com", formats=["markdown"])
@@ -24,20 +24,20 @@ async def test_scrape_success_with_markdown(mock_crawler_class):
 
         assert response.error is None
         assert response.markdown == "# Test Markdown"
-        mock_crawler.arun.assert_called_once()
+        mock_tool.execute.assert_called_once()
 
 @pytest.mark.asyncio
-@patch("koda.modules.page.service.AsyncWebCrawler")
-async def test_scrape_timeout_handling(mock_crawler_class):
+@patch("koda.modules.page.service.Crawl4AiTool")
+async def test_scrape_timeout_handling(mock_tool_class):
     """Test scrape timeout handling."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     
-    async def slow_arun(*args, **kwargs):
+    async def slow_execute(*args, **kwargs):
         await asyncio.sleep(0.2)
         return MagicMock(success=True)
         
-    mock_crawler.arun.side_effect = slow_arun
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_tool.execute.side_effect = slow_execute
+    mock_tool_class.return_value = mock_tool
 
     async with KodaClient() as client:
         # Set a very short timeout
@@ -48,18 +48,18 @@ async def test_scrape_timeout_handling(mock_crawler_class):
         assert "timed out" in response.error
 
 @pytest.mark.asyncio
-@patch("koda.modules.page.service.AsyncWebCrawler")
+@patch("koda.modules.page.service.Crawl4AiTool")
 @patch("koda.modules.page.service.file.upload")
 @patch("koda.modules.page.service.file.generate_presigned_url")
-async def test_scrape_with_s3_upload(mock_generate_url, mock_upload, mock_crawler_class):
+async def test_scrape_with_s3_upload(mock_generate_url, mock_upload, mock_tool_class):
     """Test scrape with S3 upload for screenshot."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     mock_result = MagicMock()
     mock_result.success = True
     # Base64 encoded "test"
-    mock_result.screenshot = "dGVzdA==" 
-    mock_crawler.arun.return_value = mock_result
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_result.screenshot = "dGVzdA=="
+    mock_tool.execute.return_value = mock_result
+    mock_tool_class.return_value = mock_tool
     
     mock_generate_url.return_value = "https://s3.example.com/screenshot.jpg"
 
@@ -83,16 +83,16 @@ async def test_scrape_with_s3_upload(mock_generate_url, mock_upload, mock_crawle
         mock_generate_url.assert_called_once()
 
 @pytest.mark.asyncio
-@patch("koda.modules.page.service.AsyncWebCrawler")
+@patch("koda.modules.page.service.Crawl4AiTool")
 @patch("koda.modules.page.service.dispatch_webhook")
-async def test_scrape_webhook_dispatch(mock_dispatch, mock_crawler_class):
+async def test_scrape_webhook_dispatch(mock_dispatch, mock_tool_class):
     """Test scrape webhook dispatch."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     mock_result = MagicMock()
     mock_result.success = True
     mock_result.markdown = "# Test"
-    mock_crawler.arun.return_value = mock_result
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_tool.execute.return_value = mock_result
+    mock_tool_class.return_value = mock_tool
 
     async with KodaClient() as client:
         webhook_config = WebhookConfig(url="http://webhook.example.com")

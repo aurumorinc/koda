@@ -7,10 +7,10 @@ from koda.modules.site.schema import CrawlRequest
 from koda.modules.webhook.schema import WebhookConfig
 
 @pytest.mark.asyncio
-@patch("koda.modules.site.service.AsyncWebCrawler")
-async def test_crawl_success_basic(mock_crawler_class):
+@patch("koda.modules.site.service.Crawl4AiTool")
+async def test_crawl_success_basic(mock_tool_class):
     """Test basic successful crawl."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     
     # Mock results for two pages
     mock_result_1 = MagicMock()
@@ -23,13 +23,13 @@ async def test_crawl_success_basic(mock_crawler_class):
     mock_result_2.url = "http://example.com/page1"
     mock_result_2.links = {"internal": []}
     
-    # arun_many returns a list of results for the batch
-    mock_crawler.arun_many.side_effect = [
+    # execute returns a list of results for the batch
+    mock_tool.execute.side_effect = [
         [mock_result_1],
         [mock_result_2]
     ]
     
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_tool_class.return_value = mock_tool
 
     async with KodaClient() as client:
         request = CrawlRequest(url="http://example.com", limit=2, maxDiscoveryDepth=1)
@@ -37,13 +37,13 @@ async def test_crawl_success_basic(mock_crawler_class):
 
         assert response.success is True
         assert response.total_pages_crawled == 2
-        assert mock_crawler.arun_many.call_count == 2
+        assert mock_tool.execute.call_count == 2
 
 @pytest.mark.asyncio
-@patch("koda.modules.site.service.AsyncWebCrawler")
-async def test_crawl_respects_depth_limit(mock_crawler_class):
+@patch("koda.modules.site.service.Crawl4AiTool")
+async def test_crawl_respects_depth_limit(mock_tool_class):
     """Test crawl respects maxDiscoveryDepth."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     
     # Depth 0
     mock_result_0 = MagicMock()
@@ -63,17 +63,17 @@ async def test_crawl_respects_depth_limit(mock_crawler_class):
     mock_result_2.url = "http://example.com/depth2"
     mock_result_2.links = {"internal": []}
     
-    mock_crawler.arun_many.side_effect = [
+    mock_tool.execute.side_effect = [
         [mock_result_0],
         [mock_result_1],
         [mock_result_2] # This shouldn't be reached
     ]
     
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_tool_class.return_value = mock_tool
 
     async with KodaClient() as client:
         request = CrawlRequest(
-            url="http://example.com", 
+            url="http://example.com",
             limit=10,
             maxDiscoveryDepth=1
         )
@@ -81,14 +81,14 @@ async def test_crawl_respects_depth_limit(mock_crawler_class):
 
         assert response.success is True
         assert response.total_pages_crawled == 2
-        assert mock_crawler.arun_many.call_count == 2
+        assert mock_tool.execute.call_count == 2
 
 @pytest.mark.asyncio
-@patch("koda.modules.site.service.AsyncWebCrawler")
+@patch("koda.modules.site.service.Crawl4AiTool")
 @patch("koda.modules.site.service.dispatch_webhook")
-async def test_crawl_webhook_dispatch(mock_dispatch, mock_crawler_class):
+async def test_crawl_webhook_dispatch(mock_dispatch, mock_tool_class):
     """Test crawl webhook dispatching."""
-    mock_crawler = AsyncMock()
+    mock_tool = AsyncMock()
     
     mock_result = MagicMock()
     mock_result.success = True
@@ -97,13 +97,13 @@ async def test_crawl_webhook_dispatch(mock_dispatch, mock_crawler_class):
     mock_result.markdown = "# Test"
     mock_result.metadata = {"title": "Test"}
     
-    mock_crawler.arun_many.return_value = [mock_result]
-    mock_crawler_class.return_value.__aenter__.return_value = mock_crawler
+    mock_tool.execute.return_value = [mock_result]
+    mock_tool_class.return_value = mock_tool
 
     async with KodaClient() as client:
         webhook_config = WebhookConfig(url="http://webhook.example.com")
         request = CrawlRequest(
-            url="http://example.com", 
+            url="http://example.com",
             limit=1,
             webhook=webhook_config
         )
