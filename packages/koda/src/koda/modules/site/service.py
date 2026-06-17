@@ -178,7 +178,8 @@ class CrawlJob:
             cache_mode=CacheMode.ENABLED if self.request.scrapeOptions.storeInCache else CacheMode.BYPASS,
             wait_for=f"delay:{self.request.scrapeOptions.waitFor}" if self.request.scrapeOptions.waitFor > 0 else None,
             exclude_external_links=not self.request.allowExternalLinks,
-            screenshot="screenshot" in self.request.scrapeOptions.formats
+            screenshot="screenshot" in self.request.scrapeOptions.formats,
+            wait_until=getattr(self.request.scrapeOptions, "wait_until", "domcontentloaded")
         )
 
         if self.request.scrapeOptions.onlyMainContent:
