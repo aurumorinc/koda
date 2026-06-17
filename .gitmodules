@@ -4,3 +4,15 @@
 [submodule ".agents/skills/python-logging/modules/python-logging"]
 	path = .agents/skills/python-logging/modules/python-logging
 	url = https://github.com/aurumorinc/python-logging
+[submodule ".agents/skills/crawl4ai/modules/crawl4ai"]
+	path = .agents/skills/crawl4ai/modules/crawl4ai
+	url = https://github.com/unclecode/crawl4ai
+[submodule ".agents/skills/invisible-playwright/modules/invisible_playwright"]
+	path = .agents/skills/invisible-playwright/modules/invisible_playwright
+	url = https://github.com/feder-cr/invisible_playwright
+[submodule ".agents/skills/stagehand/modules/stagehand"]
+	path = .agents/skills/stagehand/modules/stagehand
+	url = https://github.com/browserbase/stagehand
+[submodule ".agents/skills/posthog-js/modules/posthog-js"]
+	path = .agents/skills/posthog-js/modules/posthog-js
+	url = https://github.com/aurumorinc/posthog-js
