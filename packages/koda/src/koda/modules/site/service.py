@@ -7,11 +7,13 @@ import asyncio
 from typing import List, Set, Tuple
 from urllib.parse import urljoin, urlparse, urldefrag
 
-from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
+from crawl4ai import BrowserConfig, CrawlerRunConfig, CacheMode
 from crawl4ai.content_filter_strategy import PruningContentFilter
 
 from koda.modules.site.schema import CrawlRequest, CrawlResponse
 from koda.modules.webhook.utils import dispatch_webhook
+from koda.modules.browser.service import BrowserSession
+from koda.integrations.crawl4ai import Crawl4AiTool
 
 __all__ = ["crawl"]
 
@@ -101,7 +103,7 @@ class CrawlJob:
 
         await dispatch_webhook(self.request.webhook, "crawl.page", page_data)
 
-    async def _process_batch(self, crawler: AsyncWebCrawler, run_config: CrawlerRunConfig):
+    async def _process_batch(self, tool: Crawl4AiTool, context: Any, run_config: CrawlerRunConfig):
         """Process a batch of URLs from the queue."""
         batch_size = min(self.request.maxConcurrency, self.request.limit - len(self.visited), len(self.queue))
         current_batch = self.queue[:batch_size]
@@ -124,7 +126,10 @@ class CrawlJob:
             await asyncio.sleep(self.request.delay)
 
         # Execute batch
-        results = await crawler.arun_many(urls=urls_to_crawl, config=run_config)
+        results = await tool.execute(context, {
+            "urls": urls_to_crawl,
+            "run_config": run_config
+        })
 
         for result in results:
             if not result.success:
@@ -179,9 +184,10 @@ class CrawlJob:
         if self.request.scrapeOptions.onlyMainContent:
             run_config.content_filter = PruningContentFilter()
 
-        async with AsyncWebCrawler(config=browser_config) as crawler:
+        async with BrowserSession() as context:
+            tool = Crawl4AiTool(browser_config=browser_config)
             while self.queue and len(self.visited) < self.request.limit:
-                await self._process_batch(crawler, run_config)
+                await self._process_batch(tool, context, run_config)
 
         if self.request.webhook:
             await dispatch_webhook(self.request.webhook, "crawl.completed", {

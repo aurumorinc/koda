@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch, AsyncMock, ANY, mock_open, PropertyMock
 from playwright.async_api import Request, Response
 
-from koda.infrastructure.posthog import (
+from koda.integrations.posthog import (
     _get_otel_trace_id,
     setup_playwright_transport,
     setup_network_capture,
@@ -25,7 +25,7 @@ async def test_inject_posthog_monolith():
     
     with patch("os.path.exists", return_value=True), \
          patch("builtins.open", mock_open(read_data="console.log('monolith');")), \
-         patch("koda.infrastructure.posthog._get_otel_trace_id", return_value="test_trace_123"):
+         patch("koda.integrations.posthog._get_otel_trace_id", return_value="test_trace_123"):
         
         await inject_posthog_monolith(mock_page, "phc_test", "https://test.com")
         

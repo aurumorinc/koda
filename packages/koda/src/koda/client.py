@@ -17,7 +17,6 @@ from koda.modules.site import service as site
 from koda.modules.file import service as file
 from koda.modules.webhook.utils import dispatch_webhook
 from koda.config.main import settings
-from koda.infrastructure.crawl4ai import patch_crawl4ai
 from koda.modules.cache import service as cache
 
 __all__ = ["KodaClient"]
@@ -29,9 +28,6 @@ class KodaClient:
         """Initialize the KodaClient."""
         # Expose the unified cache adapter
         self.cache = cache
-        
-        # Apply monkey patches to third-party crawlers
-        patch_crawl4ai(settings.posthog_api_key, settings.posthog_host)
         
     async def __aenter__(self) -> KodaClient:
         return self

@@ -36,18 +36,6 @@ push = false
     '__version__ = "{version}"',
 ]
 
-[tool.pdm.build]
-excludes = ["third_party/**"]
-
-[tool.ruff]
-exclude = ["third_party"]
-
-[tool.mypy]
-exclude = ["^third_party/"]
-
-[tool.pytest.ini_options]
-norecursedirs = ["third_party"]
-
 [dependency-groups]
 dev = [
     "ruff>=0.15.17",

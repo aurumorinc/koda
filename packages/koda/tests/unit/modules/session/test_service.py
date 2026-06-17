@@ -115,7 +115,7 @@ async def test_release_session(session_service, mock_repos):
 @patch("koda.modules.session.service.shutil.rmtree")
 @patch("koda.modules.session.service.os.path.exists", return_value=True)
 @patch("koda.modules.session.service.os.makedirs")
-@patch("koda.modules.session.service.launch_browser")
+@patch("koda.modules.session.service.BrowserSession")
 async def test_browser_session_scope_success(
     mock_launch_browser, mock_makedirs, mock_exists, mock_rmtree, session_service, mock_repos
 ):
@@ -142,7 +142,7 @@ async def test_browser_session_scope_success(
     assert session.model.browser.user_data_dir == "new_s3_key_123"
     
     mock_repos["s3_repo"].download_profile.assert_called_once_with("s3_key_123", "/tmp/koda_profiles/1")
-    mock_launch_browser.assert_called_once_with("invisible_playwright", "/tmp/koda_profiles/1", {})
+    mock_launch_browser.assert_called_once_with(config={}, user_data_dir="/tmp/koda_profiles/1")
     mock_repos["s3_repo"].upload_profile.assert_called_once_with("/tmp/koda_profiles/1", "1")
     mock_rmtree.assert_called_once_with("/tmp/koda_profiles/1", ignore_errors=True)
     session_service.release_session.assert_called_once_with(session, "token-123")
@@ -152,7 +152,7 @@ async def test_browser_session_scope_success(
 @patch("koda.modules.session.service.shutil.rmtree")
 @patch("koda.modules.session.service.os.path.exists", return_value=True)
 @patch("koda.modules.session.service.os.makedirs")
-@patch("koda.modules.session.service.launch_browser")
+@patch("koda.modules.session.service.BrowserSession")
 async def test_browser_session_scope_exception(
     mock_launch_browser, mock_makedirs, mock_exists, mock_rmtree, session_service, mock_repos
 ):
@@ -179,7 +179,7 @@ async def test_browser_session_scope_exception(
     assert session.model.browser.user_data_dir == "new_s3_key_123"
     
     mock_makedirs.assert_called_once_with("/tmp/koda_profiles/1", exist_ok=True)
-    mock_launch_browser.assert_called_once_with("invisible_playwright", "/tmp/koda_profiles/1", {})
+    mock_launch_browser.assert_called_once_with(config={}, user_data_dir="/tmp/koda_profiles/1")
     mock_repos["s3_repo"].upload_profile.assert_called_once_with("/tmp/koda_profiles/1", "1")
     mock_rmtree.assert_called_once_with("/tmp/koda_profiles/1", ignore_errors=True)
     session_service.release_session.assert_called_once_with(session, "token-123")

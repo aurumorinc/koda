@@ -8,7 +8,7 @@ import base64
 import uuid
 from typing import Dict, Any, Optional
 
-from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
+from crawl4ai import BrowserConfig, CrawlerRunConfig
 from crawl4ai.content_filter_strategy import PruningContentFilter
 
 from koda.modules.page.schema import ScrapeRequest, ScrapeResponse
@@ -16,6 +16,8 @@ from koda.modules.file import service as file
 from koda.modules.webhook.utils import dispatch_webhook
 from koda.config.main import settings
 from koda.utils import sanitize_filename
+from koda.modules.browser.service import BrowserSession
+from koda.integrations.crawl4ai import Crawl4AiTool
 
 __all__ = ["scrape"]
 
@@ -135,13 +137,14 @@ class ScrapeJob:
         if self.request.only_main_content:
             run_config.content_filter = PruningContentFilter()
             
-        async with AsyncWebCrawler(config=browser_config) as crawler:
-            crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)
+        async with BrowserSession() as context:
+            tool = Crawl4AiTool(browser_config=browser_config)
             
-            result = await crawler.arun(
-                url=self.request.url,
-                config=run_config
-            )
+            result = await tool.execute(context, {
+                "url": self.request.url,
+                "run_config": run_config,
+                "hook": self.execute_actions_hook
+            })
             
             if not result.success:
                 response.error = result.error_message
