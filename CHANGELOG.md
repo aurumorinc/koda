@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.10] - 2026-06-17
+
+### 🚀 Features
+
+- Add new agent skills to project
+
 ## [26.6.9] - 2026-06-15
 
 ### 🚀 Features
@@ -18,6 +24,10 @@ All notable changes to this project will be documented in this file.
 
 - Add end-to-end tests for scrape and crawl
 - Add integration tests for client crawl and scrape
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.9
 
 ## [26.6.8] - 2026-06-15
 
