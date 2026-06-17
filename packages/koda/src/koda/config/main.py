@@ -15,8 +15,8 @@ class Settings(LoggingSettings, BaseSettings):
 
     # Client Configuration
     timeout: int = 30000
-    browser: Optional[Literal["invisible_playwright", "cloakbrowser"]] = None
-    browser_type: Optional[Literal["firefox", "chromium"]] = None
+    browser: Optional[Literal["invisible_playwright", "cloakbrowser"]] = "invisible_playwright"
+    browser_type: Optional[Literal["firefox", "chromium"]] = "firefox"
 
     @model_validator(mode="after")
     def validate_browser(self) -> "Settings":
