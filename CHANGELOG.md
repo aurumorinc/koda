@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.13] - 2026-06-17
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove agent and roo configuration rules
+
 ## [26.6.12] - 2026-06-17
 
 ### 🐛 Bug Fixes
 
 - Set default values for browser settings
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.12
 
 ## [26.6.11] - 2026-06-17
 
