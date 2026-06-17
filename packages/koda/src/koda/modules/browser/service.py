@@ -36,22 +36,25 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
         
     # Suppress Playwright's internal TargetClosedError unretrieved futures
     loop = asyncio.get_running_loop()
-    original_handler = loop.get_exception_handler()
     
-    def custom_exception_handler(loop, context_dict):
-        exc = context_dict.get("exception")
-        if exc and "TargetClosedError" in str(type(exc).__name__):
-            # Ignore TargetClosedError from Playwright's internal tasks (like expose_function)
-            return
-        if original_handler:
-            original_handler(loop, context_dict)
-        else:
-            loop.default_exception_handler(context_dict)
-            
-    loop.set_exception_handler(custom_exception_handler)
+    # Only set it if we haven't already (in case of multiple sessions in same loop)
+    if not hasattr(loop, "_koda_exception_handler_set"):
+        original_handler = loop.get_exception_handler()
+        
+        def custom_exception_handler(loop, context_dict):
+            exc = context_dict.get("exception")
+            if exc and "TargetClosedError" in str(type(exc).__name__):
+                # Ignore TargetClosedError from Playwright's internal tasks
+                return
+            if original_handler:
+                original_handler(loop, context_dict)
+            else:
+                loop.default_exception_handler(context_dict)
+                
+        loop.set_exception_handler(custom_exception_handler)
+        loop._koda_exception_handler_set = True
     
-    try:
-        async with launcher(user_data_dir, config) as browser:
+    async with launcher(user_data_dir, config) as browser:
             # Create a new context from the browser
             context = await browser.new_context()
             
@@ -74,6 +77,3 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
                 # Ensure all telemetry is flushed before closing the context
                 await flush_telemetry()
                 await context.close()
-    finally:
-        # Restore the original exception handler
-        loop.set_exception_handler(original_handler)
