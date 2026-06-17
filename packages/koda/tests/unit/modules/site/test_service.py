@@ -50,19 +50,19 @@ async def test_crawl_basic():
     mock_result_2.url = "https://example.com/page1"
     mock_result_2.links = {"internal": []}
     
-    with patch("koda.modules.site.service.AsyncWebCrawler") as mock_crawler_cls:
-        mock_crawler = AsyncMock()
-        mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
+    with patch("koda.modules.site.service.Crawl4AiTool") as mock_tool_cls:
+        mock_tool = AsyncMock()
+        mock_tool_cls.return_value = mock_tool
         
         # First batch returns root, second batch returns page1
-        mock_crawler.arun_many.side_effect = [[mock_result_1], [mock_result_2]]
+        mock_tool.execute.side_effect = [[mock_result_1], [mock_result_2]]
         
         job = CrawlJob(request)
         response = await job.run()
         
         assert response.success is True
         assert response.total_pages_crawled == 2
-        assert mock_crawler.arun_many.call_count == 2
+        assert mock_tool.execute.call_count == 2
 
 @pytest.mark.asyncio
 async def test_crawl_with_webhook():
@@ -80,12 +80,12 @@ async def test_crawl_with_webhook():
     mock_result.html = "<h1>Hello</h1>"
     mock_result.metadata = {"title": "Test"}
     
-    with patch("koda.modules.site.service.AsyncWebCrawler") as mock_crawler_cls, \
+    with patch("koda.modules.site.service.Crawl4AiTool") as mock_tool_cls, \
          patch("koda.modules.site.service.dispatch_webhook") as mock_dispatch:
         
-        mock_crawler = AsyncMock()
-        mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
-        mock_crawler.arun_many.return_value = [mock_result]
+        mock_tool = AsyncMock()
+        mock_tool_cls.return_value = mock_tool
+        mock_tool.execute.return_value = [mock_result]
         
         job = CrawlJob(request)
         await job.run()

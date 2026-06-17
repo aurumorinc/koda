@@ -60,10 +60,10 @@ async def test_scrape_job_basic():
     mock_result.html = "<h1>Hello</h1>"
     mock_result.metadata = {"title": "Test"}
     
-    with patch("koda.modules.page.service.AsyncWebCrawler") as mock_crawler_cls:
-        mock_crawler = MagicMock()
-        mock_crawler.arun = AsyncMock(return_value=mock_result)
-        mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
+    with patch("koda.modules.page.service.Crawl4AiTool") as mock_tool_cls:
+        mock_tool = MagicMock()
+        mock_tool.execute = AsyncMock(return_value=mock_result)
+        mock_tool_cls.return_value = mock_tool
         
         job = ScrapeJob(request)
         response = await job.run()
@@ -82,10 +82,10 @@ async def test_scrape_job_with_screenshot():
     mock_result.success = True
     mock_result.screenshot = "YmFzZTY0" # base64 for "base64"
     
-    with patch("koda.modules.page.service.AsyncWebCrawler") as mock_crawler_cls:
-        mock_crawler = MagicMock()
-        mock_crawler.arun = AsyncMock(return_value=mock_result)
-        mock_crawler_cls.return_value.__aenter__.return_value = mock_crawler
+    with patch("koda.modules.page.service.Crawl4AiTool") as mock_tool_cls:
+        mock_tool = MagicMock()
+        mock_tool.execute = AsyncMock(return_value=mock_result)
+        mock_tool_cls.return_value = mock_tool
         
         job = ScrapeJob(request)
         response = await job.run()
