@@ -2,11 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.14] - 2026-06-17
+
+### 🚀 Features
+
+- Add wait_until option to page schema
+- Add wait_until option to site scraper
+
+### 🐛 Bug Fixes
+
+- Prevent errors when page closes during event
+- Prevent multiple exception handler overrides
+
 ## [26.6.13] - 2026-06-17
 
 ### ⚙️ Miscellaneous Tasks
 
 - Remove agent and roo configuration rules
+- Release 26.6.13
 
 ## [26.6.12] - 2026-06-17
 
