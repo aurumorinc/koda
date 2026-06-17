@@ -120,6 +120,9 @@ async def setup_network_capture(page: Page, posthog_api_key: str) -> None:
                 "timeToFirstByte": time_to_first_byte,
             }
 
+            if page.is_closed():
+                return
+
             await page.evaluate(
                 """data => {
                     if (window.__posthog_playwright_network_receiver) {
@@ -184,6 +187,9 @@ async def setup_network_capture(page: Page, posthog_api_key: str) -> None:
                 "endTime": start_time_ms,
                 "timeToFirstByte": 0,
             }
+
+            if page.is_closed():
+                return
 
             await page.evaluate(
                 """data => {
