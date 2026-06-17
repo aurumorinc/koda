@@ -8,7 +8,7 @@ from typing import Any, AsyncGenerator, Tuple
 import pyotp
 
 from koda.exceptions import KodaError, SessionExhaustedError
-from koda.modules.browser.service import launch_browser
+from koda.modules.browser.service import BrowserSession
 from koda.modules.session.schema import Session
 
 logger = logging.getLogger(__name__)
@@ -105,10 +105,9 @@ class SessionService:
             else:
                 os.makedirs(local_profile_dir, exist_ok=True)
                 
-            async with launch_browser(
-                session.model.browser.type,
-                local_profile_dir,
-                session.model.browser.config
+            async with BrowserSession(
+                config=session.model.browser.config,
+                user_data_dir=local_profile_dir
             ) as browser_context:
                 yield session, browser_context
                 session.mark_good()
