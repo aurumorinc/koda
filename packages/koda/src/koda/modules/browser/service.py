@@ -21,7 +21,7 @@ class BrowserTool(Protocol):
         ...
 
 @asynccontextmanager
-async def BrowserSession(config: Dict[str, Any] = None) -> AsyncGenerator[BrowserContext, None]:
+async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "") -> AsyncGenerator[BrowserContext, None]:
     """
     Context manager that owns the browser lifecycle.
     Launches the browser, injects telemetry into all pages, and ensures safe teardown.
@@ -51,7 +51,7 @@ async def BrowserSession(config: Dict[str, Any] = None) -> AsyncGenerator[Browse
     loop.set_exception_handler(custom_exception_handler)
     
     try:
-        async with launcher("", config) as browser:
+        async with launcher(user_data_dir, config) as browser:
             # Create a new context from the browser
             context = await browser.new_context()
             
