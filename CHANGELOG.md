@@ -2,11 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.11] - 2026-06-17
+
+### 🚀 Features
+
+- Add crawl4ai and stagehand integrations
+- Allow custom user data directory in session
+
+### 🐛 Bug Fixes
+
+- Update posthog import path
+
+### 🚜 Refactor
+
+- Remove crawl4ai monkey patches
+- [**breaking**] Replace launch_browser with BrowserSession
+- Migrate scraping to BrowserSession and Crawl4AiTool
+- Replace AsyncWebCrawler with Crawl4AiTool
+- Update module paths and fix test mocks
+- Replace AsyncWebCrawler with Crawl4AiTool
+- Use BrowserSession class for browser handling
+
+### 🧪 Testing
+
+- Add unit tests for integrations
+- Remove crawl4ai infrastructure tests
+- Refactor end-to-end tests for telemetry
+- Update service tests to use Crawl4AiTool
+- Update global browser mock to use BrowserSession
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove crawl4ai monkey patching
+- Update project metadata and cleanup config
+- Remove third_party directory configuration
+
 ## [26.6.10] - 2026-06-17
 
 ### 🚀 Features
 
 - Add new agent skills to project
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.10
 
 ## [26.6.9] - 2026-06-15
 
