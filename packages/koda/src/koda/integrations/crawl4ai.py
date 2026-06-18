@@ -31,6 +31,25 @@ class KodaBrowserManager(BrowserManager):
     async def get_page(self, crawlerRunConfig: CrawlerRunConfig):
         # Create a new page from the Koda context
         page = await self.koda_context.new_page()
+        
+        # Patch evaluate to prevent Crawl4AI from deadlocking the JS engine
+        # on heavily obfuscated DOMs (like google.com) when combined with invisible_playwright
+        import asyncio
+        original_evaluate = page.evaluate
+        async def safe_evaluate(expression, *args, **kwargs):
+            try:
+                # 5 second timeout for JS evaluations to prevent infinite hangs
+                return await asyncio.wait_for(
+                    original_evaluate(expression, *args, **kwargs),
+                    timeout=5.0
+                )
+            except asyncio.TimeoutError:
+                if self.logger:
+                    self.logger.warning("page.evaluate timed out after 5s. Bypassing deadlock.")
+                return True
+                
+        page.evaluate = safe_evaluate
+        
         return page, self.koda_context
         
     async def release_page_with_context(self, page):
