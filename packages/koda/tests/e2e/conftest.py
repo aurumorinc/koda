@@ -93,3 +93,45 @@ def local_test_server():
         
         server_thread.stop()
         server_thread.join()
+
+import pytest_asyncio
+@pytest_asyncio.fixture(autouse=True)
+async def strict_asyncio_exceptions():
+    """
+    Ensures that any unhandled exception in an asyncio background task 
+    fails the pytest suite, mirroring strict production runtimes like Windmill.
+    """
+    loop = asyncio.get_running_loop()
+    original_handler = loop.get_exception_handler()
+    
+    unhandled_exceptions = []
+
+    def strict_handler(loop, context):
+        exc = context.get("exception")
+        if not exc:
+            future = context.get("future") or context.get("task")
+            if future and hasattr(future, "exception") and not future.cancelled():
+                try:
+                    exc = future.exception()
+                except Exception:
+                    pass
+        
+        # We don't fail for TargetClosedError since koda specifically ignores it,
+        # but koda's own handler will intercept it first anyway.
+        if exc and "TargetClosedError" not in str(type(exc).__name__):
+            unhandled_exceptions.append(exc)
+            
+        if original_handler:
+            original_handler(loop, context)
+        else:
+            loop.default_exception_handler(context)
+
+    loop.set_exception_handler(strict_handler)
+    
+    yield
+    
+    # Restore original and assert no unhandled exceptions occurred
+    loop.set_exception_handler(original_handler)
+    
+    if unhandled_exceptions:
+        pytest.fail(f"Unhandled asyncio exceptions occurred during test: {unhandled_exceptions}")

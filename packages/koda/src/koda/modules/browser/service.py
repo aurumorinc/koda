@@ -43,9 +43,20 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
         
         def custom_exception_handler(loop, context_dict):
             exc = context_dict.get("exception")
+            
+            # If the exception is wrapped in a future/task
+            if not exc:
+                future = context_dict.get("future") or context_dict.get("task")
+                if future and hasattr(future, "exception") and not future.cancelled():
+                    try:
+                        exc = future.exception()
+                    except Exception:
+                        pass
+
             if exc and "TargetClosedError" in str(type(exc).__name__):
                 # Ignore TargetClosedError from Playwright's internal tasks
                 return
+                
             if original_handler:
                 original_handler(loop, context_dict)
             else:
