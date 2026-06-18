@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.15] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- Add timeout to page evaluation
+- Handle exceptions wrapped in futures
+
+### 🚜 Refactor
+
+- [**breaking**] Remove wait_until configuration
+- Remove unused wait_until scrape option
+
+### 🧪 Testing
+
+- Fail tests on unhandled asyncio exceptions
+
 ## [26.6.14] - 2026-06-17
 
 ### 🚀 Features
@@ -13,6 +29,10 @@ All notable changes to this project will be documented in this file.
 
 - Prevent errors when page closes during event
 - Prevent multiple exception handler overrides
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.14
 
 ## [26.6.13] - 2026-06-17
 
