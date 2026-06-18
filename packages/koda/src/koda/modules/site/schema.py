@@ -17,7 +17,6 @@ class ScrapeOptions(BaseModel):
     minAge: Optional[int] = None
     headers: Optional[Dict[str, str]] = None
     waitFor: int = 0
-    wait_until: str = Field(default="domcontentloaded", alias="waitUntil")
     mobile: bool = False
     skipTlsVerification: bool = True
     timeout: int = Field(default=60000, ge=1000, le=300000)
