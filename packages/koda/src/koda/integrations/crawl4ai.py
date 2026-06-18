@@ -100,3 +100,29 @@ class Crawl4AiTool(BrowserTool):
                     url=request.get("url"),
                     config=run_config
                 )
+
+    async def execute_stream(self, context: BrowserContext, request: Any) -> Any:
+        """
+        Execute a crawl4ai scrape using the provided context, yielding results as they arrive.
+        """
+        manager = KodaBrowserManager(context=context, browser_config=self.browser_config)
+        strategy = AsyncPlaywrightCrawlerStrategy(
+            browser_config=self.browser_config,
+            browser_manager=manager
+        )
+        strategy.browser_manager = manager
+
+        run_config = request.get("run_config") or CrawlerRunConfig()
+        # Enforce stream mode
+        run_config.stream = True
+
+        async with AsyncWebCrawler(crawler_strategy=strategy, config=self.browser_config) as crawler:
+            hook = request.get("hook")
+            if hook:
+                crawler.crawler_strategy.set_hook("before_retrieve_html", hook)
+                
+            async for result in crawler.arun(
+                url=request.get("url"),
+                config=run_config
+            ):
+                yield result
