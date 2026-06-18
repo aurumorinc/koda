@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel, Field, HttpUrl
 
 from koda.modules.webhook.schema import WebhookConfig
+from koda.modules.page.schema import Action
 
 class ScrapeOptions(BaseModel):
     """Options for scraping individual pages during a crawl."""
@@ -21,7 +22,7 @@ class ScrapeOptions(BaseModel):
     skipTlsVerification: bool = True
     timeout: int = Field(default=60000, ge=1000, le=300000)
     parsers: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["pdf"])
-    actions: Optional[List[Dict[str, Any]]] = None
+    actions: Optional[List[Action]] = None
     location: Optional[Dict[str, Any]] = None
     removeBase64Images: bool = True
     blockAds: bool = True

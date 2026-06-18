@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import re
 import asyncio
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Any
 from urllib.parse import urljoin, urlparse, urldefrag
 
 from crawl4ai import BrowserConfig, CrawlerRunConfig, CacheMode
 from crawl4ai.content_filter_strategy import PruningContentFilter
+from crawl4ai.deep_crawling import BFSDeepCrawlStrategy, FilterChain, URLPatternFilter
+from crawl4ai.async_configs import SeedingConfig
+from crawl4ai.async_url_seeder import AsyncUrlSeeder
 
 from koda.modules.site.schema import CrawlRequest, CrawlResponse
 from koda.modules.webhook.utils import dispatch_webhook
 from koda.modules.browser.service import BrowserSession
 from koda.integrations.crawl4ai import Crawl4AiTool
+from koda.modules.page.service import ScrapeJob
 
 __all__ = ["crawl"]
 
@@ -23,61 +27,7 @@ class CrawlJob:
     def __init__(self, request: CrawlRequest):
         self.request = request
         self.base_url = str(request.url)
-        self.queue: List[Tuple[str, int]] = [(self.base_url, 0)]
-        self.visited: Set[str] = set()
         self.total_crawled = 0
-
-    def _normalize_url(self, url: str) -> str:
-        """Normalize a URL by removing fragments and optionally query parameters."""
-        url, _ = urldefrag(url)
-        if self.request.ignoreQueryParameters:
-            parsed = urlparse(url)
-            url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-        return url
-
-    def _is_valid_link(self, link: str) -> bool:
-        """Check if a link should be crawled based on the request configuration."""
-        try:
-            absolute_link = urljoin(self.base_url, link)
-            parsed_link = urlparse(absolute_link)
-            parsed_base = urlparse(self.base_url)
-        except Exception:
-            return False
-
-        # Check external
-        is_external = parsed_link.netloc != parsed_base.netloc
-        if is_external:
-            if not self.request.allowExternalLinks:
-                # Check subdomains
-                if self.request.allowSubdomains and parsed_link.netloc.endswith(f".{parsed_base.netloc}"):
-                    pass
-                else:
-                    return False
-
-        # Check domain scope (if not external)
-        if not is_external and not self.request.crawlEntireDomain:
-            # Must be a child path
-            if not parsed_link.path.startswith(parsed_base.path):
-                return False
-
-        # Check include/exclude paths
-        target_for_regex = link if self.request.regexOnFullURL else parsed_link.path
-
-        if self.request.excludePaths:
-            for pattern in self.request.excludePaths:
-                if re.search(pattern, target_for_regex):
-                    return False
-
-        if self.request.includePaths:
-            matched = False
-            for pattern in self.request.includePaths:
-                if re.search(pattern, target_for_regex):
-                    matched = True
-                    break
-            if not matched:
-                return False
-
-        return True
 
     async def _dispatch_page_webhook(self, result):
         """Dispatch a webhook for a successfully crawled page."""
@@ -103,82 +53,74 @@ class CrawlJob:
 
         await dispatch_webhook(self.request.webhook, "crawl.page", page_data)
 
-    async def _process_batch(self, tool: Crawl4AiTool, context: Any, run_config: CrawlerRunConfig):
-        """Process a batch of URLs from the queue."""
-        batch_size = min(self.request.maxConcurrency, self.request.limit - len(self.visited), len(self.queue))
-        current_batch = self.queue[:batch_size]
-        self.queue = self.queue[batch_size:]
-
-        urls_to_crawl = []
-        depth_map = {}
-        for url, depth in current_batch:
-            norm_url = self._normalize_url(url)
-            if norm_url not in self.visited:
-                self.visited.add(norm_url)
-                urls_to_crawl.append(url)
-                depth_map[url] = depth
-
-        if not urls_to_crawl:
-            return
-
-        # Add delay if specified
-        if self.request.delay and self.total_crawled > 0:
-            await asyncio.sleep(self.request.delay)
-
-        # Execute batch
-        results = await tool.execute(context, {
-            "urls": urls_to_crawl,
-            "run_config": run_config
-        })
-
-        for result in results:
-            if not result.success:
-                if self.request.webhook:
-                    await dispatch_webhook(self.request.webhook, "crawl.failed", {
-                        "url": result.url,
-                        "error": result.error_message
-                    })
-                continue
-
-            self.total_crawled += 1
-            current_depth = depth_map.get(result.url, 0)
-
-            await self._dispatch_page_webhook(result)
-
-            # Discover links if within depth
-            if current_depth < self.request.maxDiscoveryDepth:
-                all_links = list(result.links.get("internal", []))
-                if self.request.allowExternalLinks:
-                    all_links.extend(result.links.get("external", []))
-
-                for link_dict in all_links:
-                    link_href = link_dict.get("href")
-                    if not link_href:
-                        continue
-                        
-                    norm_link = self._normalize_url(link_href)
-                    if norm_link in self.visited:
-                        continue
-
-                    if self._is_valid_link(link_href):
-                        self.queue.append((link_href, current_depth + 1))
-
     async def run(self) -> CrawlResponse:
-        """Execute the BFS crawl starting from the request URL."""
+        """Execute the deep crawl starting from the request URL."""
         if self.request.webhook:
             await dispatch_webhook(self.request.webhook, "crawl.started", {"url": self.base_url})
 
-        browser_config = BrowserConfig(
-            headless=True,
-            proxy=self.request.scrapeOptions.proxy if self.request.scrapeOptions.proxy != "auto" else None
-        )
+        # Map filtering rules
+        filters = []
+        if self.request.includePaths:
+            for p in self.request.includePaths:
+                filters.append(URLPatternFilter(pattern=p))
+        if self.request.excludePaths:
+            for p in self.request.excludePaths:
+                filters.append(URLPatternFilter(pattern=p, reverse=True))
 
+        filter_chain = FilterChain(filters=filters) if filters else None
+
+        # Sitemap logic
+        urls_to_crawl = [self.base_url]
+        if self.request.sitemap in ("only", "include"):
+            seeder = AsyncUrlSeeder()
+            try:
+                sitemap_results = await seeder.urls(
+                    self.base_url,
+                    SeedingConfig(source="sitemap", extract_head=False)
+                )
+                if self.request.sitemap == "only":
+                    urls_to_crawl = [r["url"] for r in sitemap_results]
+                else:
+                    urls_to_crawl.extend([r["url"] for r in sitemap_results])
+            finally:
+                await seeder.close()
+
+        # Browser Config
+        browser_kwargs = {
+            "headless": True,
+            "proxy": self.request.scrapeOptions.proxy if self.request.scrapeOptions.proxy != "auto" else None,
+            "headers": self.request.scrapeOptions.headers
+        }
+        if self.request.robotsUserAgent:
+            browser_kwargs["user_agent"] = self.request.robotsUserAgent
+
+        browser_config = BrowserConfig(**browser_kwargs)
+
+        # Scrape Actions Hook (reuse from page.service if possible, or build equivalent)
+        # We instantiate a dummy ScrapeJob to reuse its execute_actions_hook
+        # Note: ScrapeRequest schema in koda.modules.page.schema must be matched
+        dummy_scrape_job = None
+        if self.request.scrapeOptions.actions:
+            from koda.modules.page.schema import ScrapeRequest as PageScrapeRequest
+            dummy_request = PageScrapeRequest(url=self.base_url, actions=self.request.scrapeOptions.actions)
+            dummy_scrape_job = ScrapeJob(dummy_request)
+
+        # Crawler Config
         run_config = CrawlerRunConfig(
             page_timeout=self.request.scrapeOptions.timeout,
             cache_mode=CacheMode.ENABLED if self.request.scrapeOptions.storeInCache else CacheMode.BYPASS,
             wait_for=f"delay:{self.request.scrapeOptions.waitFor}" if self.request.scrapeOptions.waitFor > 0 else None,
             exclude_external_links=not self.request.allowExternalLinks,
-            screenshot="screenshot" in self.request.scrapeOptions.formats
+            screenshot="screenshot" in self.request.scrapeOptions.formats,
+            check_robots_txt=not self.request.ignoreRobotsTxt,
+            remove_overlay_elements=self.request.scrapeOptions.blockAds,
+            remove_consent_popups=self.request.scrapeOptions.blockAds,
+            deep_crawl_strategy=BFSDeepCrawlStrategy(
+                max_depth=self.request.maxDiscoveryDepth,
+                max_pages=self.request.limit,
+                include_external=self.request.allowExternalLinks,
+                filter_chain=filter_chain
+            ) if self.request.sitemap != "only" else None # Don't deep crawl if sitemap only
         )
 
         if self.request.scrapeOptions.onlyMainContent:
@@ -186,8 +128,52 @@ class CrawlJob:
 
         async with BrowserSession() as context:
             tool = Crawl4AiTool(browser_config=browser_config)
-            while self.queue and len(self.visited) < self.request.limit:
-                await self._process_batch(tool, context, run_config)
+            
+            # If sitemap="only", we might have thousands of URLs. We don't want to use deep_crawl.
+            if self.request.sitemap == "only":
+                # We chunk them to avoid passing thousands of URLs to execute() at once
+                chunk_size = self.request.maxConcurrency or 10
+                for i in range(0, min(len(urls_to_crawl), self.request.limit), chunk_size):
+                    chunk = urls_to_crawl[i:i+chunk_size]
+                    if self.request.delay and self.total_crawled > 0:
+                        await asyncio.sleep(self.request.delay)
+                        
+                    results = await tool.execute(context, {
+                        "urls": chunk,
+                        "run_config": run_config,
+                        "hook": dummy_scrape_job.execute_actions_hook if dummy_scrape_job else None
+                    })
+                    for result in results:
+                        if result.success:
+                            self.total_crawled += 1
+                            await self._dispatch_page_webhook(result)
+                        elif self.request.webhook:
+                            await dispatch_webhook(self.request.webhook, "crawl.failed", {
+                                "url": result.url,
+                                "error": result.error_message
+                            })
+            else:
+                # Use native BFS deep crawling with stream
+                hook = dummy_scrape_job.execute_actions_hook if dummy_scrape_job else None
+                async for result in tool.execute_stream(context, {
+                    "url": self.base_url,
+                    "run_config": run_config,
+                    "hook": hook
+                }):
+                    if self.request.delay and self.total_crawled > 0:
+                        await asyncio.sleep(self.request.delay)
+                        
+                    if result.success:
+                        self.total_crawled += 1
+                        await self._dispatch_page_webhook(result)
+                    elif self.request.webhook:
+                        await dispatch_webhook(self.request.webhook, "crawl.failed", {
+                            "url": result.url,
+                            "error": result.error_message
+                        })
+                        
+                    if self.total_crawled >= self.request.limit:
+                        break
 
         if self.request.webhook:
             await dispatch_webhook(self.request.webhook, "crawl.completed", {
