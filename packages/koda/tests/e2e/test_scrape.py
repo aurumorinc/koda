@@ -104,8 +104,9 @@ async def test_scrape_google_com():
             )
             response = await client.scrape(request)
 
-            # Google might block us or timeout, but we shouldn't crash with TargetClosedError
-            assert response.error is None or "timed out" in response.error
+            # Google should not timeout now that we patched the evaluation deadlock
+            assert response.error is None, f"Expected success but got error: {response.error}"
+            assert response.markdown is not None, "Expected markdown to be extracted"
     finally:
         settings.posthog_api_key = old_key
 
@@ -124,7 +125,8 @@ async def test_scrape_linkedin_com():
             )
             response = await client.scrape(request)
             
-            # LinkedIn might block us, but we shouldn't crash with TargetClosedError
-            assert response.error is None or response.error is not None
+            # LinkedIn should not timeout, though it might return a captcha. We just want to ensure it completes.
+            assert response.error is None, f"Expected success but got error: {response.error}"
+            assert response.markdown is not None, "Expected markdown to be extracted"
     finally:
         settings.posthog_api_key = old_key
