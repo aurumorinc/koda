@@ -1,6 +1,6 @@
 """Koda - Web scraping and extraction engine."""
 
-__version__ = "26.6.15"
+__version__ = "26.6.16"
 
 from koda import client
 from koda import exceptions

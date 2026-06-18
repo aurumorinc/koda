@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.16] - 2026-06-18
+
+### 🚀 Features
+
+- Add execute_stream method to crawl4ai integration
+
+### 🚜 Refactor
+
+- Migrate crawler to native crawl4ai strategies
+
+### 🧪 Testing
+
+- Update crawl integration tests to streaming
+
 ## [26.6.15] - 2026-06-18
 
 ### 🐛 Bug Fixes
@@ -17,6 +31,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Fail tests on unhandled asyncio exceptions
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.15
 
 ## [26.6.14] - 2026-06-17
 
