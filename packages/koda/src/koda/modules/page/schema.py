@@ -50,7 +50,6 @@ class ScrapeRequest(BaseModel):
         only_main_content: Whether to filter out noise like headers, footers, and sidebars.
         actions: A list of actions to perform on the page before scraping.
         timeout: Maximum time to wait for the scrape job to complete, in milliseconds.
-        wait_until: Condition to wait for when navigating (e.g., 'domcontentloaded', 'networkidle', 'load').
         s3_config: Optional S3 configuration dictionary for uploading screenshots.
         webhook: Optional webhook configuration for callbacks.
     """
@@ -61,7 +60,6 @@ class ScrapeRequest(BaseModel):
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
-    wait_until: Optional[str] = Field(default="domcontentloaded", alias="waitUntil")
     s3_config: Optional[S3Config] = None
     webhook: Optional[WebhookConfig] = None
 

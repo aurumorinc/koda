@@ -131,8 +131,7 @@ class ScrapeJob:
         
         run_config = CrawlerRunConfig(
             page_timeout=self.request.timeout,
-            screenshot="screenshot" in self.request.formats,
-            wait_until=getattr(self.request, "wait_until", "domcontentloaded")
+            screenshot="screenshot" in self.request.formats
         )
         
         if self.request.only_main_content:
