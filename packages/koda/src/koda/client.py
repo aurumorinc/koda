@@ -8,7 +8,7 @@ from typing import Union, List, Dict, Any, Optional
 from pathlib import Path
 
 from koda.exceptions import KodaError
-from koda.modules.page.schema import ScrapeRequest, ScrapeResponse, Action
+from koda.modules.page.schema import ScrapeRequest, ScrapeResponse, Action, BatchScrapeRequest, BatchScrapeResponse
 from koda.modules.site.schema import CrawlRequest, CrawlResponse
 from koda.modules.webhook.schema import WebhookConfig
 from koda.utils import sanitize_filename
@@ -34,6 +34,20 @@ class KodaClient:
         
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         pass
+
+    async def batch_scrape(
+        self,
+        request: BatchScrapeRequest
+    ) -> BatchScrapeResponse:
+        """Scrape a batch of URLs concurrently.
+        
+        Args:
+            request: Configuration and targets for the batch scraping job.
+            
+        Returns:
+            A BatchScrapeResponse containing the requested data.
+        """
+        return await page.batch_scrape(request)
 
     async def scrape(
         self,

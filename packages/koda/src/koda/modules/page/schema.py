@@ -86,3 +86,47 @@ class ScrapeResponse(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     action_results: Optional[Dict[str, Any]] = None
+
+class BatchScrapeRequest(BaseModel):
+    """Configuration and target for a batch scraping job.
+    
+    Attributes:
+        urls: The list of URLs to scrape.
+        formats: A list of formats to extract, e.g. ["markdown", "screenshot", "metadata", "html", "links", "images"].
+        only_main_content: Whether to filter out noise like headers, footers, and sidebars.
+        actions: A list of actions to perform on the page before scraping.
+        timeout: Maximum time to wait for the scrape job to complete, in milliseconds.
+        s3_config: Optional S3 configuration dictionary for uploading screenshots.
+        webhook: Optional webhook configuration for callbacks.
+        max_concurrency: Maximum number of concurrent scrapes.
+        ignore_invalid_urls: If invalid URLs are specified, ignore them instead of failing the request.
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    urls: List[str]
+    formats: List[str] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    only_main_content: bool = Field(default=True, alias="onlyMainContent")
+    actions: List[Action] = Field(default_factory=list)
+    timeout: Optional[int] = None
+    s3_config: Optional[S3Config] = None
+    webhook: Optional[WebhookConfig] = None
+    max_concurrency: Optional[int] = Field(default=None, alias="maxConcurrency")
+    ignore_invalid_urls: Optional[bool] = Field(default=True, alias="ignoreInvalidURLs")
+
+class BatchScrapeResponse(BaseModel):
+    """The result of a batch scraping job.
+    
+    Attributes:
+        success: Whether the batch job was successfully initialized.
+        id: Unique identifier for the batch job.
+        url: Deprecated/Informational Firecrawl compliance field.
+        invalid_urls: List of invalid URLs that were ignored.
+        results: List of ScrapeResponse objects containing the actual scraped data.
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool
+    id: str
+    url: Optional[str] = None
+    invalid_urls: Optional[List[str]] = Field(default_factory=list, alias="invalidURLs")
+    results: Optional[List[ScrapeResponse]] = Field(default_factory=list)
