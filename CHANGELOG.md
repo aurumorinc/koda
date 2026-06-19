@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.17] - 2026-06-19
+
+### 🚀 Features
+
+- Add batch scraping capability
+- Make headless mode configurable for cloakbrowser
+- Add batch scrape functionality
+
+### 🧪 Testing
+
+- Add integration tests for batch scraping and youtube scraping
+
 ## [26.6.16] - 2026-06-18
 
 ### 🚀 Features
@@ -15,6 +27,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Update crawl integration tests to streaming
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.16
 
 ## [26.6.15] - 2026-06-18
 
