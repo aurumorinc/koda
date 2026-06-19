@@ -32,22 +32,29 @@ async def test_youtube_orchestrator_success(mock_client_class):
     # First scrape for resolution
     res_initial = MagicMock()
     res_initial.error = None
-    res_initial.action_results = {
-        "javascriptReturns": [{"value": "https://www.youtube.com/@youtube"}]
+    res_initial.metadata = {
+        "og:url": "https://www.youtube.com/@youtube"
     }
     
     # Second scrape (batch)
     res_home = MagicMock(url="https://www.youtube.com/@youtube", success=True, markdown="Home Page Markdown", error=None)
     res_home.html = "<html>Home</html>"
     res_home.links = {"link1": "test1"}
+    res_home.screenshot = "http://s3/home.jpg"
+    
+    res_about = MagicMock(url="https://www.youtube.com/@youtube?about=1", success=True, markdown="About Markdown", error=None)
+    res_about.html = "<html>About</html>"
+    res_about.links = {"link_about": "test_about"}
+    res_about.screenshot = "http://s3/about.jpg"
     
     res_videos = MagicMock(url="https://www.youtube.com/@youtube/videos", success=True, markdown="Videos Markdown", error=None)
     res_videos.html = "<html>Videos</html>"
     res_videos.links = {"link2": "test2"}
+    res_videos.screenshot = "http://s3/videos.jpg"
     
     batch_res = MagicMock()
     batch_res.success = True
-    batch_res.results = [res_home, res_videos]
+    batch_res.results = [res_home, res_about, res_videos]
 
     mock_client.scrape.return_value = res_initial
     mock_client.batch_scrape.return_value = batch_res
@@ -55,8 +62,8 @@ async def test_youtube_orchestrator_success(mock_client_class):
     mock_client_class.return_value.__aenter__.return_value = mock_client
 
     result = await _run_youtube_scrape(
-        url="https://youtube.com/@youtube",
-        formats=["markdown", "links"],
+        url="https://www.youtube.com/@youtube",
+        formats=["markdown", "links", "screenshot"],
         onlyMainContent=True,
         actions=[],
         timeout=60000,
@@ -70,12 +77,18 @@ async def test_youtube_orchestrator_success(mock_client_class):
     assert "data" in result
     assert "markdown" in result["data"]
     assert "links" in result["data"]
+    assert "screenshots" in result["data"]
     
     assert "Home Page Markdown" in result["data"]["markdown"]
     assert "Videos Markdown" in result["data"]["markdown"]
+    assert "About Markdown" in result["data"]["markdown"]
     
     assert "Home" in result["data"]["links"]
     assert "Videos" in result["data"]["links"]
+    assert "About" in result["data"]["links"]
+    
+    assert result["data"]["screenshots"]["Home"] == "http://s3/home.jpg"
+    assert result["data"]["screenshots"]["About"] == "http://s3/about.jpg"
 
 @pytest.mark.asyncio
 @patch("scrape_youtube_profile.KodaClient")
@@ -85,14 +98,14 @@ async def test_youtube_orchestrator_redirect(mock_client_class):
     # First scrape for resolution (from a redirect URL)
     res_initial = MagicMock()
     res_initial.error = None
-    res_initial.action_results = {
-        "javascriptReturns": [{"value": "https://www.youtube.com/@mkbhd/featured"}] # Sub-tab
+    res_initial.metadata = {
+        "og:url": "https://www.youtube.com/@mkbhd/featured"
     }
     
     batch_res = MagicMock()
     batch_res.success = True
     batch_res.results = [
-        MagicMock(url="https://www.youtube.com/@mkbhd", success=True, markdown="Home Markdown", error=None, html=None, links=None)
+        MagicMock(url="https://www.youtube.com/@mkbhd", success=True, markdown="Home Markdown", error=None, html=None, links=None, screenshot=None)
     ]
     
     mock_client.scrape.return_value = res_initial
@@ -118,7 +131,11 @@ async def test_youtube_orchestrator_redirect(mock_client_class):
     calls = mock_client.batch_scrape.call_args_list
     assert len(calls) == 1
     batch_req = calls[0][0][0]
-    assert batch_req.urls == ["https://www.youtube.com/@mkbhd"]
+    
+    assert batch_req.requests is not None
+    assert len(batch_req.requests) == 2  # Home + About (no sub tabs passed in this test)
+    assert batch_req.requests[0].url == "https://www.youtube.com/@mkbhd"
+    assert batch_req.requests[1].url == "https://www.youtube.com/@mkbhd?about=1"
 
 @pytest.mark.asyncio
 @patch("scrape_youtube_profile.KodaClient")
@@ -128,15 +145,15 @@ async def test_youtube_orchestrator_invalid_handle(mock_client_class):
     # First scrape for resolution
     res_initial = MagicMock()
     res_initial.error = None
-    res_initial.action_results = {
-        "javascriptReturns": [{"value": "https://www.youtube.com/404"}]
+    res_initial.metadata = {
+        "url": "https://www.youtube.com/404"
     }
     
     batch_res = MagicMock()
     batch_res.success = True
     # In batch, error is stored inside the individual ScrapeResponse
     batch_res.results = [
-        MagicMock(url="https://www.youtube.com/404", success=False, error="404 Not Found", markdown=None, html=None, links=None)
+        MagicMock(url="https://www.youtube.com/404", success=False, error="404 Not Found", markdown=None, html=None, links=None, screenshot=None)
     ]
     
     mock_client.scrape.return_value = res_initial
