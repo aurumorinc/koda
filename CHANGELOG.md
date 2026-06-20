@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.18] - 2026-06-20
+
+### 🚀 Features
+
+- Enhance action handling and request support
+
+### 🧪 Testing
+
+- Add e2e and update integration tests for youtube scout
+
 ## [26.6.17] - 2026-06-19
 
 ### 🚀 Features
@@ -13,6 +23,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Add integration tests for batch scraping and youtube scraping
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.17
 
 ## [26.6.16] - 2026-06-18
 
