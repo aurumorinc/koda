@@ -44,16 +44,22 @@ class ScrapeJob:
                     if action.milliseconds:
                         await asyncio.sleep(action.milliseconds / 1000.0)
                     elif action.selector:
-                        await page.wait_for_selector(action.selector)
+                        kwargs_wait = {}
+                        if action.timeout is not None:
+                            kwargs_wait["timeout"] = action.timeout
+                        await page.wait_for_selector(action.selector, **kwargs_wait)
                 
                 elif action.type == "click":
+                    kwargs_click = {}
+                    if action.timeout is not None:
+                        kwargs_click["timeout"] = action.timeout
                     if action.selector:
                         if action.all:
                             elements = await page.query_selector_all(action.selector)
                             for el in elements:
-                                await el.click()
+                                await el.click(**kwargs_click)
                         else:
-                            await page.click(action.selector)
+                            await page.click(action.selector, **kwargs_click)
                 
                 elif action.type == "write":
                     if action.text:
@@ -73,7 +79,7 @@ class ScrapeJob:
                             }}
                         """)
                     else:
-                        await page.evaluate(f"window.scrollBy(0, {1000 if direction == 'down' else -1000})")
+                        await page.mouse.wheel(0, 1000 if direction == 'down' else -1000)
                 
                 elif action.type == "executeJavascript":
                     if action.script:
@@ -118,6 +124,8 @@ class ScrapeJob:
                     
             except Exception as e:
                 print(f"Action {action.type} failed: {str(e)}")
+                if not action.ignoreError:
+                    raise
 
         return page
 
@@ -181,6 +189,10 @@ class BatchScrapeJob:
     def __init__(self, request: BatchScrapeRequest):
         self.request = request
         self.action_results: Dict[str, Dict[str, list]] = {}
+        self.target_requests: Dict[str, ScrapeRequest] = {}
+        if self.request.requests:
+            for req in self.request.requests:
+                self.target_requests[req.url] = req
         
     def _init_url_action_results(self, url: str):
         if url not in self.action_results:
@@ -193,31 +205,47 @@ class BatchScrapeJob:
 
     async def execute_actions_hook(self, page, context, **kwargs):
         """Hook to execute Firecrawl actions on the Playwright page before extraction."""
-        if not self.request.actions:
+        url_key = page.url
+        
+        target_req = self.target_requests.get(url_key)
+        if not target_req:
+            for k, r in self.target_requests.items():
+                if k.rstrip("/") == url_key.rstrip("/") or (k.split("?")[0] == url_key.split("?")[0] and k in url_key):
+                    target_req = r
+                    break
+                    
+        actions = target_req.actions if target_req else self.request.actions
+
+        if not actions:
             return page
 
         # page.url might be 'about:blank' initially if navigated differently,
         # but in crawl4ai hook 'before_retrieve_html' it should be the target URL.
         # We use a fallback if page.url is not meaningful, but it should be.
-        url_key = page.url
         self._init_url_action_results(url_key)
 
-        for action in self.request.actions:
+        for action in actions:
             try:
                 if action.type == "wait":
                     if action.milliseconds:
                         await asyncio.sleep(action.milliseconds / 1000.0)
                     elif action.selector:
-                        await page.wait_for_selector(action.selector)
+                        kwargs_wait = {}
+                        if action.timeout is not None:
+                            kwargs_wait["timeout"] = action.timeout
+                        await page.wait_for_selector(action.selector, **kwargs_wait)
                 
                 elif action.type == "click":
+                    kwargs_click = {}
+                    if action.timeout is not None:
+                        kwargs_click["timeout"] = action.timeout
                     if action.selector:
                         if action.all:
                             elements = await page.query_selector_all(action.selector)
                             for el in elements:
-                                await el.click()
+                                await el.click(**kwargs_click)
                         else:
-                            await page.click(action.selector)
+                            await page.click(action.selector, **kwargs_click)
                 
                 elif action.type == "write":
                     if action.text:
@@ -237,7 +265,7 @@ class BatchScrapeJob:
                             }}
                         """)
                     else:
-                        await page.evaluate(f"window.scrollBy(0, {1000 if direction == 'down' else -1000})")
+                        await page.mouse.wheel(0, 1000 if direction == 'down' else -1000)
                 
                 elif action.type == "executeJavascript":
                     if action.script:
@@ -281,6 +309,8 @@ class BatchScrapeJob:
                     
             except Exception as e:
                 print(f"Action {action.type} failed for {url_key}: {str(e)}")
+                if not action.ignoreError:
+                    raise
 
         return page
 
@@ -294,7 +324,8 @@ class BatchScrapeJob:
         )
         
         valid_urls = []
-        for u in self.request.urls:
+        source_urls = [r.url for r in self.request.requests] if self.request.requests else (self.request.urls or [])
+        for u in source_urls:
             if not u.startswith("http") and not u.startswith("file://"):
                 # Simplistic invalid check, normally handled gracefully or by ignoring
                 if self.request.ignore_invalid_urls:

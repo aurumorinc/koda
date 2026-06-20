@@ -24,6 +24,8 @@ class Action(BaseModel):
         format: Optional string for PDF format.
         landscape: Optional boolean for PDF landscape orientation.
         scale: Optional float for PDF scale.
+        timeout: Optional maximum time to wait for the action to complete, in milliseconds.
+        ignoreError: Optional boolean to ignore errors if the action fails.
     """
     type: str
     selector: Optional[str] = None
@@ -40,6 +42,8 @@ class Action(BaseModel):
     format: Optional[str] = None
     landscape: Optional[bool] = None
     scale: Optional[float] = None
+    timeout: Optional[int] = None
+    ignoreError: Optional[bool] = Field(default=True)
 
 class ScrapeRequest(BaseModel):
     """Configuration and target for a scraping job.
@@ -91,7 +95,8 @@ class BatchScrapeRequest(BaseModel):
     """Configuration and target for a batch scraping job.
     
     Attributes:
-        urls: The list of URLs to scrape.
+        urls: The list of URLs to scrape (if applying global settings).
+        requests: An optional list of distinct ScrapeRequests for heterogeneous batching.
         formats: A list of formats to extract, e.g. ["markdown", "screenshot", "metadata", "html", "links", "images"].
         only_main_content: Whether to filter out noise like headers, footers, and sidebars.
         actions: A list of actions to perform on the page before scraping.
@@ -103,7 +108,8 @@ class BatchScrapeRequest(BaseModel):
     """
     model_config = ConfigDict(populate_by_name=True)
 
-    urls: List[str]
+    urls: Optional[List[str]] = None
+    requests: Optional[List[ScrapeRequest]] = None
     formats: List[str] = Field(default_factory=lambda: ["markdown", "screenshot"])
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
