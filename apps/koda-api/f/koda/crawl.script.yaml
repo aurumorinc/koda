@@ -1,0 +1,74 @@
+summary: ''
+description: ''
+lock: '!inline f/koda/crawl.script.lock'
+kind: script
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  properties:
+    allowExternalLinks:
+      type: boolean
+      description: ''
+      default: false
+    allowSubdomains:
+      type: boolean
+      description: ''
+      default: false
+    crawlEntireDomain:
+      type: boolean
+      description: ''
+      default: false
+    delay:
+      type: number
+      description: ''
+      default: null
+    excludePaths:
+      type: array
+      description: ''
+      default: null
+      items:
+        type: string
+      originalType: string[]
+    ignoreQueryParameters:
+      type: boolean
+      description: ''
+      default: false
+    includePaths:
+      type: array
+      description: ''
+      default: null
+      items:
+        type: string
+      originalType: string[]
+    limit:
+      type: integer
+      description: ''
+      default: 10000
+    maxConcurrency:
+      type: integer
+      description: ''
+      default: 10
+    maxDiscoveryDepth:
+      type: integer
+      description: ''
+      default: 0
+    regexOnFullURL:
+      type: boolean
+      description: ''
+      default: false
+    scrapeOptions:
+      type: ''
+      description: ''
+      default: null
+    url:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+    webhook:
+      type: ''
+      description: ''
+      default: null
+  required:
+    - url
+tag: koda
