@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field, ConfigDict
 
 from koda.modules.file.schema import S3Config
@@ -35,6 +35,7 @@ class Action(BaseModel):
     key: Optional[str] = None
     script: Optional[str] = None
     direction: Optional[str] = None
+    amount: Optional[int] = None
     all: Optional[bool] = None
     fullPage: Optional[bool] = None
     quality: Optional[int] = None
@@ -60,7 +61,7 @@ class ScrapeRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     url: str
-    formats: List[str] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown", "screenshot"])
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
@@ -110,7 +111,7 @@ class BatchScrapeRequest(BaseModel):
 
     urls: Optional[List[str]] = None
     requests: Optional[List[ScrapeRequest]] = None
-    formats: List[str] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown", "screenshot"])
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
