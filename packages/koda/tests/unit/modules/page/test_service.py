@@ -14,7 +14,7 @@ async def test_execute_actions_hook():
         Action(type="click", selector="#btn"),
         Action(type="write", text="hello"),
         Action(type="press", key="Enter"),
-        Action(type="scroll", direction="down"),
+        Action(type="scroll", direction="down", amount=2780, selector="#container"),
         Action(type="executeJavascript", script="return 1+1;"),
         Action(type="screenshot", fullPage=True),
         Action(type="pdf", format="A4"),
@@ -37,6 +37,11 @@ async def test_execute_actions_hook():
     mock_page.keyboard.type.assert_called_once_with("hello")
     mock_page.keyboard.press.assert_called_once_with("Enter")
     assert mock_page.evaluate.call_count == 2 # scroll and executeJavascript
+
+    # Verify the scroll action with amount
+    scroll_call = mock_page.evaluate.call_args_list[0][0][0]
+    assert "el.scrollBy(0, 2780);" in scroll_call
+
     mock_page.screenshot.assert_called_once_with(full_page=True, quality=None, type="png", clip=None)
     mock_page.pdf.assert_called_once_with(format="A4", landscape=False, scale=1.0)
     mock_page.content.assert_called_once()
@@ -92,6 +97,31 @@ async def test_scrape_job_with_screenshot():
         
         assert response.error is None
         assert getattr(response, "_screenshot_bytes") == b"base64"
+
+@pytest.mark.asyncio
+async def test_scrape_job_with_screenshot_override():
+    request = ScrapeRequest(
+        url="https://example.com",
+        formats=[{"type": "screenshot", "fullPage": True}]
+    )
+    
+    mock_result = MagicMock()
+    mock_result.success = True
+    mock_result.screenshot = "YmFzZTY0" # base64 for "base64"
+    
+    with patch("koda.modules.page.service.Crawl4AiTool") as mock_tool_cls:
+        mock_tool = MagicMock()
+        mock_tool.execute = AsyncMock(return_value=mock_result)
+        mock_tool_cls.return_value = mock_tool
+        
+        job = ScrapeJob(request)
+        # Manually inject the override byte cache from execute_actions_hook
+        job.action_results["_format_screenshot_bytes"] = b"full_page_override"
+        
+        response = await job.run()
+        
+        assert response.error is None
+        assert getattr(response, "_screenshot_bytes") == b"full_page_override"
 
 @pytest.mark.asyncio
 @patch("koda.modules.page.service.file.upload")
