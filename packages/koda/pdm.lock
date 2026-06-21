@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:2138678f5ac6e536854dee8f8a465148fed2bf279a222cc91c3cb0f25e19f45e"
+content_hash = "sha256:649579148c737f1181dcfed486d3c1776f905a05bb9c60ba0bc3cc725f74243e"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -2768,7 +2768,7 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "9.0.3"
+version = "9.1.1"
 summary = ""
 dependencies = [
     "colorama; sys_platform == \"win32\"",
@@ -2778,8 +2778,8 @@ dependencies = [
     "pygments",
 ]
 files = [
-    {file = "pytest-9.0.3-py3-none-any.whl", hash = "sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9"},
-    {file = "pytest-9.0.3.tar.gz", hash = "sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c"},
+    {file = "pytest-9.1.1-py3-none-any.whl", hash = "sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c"},
+    {file = "pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313"},
 ]
 
 [[package]]
