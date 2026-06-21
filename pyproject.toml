@@ -1,6 +1,6 @@
 [project]
 name = "koda-workspace"
-version = "26.6.28"
+version = "26.6.29"
 requires-python = ">=3.9"
 dependencies = [
     "httpx>=0.28.1",
@@ -17,7 +17,7 @@ members = [
 ]
 
 [tool.bumpver]
-current_version = "26.6.28"
+current_version = "26.6.29"
 version_pattern = "YY.MM.INC0"
 commit = false
 tag = false

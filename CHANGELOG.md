@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.29] - 2026-06-21
+
+### ⚙️ Miscellaneous Tasks
+
+- Update koda dependency management
+- Upgrade koda dependency to version 26.6.28
+
 ## [26.6.28] - 2026-06-21
 
 ### 🚀 Features
@@ -19,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 - Add folder metadata for koda
 - Add Windmill configuration and lock files
+- Release 26.6.28
 
 ## [26.6.27] - 2026-06-21
 
