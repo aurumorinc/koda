@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.25] - 2026-06-21
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.25
+
 ## [26.6.22] - 2026-06-21
 
 ### ⚙️ Miscellaneous Tasks
