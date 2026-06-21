@@ -5,9 +5,133 @@
 # ///
 import asyncio
 import wmill
+import base64
 from typing import Optional, List, Dict, Any, Union
 
-from koda import KodaClient, ScrapeRequest, BatchScrapeRequest
+from crawlee.router import Router
+from crawlee.crawlers import PlaywrightCrawlingContext
+
+from koda import KodaClient
+from koda.config.main import settings
+from koda.integrations.crawlee import PlaywrightCrawler
+
+router = Router[PlaywrightCrawlingContext]()
+
+@router.default_handler
+async def default_handler(context: PlaywrightCrawlingContext) -> None:
+    # Resolve canonical URL
+    page = context.page
+    
+    # Wait for the page to load, but we don't need a deep crawl
+    await page.wait_for_timeout(2000)
+    
+    resolved_url = page.url
+    
+    # Extract canonical URL if possible
+    try:
+        og_url = await page.locator('meta[property="og:url"]').get_attribute('content', timeout=2000)
+        if og_url:
+            resolved_url = og_url
+    except Exception:
+        pass
+        
+    parts = resolved_url.split("/")
+    if len(parts) > 4 and "@" in parts[3]:
+        base_profile_url = "/".join(parts[:4])
+    else:
+        base_profile_url = resolved_url.rstrip("/")
+        
+    # Enqueue sub-tabs
+    tabs = context.request.user_data.get("tabs", ["videos", "shorts"])
+    
+    # 1. Home
+    await context.enqueue_links(
+        urls=[base_profile_url],
+        user_data={"label": "TAB", "tab_name": "Home", **context.request.user_data}
+    )
+    
+    # 2. About
+    await context.enqueue_links(
+        urls=[f"{base_profile_url}?about=1"],
+        user_data={"label": "TAB", "tab_name": "About", **context.request.user_data}
+    )
+    
+    # 3. Sub Tabs
+    for tab in tabs:
+        await context.enqueue_links(
+            urls=[f"{base_profile_url}/{tab}"],
+            user_data={"label": "TAB", "tab_name": tab.capitalize(), **context.request.user_data}
+        )
+
+@router.handler('TAB')
+async def tab_handler(context: PlaywrightCrawlingContext) -> None:
+    page = context.page
+    user_data = context.request.user_data
+    tab_name = user_data["tab_name"]
+    normalized_formats = user_data.get("normalized_formats", ["markdown"])
+    has_screenshot = user_data.get("has_screenshot", False)
+    
+    # 1. Click consent
+    try:
+        consent_selector = "ytd-consent-bump-v2-lightbox button:has-text('Accept'), ytd-consent-bump-v2-lightbox button:has-text('Agree')"
+        await page.locator(consent_selector).click(timeout=2000)
+        await page.wait_for_timeout(1000)
+    except Exception:
+        pass # Consent might not exist
+        
+    # About specific click
+    if tab_name == "About":
+        try:
+            about_selector = "button[aria-label^=\"Description\"]:visible, button:has-text('...more'):visible, button:has-text('more links'):visible, ytd-channel-about-metadata-renderer:visible"
+            await page.locator(about_selector).click(timeout=2000)
+            await page.wait_for_timeout(2000)
+        except Exception:
+            pass
+
+    # 2. Scroll specific actions
+    if tab_name not in ["Home", "About"]:
+        await page.evaluate("window.scrollBy(0, 1000);")
+        await page.wait_for_timeout(1500)
+        await page.evaluate("window.scrollBy(0, 1000);")
+        await page.wait_for_timeout(1500)
+        await page.evaluate("window.scrollBy(0, 780);")
+        await page.wait_for_timeout(1500)
+        
+    # Wait for actions passed
+    actions = user_data.get("actions", [])
+    for action in actions:
+        if action.get("type") == "wait":
+            await page.wait_for_timeout(action.get("milliseconds", 1000))
+            
+    # 3. Extraction
+    extracted_data = {
+        "url": page.url,
+        "tab_name": tab_name
+    }
+    
+    if "html" in normalized_formats or "rawHtml" in normalized_formats:
+        extracted_data["html"] = await page.content()
+        
+    # Simple Readability fallback for Markdown
+    if "markdown" in normalized_formats:
+        # Since Koda's extractors aren't easily imported as a standalone function for a raw PW page,
+        # we pull basic text content or evaluate readability if needed.
+        # For this script we will use page.evaluate to extract text.
+        text = await page.evaluate("document.body.innerText")
+        extracted_data["markdown"] = text
+        
+    if "links" in normalized_formats:
+        links = await page.evaluate("Array.from(document.querySelectorAll('a')).map(a => a.href)")
+        extracted_data["links"] = list(set(links))
+        
+    if "screenshot" in normalized_formats or "screenshots" in normalized_formats or has_screenshot:
+        screenshot_bytes = await page.screenshot(full_page=True)
+        b64_str = base64.b64encode(screenshot_bytes).decode('utf-8')
+        extracted_data["screenshot"] = f"data:image/jpeg;base64,{b64_str}"
+        
+    # 4. Push to Dataset
+    await context.push_data(extracted_data)
+
 
 async def _run_youtube_scrape(
     url: str,
@@ -19,14 +143,27 @@ async def _run_youtube_scrape(
     webhook: Optional[Dict[str, Any]],
     **kwargs
 ) -> Dict[str, Any]:
-    # 1. Fetch S3 config if resource is provided
-    s3_config = None
-    if s3_resource:
-        s3_config = wmill.get_resource(s3_resource)
-        if not s3_config:
-            return {"success": False, "error": f"S3 Resource '{s3_resource}' not found."}
+    
+    # Set Webhook globally
+    if webhook:
+        settings.webhook_url = webhook.get("url")
+        settings.webhook_events = webhook.get("events")
+        settings.webhook_headers = webhook.get("headers")
 
-    # 2. Normalize Formats
+    # Fetch S3 config if resource is provided and set globally
+    if s3_resource:
+        s3_config_dict = wmill.get_resource(s3_resource)
+        if not s3_config_dict:
+            return {"success": False, "error": f"S3 Resource '{s3_resource}' not found."}
+            
+        settings.s3_bucket_name = s3_config_dict.get("bucket")
+        settings.s3_access_key_id = s3_config_dict.get("accessKey") or s3_config_dict.get("access_key")
+        settings.s3_secret_access_key = s3_config_dict.get("secretKey") or s3_config_dict.get("secret_key")
+        settings.s3_endpoint_url = s3_config_dict.get("endPoint") or s3_config_dict.get("endpoint_url")
+        settings.s3_region_name = s3_config_dict.get("region", "us-east-1")
+        if "pathStyle" in s3_config_dict or "path_style" in s3_config_dict:
+            settings.s3_addressing_style = "path" if s3_config_dict.get("pathStyle", s3_config_dict.get("path_style")) else "auto"
+
     normalized_formats = []
     if formats:
         for f in formats:
@@ -35,182 +172,54 @@ async def _run_youtube_scrape(
             else:
                 normalized_formats.append(str(f))
 
-    # Configuration Overrides
-    tabs = kwargs.get("tabs", ["videos", "shorts"])
-    scroll_limit = kwargs.get("scroll_limit", 5)
+    has_screenshot = any(
+        f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") 
+        for f in formats
+    )
 
     try:
         async with KodaClient() as client:
-            # 3. Resolve Canonical URL
-            # Execute a fast targeted scrape to get the resolved URL
-            initial_req = ScrapeRequest(
-                url=url,
-                formats=["metadata"], # No need for markdown, we just want the URL
-                onlyMainContent=False,
-                timeout=timeout,
-                actions=[
-                    {"type": "wait", "milliseconds": 2000}
-                ]
-            )
-            initial_res = await client.scrape(initial_req)
-            if initial_res.error:
-                return {"success": False, "error": f"Failed to resolve URL: {initial_res.error}"}
-
-            resolved_url = url
-            # The ScrapeResponse URL will not be updated from crawl4ai internally in ScrapeJob yet,
-            # but we can try to extract from metadata if available, 
-            # OR we can just rely on the user input url since the batch scrape handles redirects.
-            # However, batch targets need to be built off the resolved url.
-            # Wait, `initial_res.metadata` might have `og:url`!
-            if initial_res.metadata and isinstance(initial_res.metadata, dict) and initial_res.metadata.get("og:url"):
-                resolved_url = initial_res.metadata.get("og:url")
-            elif initial_res.metadata and isinstance(initial_res.metadata, dict) and initial_res.metadata.get("url"):
-                resolved_url = initial_res.metadata.get("url")
-
-            # Parse base profile URL (remove any trailing tab paths)
-            parts = resolved_url.split("/")
-            # A typical youtube URL is https://www.youtube.com/@handle or https://www.youtube.com/@handle/videos
-            if len(parts) > 4 and "@" in parts[3]:
-                base_profile_url = "/".join(parts[:4])
-            else:
-                base_profile_url = resolved_url.rstrip("/")
-
-            # 4. Construct Heterogeneous Batch Scrape Requests
-            target_requests = []
-            
-            consent_action = {
-                "type": "click",
-                "selector": "ytd-consent-bump-v2-lightbox button:has-text('Accept'), ytd-consent-bump-v2-lightbox button:has-text('Agree')",
-                "all": True,
-                "timeout": 2000
-            }
-            
-            # Specific sequence to scroll exactly 2780px
-            scroll_actions_2780 = [
-                {"type": "executeJavascript", "script": "window.scrollBy(0, 1000);"},
-                {"type": "wait", "milliseconds": 1500},
-                {"type": "executeJavascript", "script": "window.scrollBy(0, 1000);"},
-                {"type": "wait", "milliseconds": 1500},
-                {"type": "executeJavascript", "script": "window.scrollBy(0, 780);"},
-                {"type": "wait", "milliseconds": 1500}
-            ]
-            
-            # Explicitly enforce fullPage screenshots by passing the Firecrawl format object
-            request_formats = normalized_formats.copy()
-            has_screenshot = False
-            for i, f in enumerate(request_formats):
-                if f == "screenshot":
-                    request_formats[i] = {"type": "screenshot", "fullPage": True}
-                    has_screenshot = True
-                elif isinstance(f, dict) and f.get("type") == "screenshot":
-                    has_screenshot = True
-                    if "fullPage" not in f:
-                        request_formats[i]["fullPage"] = True
-
-            if not has_screenshot and ("screenshot" in formats or "screenshots" in formats):
-                request_formats.append({"type": "screenshot", "fullPage": True})
-                
-            # Job 1: Home Page - Click consent and take full page screenshot
-            target_requests.append(ScrapeRequest(
-                url=base_profile_url,
-                formats=request_formats,
-                actions=[consent_action, {"type": "wait", "milliseconds": 2000}] + actions,
-                onlyMainContent=onlyMainContent,
-                timeout=timeout,
-                s3_config=s3_config,
-                webhook=webhook
-            ))
-            
-            # Job 2: About Popup - Click consent, open popup, take full page screenshot
-            target_requests.append(ScrapeRequest(
-                url=f"{base_profile_url}?about=1",
-                formats=request_formats,
-                actions=[
-                    consent_action,
-                    {"type": "wait", "milliseconds": 1000},
-                    {
-                        "type": "click",
-                        "selector": "button[aria-label^=\"Description\"]:visible, button:has-text('...more'):visible, button:has-text('more links'):visible, ytd-channel-about-metadata-renderer:visible",
-                        "timeout": 5000
-                    },
-                    {"type": "wait", "milliseconds": 2000}
-                ] + actions,
-                onlyMainContent=onlyMainContent,
-                timeout=timeout,
-                s3_config=s3_config,
-                webhook=webhook
-            ))
-            
-            # Jobs 3-9: Sub-Tabs - Consent, scroll exactly 2780px, take full page screenshot
-            for tab in tabs:
-                target_requests.append(ScrapeRequest(
-                    url=f"{base_profile_url}/{tab}",
-                    formats=request_formats,
-                    actions=[consent_action] + scroll_actions_2780 + actions,
-                    onlyMainContent=onlyMainContent,
-                    timeout=timeout,
-                    s3_config=s3_config,
-                    webhook=webhook
-                ))
-
-            # 5. Execute Heterogeneous Batch Scrape
-            batch_req = BatchScrapeRequest(
-                requests=target_requests,
-                timeout=timeout,
-                ignoreInvalidURLs=True,
-                s3_config=s3_config,
-                webhook=webhook
+            crawler = PlaywrightCrawler(
+                client=client,
+                request_handler=router,
+                max_request_retries=1
             )
             
-            batch_response = await client.batch_scrape(batch_req)
+            # Start Crawl
+            await crawler.run([
+                {
+                    "url": url,
+                    "user_data": {
+                        "tabs": kwargs.get("tabs", ["videos", "shorts"]),
+                        "normalized_formats": normalized_formats,
+                        "actions": actions,
+                        "has_screenshot": has_screenshot
+                    }
+                }
+            ])
             
-            if not batch_response.success:
-                return {"success": False, "error": "Batch scrape initialization failed."}
-
-            # 6. Format Response
+            # Post Crawl Formatting
+            dataset = await crawler.get_dataset()
+            data_obj = await dataset.get_data()
+            items = data_obj.items
+            
             aggregated_markdown = ""
             aggregated_html = ""
             aggregated_links = {}
             aggregated_screenshots = {}
-
-            tab_names = ["Home", "About"] + [t.capitalize() for t in tabs]
             
-            url_to_tab = {
-                base_profile_url: "Home",
-                f"{base_profile_url}?about=1": "About",
-            }
-            for t in tabs:
-                url_to_tab[f"{base_profile_url}/{t}"] = t.capitalize()
-
-            if batch_response.results:
-                for idx, result in enumerate(batch_response.results):
-                    # Robust tab matching by URL, fallback to order index
-                    tab_name = url_to_tab.get(result.url)
-                    if not tab_name:
-                        for u, t in url_to_tab.items():
-                            if u.rstrip('/') == result.url.rstrip('/') or (u.split('?')[0] == result.url.split('?')[0] and u in result.url):
-                                tab_name = t
-                                break
-                    if not tab_name:
-                        tab_name = tab_names[idx] if idx < len(tab_names) else f"Tab_{idx}"
-                        
-                    if result.error:
-                        aggregated_markdown += f"\n\n# {tab_name}\nError: {result.error}\n"
-                        continue
-
-                    if result.markdown:
-                        aggregated_markdown += f"\n\n# {tab_name}\n{result.markdown}\n"
-                    if result.html:
-                        aggregated_html += f"<!-- Tab: {tab_name} -->\n{result.html}\n"
-                    if result.links:
-                        aggregated_links[tab_name] = result.links
-                    if result.screenshot:
-                        aggregated_screenshots[tab_name] = result.screenshot
-                    elif hasattr(result, "_screenshot_bytes"):
-                        import base64
-                        b64_str = base64.b64encode(getattr(result, "_screenshot_bytes")).decode('utf-8')
-                        aggregated_screenshots[tab_name] = f"data:image/jpeg;base64,{b64_str}"
-
+            for item in items:
+                tab_name = item.get("tab_name", "Unknown")
+                
+                if "markdown" in item:
+                    aggregated_markdown += f"\n\n# {tab_name}\n{item['markdown']}\n"
+                if "html" in item:
+                    aggregated_html += f"<!-- Tab: {tab_name} -->\n{item['html']}\n"
+                if "links" in item:
+                    aggregated_links[tab_name] = item["links"]
+                if "screenshot" in item:
+                    aggregated_screenshots[tab_name] = item["screenshot"]
+            
             data = {}
             if "markdown" in normalized_formats:
                 data["markdown"] = aggregated_markdown.strip()
@@ -219,9 +228,11 @@ async def _run_youtube_scrape(
             if "links" in normalized_formats:
                 data["links"] = aggregated_links
             if "screenshot" in normalized_formats or "screenshots" in normalized_formats or has_screenshot:
-                # Return the dictionary mapping tabs to screenshots
                 data["screenshots"] = aggregated_screenshots
-
+                
+            # Note: The global Crawler hook (PlaywrightCrawler extended natively) 
+            # will have already zipped/uploaded the dataset to S3 during its teardown if S3 is configured!
+            
             return {
                 "success": True,
                 "data": data
@@ -245,6 +256,7 @@ def main(
 ) -> Dict[str, Any]:
     """
     Scrape a YouTube profile URL. Extracts the channel handle and performs a multi-tab scrape behind the scenes.
+    Uses Crawlee for orchestration and Playwright automation, passing S3/Webhook to global settings.
     """
     return asyncio.run(_run_youtube_scrape(
         url=url,
