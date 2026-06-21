@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.20] - 2026-06-21
+
+### 🚀 Features
+
+- Add flexible CSP management strategies
+
+### 🚜 Refactor
+
+- Remove default CSP preferences from playwright
+
 ## [26.6.19] - 2026-06-21
 
 ### 🚀 Features
@@ -12,6 +22,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Add integration test for CSP bypass
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.19
 
 ## [26.6.18] - 2026-06-20
 
