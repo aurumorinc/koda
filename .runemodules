@@ -16,3 +16,6 @@
 [runemodule ".agents/skills/python-logging/modules/python-logging"]
 	url = https://github.com/aurumorinc/python-loggin/tree/main
 	path = .agents/skills/python-logging/modules/python-logging
+[runemodule ".agents/skills/playwright/modules/playwright"]
+	url = https://github.com/microsoft/playwrigh/tree/main
+	path = .agents/skills/playwright/modules/playwright

@@ -381,3 +381,7 @@ plans/
 .agents/skills/stagehand/modules/stagehand
 .agents/skills/windmill/modules/windmill
 .agents/skills/cloakbrowser/modules/CloakBrowser
+.agents/skills/playwright/modules/playwright
+
+# Windmill
+*.resource.yaml
