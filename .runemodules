@@ -19,3 +19,6 @@
 [runemodule ".agents/skills/playwright/modules/playwright"]
 	url = https://github.com/microsoft/playwrigh/tree/main
 	path = .agents/skills/playwright/modules/playwright
+[runemodule ".agents/skills/crawlee/modules/crawlee-python"]
+	url = https://github.com/apify/crawlee-python/tree/master
+	path = .agents/skills/crawlee/modules/crawlee-python

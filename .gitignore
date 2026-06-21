@@ -385,3 +385,5 @@ plans/
 
 # Windmill
 *.resource.yaml
+.agents/skills/crawlee-python/modules/crawlee-python
+.agents/skills/crawlee/modules/crawlee-python

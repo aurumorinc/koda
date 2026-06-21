@@ -2,6 +2,57 @@
 
 Koda is a resilient, high-performance browser automation and RPA framework.
 
+## Crawlee Integration
+
+Koda natively integrates with [Apify's Crawlee for Python](https://crawlee.dev/python/) to provide highly resilient web crawling. We export a customized `PlaywrightCrawler` that acts as a drop-in replacement for the native Crawlee crawler.
+
+### Why use Koda's PlaywrightCrawler?
+Unlike the standalone Crawlee implementation, Koda's `PlaywrightCrawler`:
+- **Routes through Koda's `BrowserSession`**: All page provisioning uses Koda's internal lifecycle management. This means your Crawlee spiders automatically benefit from **`invisible-playwright`** (stealth bypasses) and **PostHog Telemetry**.
+- **Shared Context**: It prevents duplicate unmanaged Playwright instances from spinning up, saving memory and keeping proxy/CSP bypass strategies intact.
+- **`KodaClient` Access**: Internal route handlers have direct access to your `KodaClient` via `context.crawler.client`, allowing you to seamlessly upload scraped screenshots to S3 or dispatch Webhooks mid-crawl.
+
+### Usage
+
+```python
+import asyncio
+from koda.client import KodaClient
+from koda.integrations.crawlee import PlaywrightCrawler
+from crawlee.crawlers import PlaywrightCrawlingContext
+
+async def main():
+    # 1. Initialize KodaClient as usual (handles configuration, S3, Webhooks, Caching)
+    async with KodaClient() as client:
+        
+        # 2. Initialize the Koda crawler instead of the native one
+        # We pass the client instance so we can access it inside our routes
+        crawler = PlaywrightCrawler(
+            client=client,
+            max_requests_per_crawl=50,
+        )
+
+        @crawler.router.default_handler
+        async def handler(context: PlaywrightCrawlingContext) -> None:
+            context.log.info(f"Processing {context.request.url} via Koda Engine")
+            
+            # The 'context.page' is backed by Koda's invisible-playwright stealth context
+            screenshot_bytes = await context.page.screenshot(full_page=True)
+            
+            # Using KodaClient's file service to upload to S3 directly from the router
+            # Note: client is accessible via the crawler object
+            # s3_url = await context.crawler.client.file.upload(...)
+            
+            await context.push_data({
+                'url': context.request.url,
+                'title': await context.page.title(),
+            })
+
+        await crawler.run(['https://www.youtube.com/@mkbhd'])
+
+if __name__ == '__main__':
+    asyncio.run(main())
+```
+
 ## Stagehand Cache Repository
 
 Koda includes a unified, asynchronous cache repository designed to integrate seamlessly with **Stagehand**'s auto-caching and self-healing capabilities. This allows Stagehand to persist resolved XPaths offsite (e.g., in Windmill's state storage) across distributed worker executions, achieving 0ms LLM latency on subsequent runs.
