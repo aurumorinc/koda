@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:b65cbc3a6dc4c5af061834c0ff395869c1a5fca504ce58f776f64387b12da94b"
+content_hash = "sha256:2138678f5ac6e536854dee8f8a465148fed2bf279a222cc91c3cb0f25e19f45e"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -275,6 +275,15 @@ files = [
 ]
 
 [[package]]
+name = "async-timeout"
+version = "5.0.1"
+summary = ""
+files = [
+    {file = "async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c"},
+    {file = "async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3"},
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 summary = ""
@@ -383,6 +392,15 @@ dependencies = [
 files = [
     {file = "browserforge-1.2.4-py3-none-any.whl", hash = "sha256:fb1c14e62ac09de221dcfc73074200269f697596c642cb200ceaab1127a17542"},
     {file = "browserforge-1.2.4.tar.gz", hash = "sha256:05686473793769856ebd3528c69071f5be0e511260993e8b2ba839863711a0c4"},
+]
+
+[[package]]
+name = "cachetools"
+version = "7.1.4"
+summary = ""
+files = [
+    {file = "cachetools-7.1.4-py3-none-any.whl", hash = "sha256:323dc4127934744db5b54eb4924482d7edafbf9554e820d1531c2e08c0e4ef54"},
+    {file = "cachetools-7.1.4.tar.gz", hash = "sha256:437f55a4e0c1b01a4f3077cc470e6991d47430970e36fbcb77e2be0df4fc1cd6"},
 ]
 
 [[package]]
@@ -691,6 +709,30 @@ dependencies = [
 files = [
     {file = "crawl4ai-0.8.6-py3-none-any.whl", hash = "sha256:57e127e8113640d8358705b231111d3cd9cc4ab05d44705e724cebc4a383e09c"},
     {file = "crawl4ai-0.8.6.tar.gz", hash = "sha256:2a2afab05ae021435fe025cfc5732f5dcebcefd7ff9a529e41050642ee954316"},
+]
+
+[[package]]
+name = "crawlee"
+version = "1.7.2"
+summary = ""
+dependencies = [
+    "async-timeout",
+    "cachetools",
+    "colorama",
+    "impit",
+    "more-itertools",
+    "protego",
+    "psutil",
+    "pydantic",
+    "pydantic-settings",
+    "pyee",
+    "tldextract",
+    "typing-extensions",
+    "yarl",
+]
+files = [
+    {file = "crawlee-1.7.2-py3-none-any.whl", hash = "sha256:dd22b2c1fa6b39312222ec0e732344b22eb26aa53d33758ec9a1a8ad16725d4d"},
+    {file = "crawlee-1.7.2.tar.gz", hash = "sha256:362f3f9e43d7c28c8c0133f8787ad2ff77d159ff205b9a72f2013ece882298ac"},
 ]
 
 [[package]]
@@ -1262,6 +1304,48 @@ files = [
 ]
 
 [[package]]
+name = "impit"
+version = "0.13.0"
+summary = ""
+files = [
+    {file = "impit-0.13.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:b492ecda596bcb7562ba8d09d74124bb01eca95dc1ea76c86f771fdbe8cfec37"},
+    {file = "impit-0.13.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ab993d07e683293c293709c5ed8633fc5b6a3dec678c885f9dd08da7823afa58"},
+    {file = "impit-0.13.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:138a27f91f58552ea5b55f8b0c902925989faaf18ea63493bdaa733cbfa17b9a"},
+    {file = "impit-0.13.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:5cab0c0d14b7048572c5afae85fefaf1d5e76789f63bc5ec60f95ad2b94792f6"},
+    {file = "impit-0.13.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:b6c33665c3fd8738fc20fb15ad0d8b8072e634f40c697139f176cde739e6e97a"},
+    {file = "impit-0.13.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:f97424837546b32d5ff9bbc863dc00ff488b68b4b068b11e92b2e995e75c75ff"},
+    {file = "impit-0.13.0-cp311-cp311-win_amd64.whl", hash = "sha256:ab3e893f532c928e2ce666be4d8aef704483ed72988c07c5d55cb8492420a2b8"},
+    {file = "impit-0.13.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:a5662d3ab997a2b6a8f466ce1d39c8ec8414d4605591a65ca744f93655a17cab"},
+    {file = "impit-0.13.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:df631b8986dcc8fc9b481020e41442eea2f4a7021bc65bc5ee6a3ff79496ce3e"},
+    {file = "impit-0.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:65082928de7552bc204fb4f49b0d82e3f1744fb0ffa7d7029324c7192d7ca047"},
+    {file = "impit-0.13.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:424b82c31ef447e4b9ba493a727911e6cc122a4f90efd4c07c4dce5ead936d35"},
+    {file = "impit-0.13.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:000909dcca3ac490a8f522be45bc718e98c18139a38bb6c28b24cabb354de6ff"},
+    {file = "impit-0.13.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:a7dd696711505cd80cc36c5a01e17a49b3d88d535bd8b56f6b92f9be9e6667b8"},
+    {file = "impit-0.13.0-cp312-cp312-win_amd64.whl", hash = "sha256:5ed4578d7d9ae4d792d06f2f7a308d576cf24d1926c2c751dd80140f8ecae279"},
+    {file = "impit-0.13.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:05d7b42b473d1266661d8f72f7b14757cf6c8663ed490dd22bf57edaba6b60c0"},
+    {file = "impit-0.13.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:bd39ebcce8f04f7154ee4bc6be140d2929efd6cae42dd80e7d4e56ac4f68f02f"},
+    {file = "impit-0.13.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:069db418a115566c66ce97be611a2ac525af331e72ee8d69826532cffff3230c"},
+    {file = "impit-0.13.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:3b9a04a4498ceb41a6c0b882218b21799819d7caf690686d1109c28a04a97a33"},
+    {file = "impit-0.13.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:067eaa427b93c08ff23c5b18a44cab7f41b817e2b87b962e3e19616834981498"},
+    {file = "impit-0.13.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:512c361c6cbde13f24e7171b95417f8e8f4a9cc3d4d496ea3f57a231c72981ef"},
+    {file = "impit-0.13.0-cp313-cp313-win_amd64.whl", hash = "sha256:4750df36dc0f950b27e1c604c477b004f28eb7029f5232761ca0adfdc32794f3"},
+    {file = "impit-0.13.0-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:0021029050561efaeb2367fc8ae7cb7351df65baaff32de90bb4d576f2e9fca3"},
+    {file = "impit-0.13.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:2664ad99c4d90f4452fc54c80d2c7c16aba529dbd8010df4747ab22fb2c6d805"},
+    {file = "impit-0.13.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fb11c6a77898c1ff847842d145e7fc2bba0bef17d9a223d2053928b660d3afb2"},
+    {file = "impit-0.13.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:7f286d65167dc5a9675deb7f3f895a068f8315637c89a07cd1c7d7fa568dc8dc"},
+    {file = "impit-0.13.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:84148336a6274c3af8431ec0d940ffbeb5073aed318ac147081e1e6235b3b57b"},
+    {file = "impit-0.13.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:791d5bb52ed95d02bdc5307741a5e0c502146a8d13225257ede2f857081577ab"},
+    {file = "impit-0.13.0-cp314-cp314-win_amd64.whl", hash = "sha256:58889f694c33eef544e251038755e2a70898e139511bd51e9603434a73a24b1a"},
+    {file = "impit-0.13.0-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:c844fb17099afc30a4293151139b372811ed70fd555a20d31a03ff508f8097a6"},
+    {file = "impit-0.13.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:070ad853ba250a8c0e3e521be96c6c858debe7ba4e91ce2e37467d1cfe4ea3c9"},
+    {file = "impit-0.13.0-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3b1c6f6363711d6de52bbb71f93eee1662875b097d574d630a91cf193b552e47"},
+    {file = "impit-0.13.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:d5f18f2abc06bb236122493ea046aea484ae1f076678ecc7d2c2c850e9b07d0d"},
+    {file = "impit-0.13.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:3851727dd25507bcf838d113dd55c7a8edfa5e2073dca8c93d9df02856065726"},
+    {file = "impit-0.13.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:cd38b86c46153a0d840d69bc56d681d61f79345088504a0cc5118a07089bab11"},
+    {file = "impit-0.13.0.tar.gz", hash = "sha256:ec5ff2932c6ccdd3004b0f5e0d0d9bce5c8a6f48df4f226e5ee172bc79952df8"},
+]
+
+[[package]]
 name = "importlib-metadata"
 version = "9.0.0"
 summary = ""
@@ -1286,7 +1370,7 @@ files = [
 name = "invisible-playwright"
 version = "0.2.0"
 git = "https://github.com/feder-cr/invisible_playwright.git"
-revision = "29262a644eae368f544b005782ce7c54701796c2"
+revision = "8f4b20a19da5dbee8a9ca7bf5036e36e09775b5d"
 summary = ""
 dependencies = [
     "maxminddb",
@@ -1698,6 +1782,15 @@ dependencies = [
 files = [
     {file = "mkinit-1.2.0-py3-none-any.whl", hash = "sha256:172755988cdcdc5212d0b76b586ec4765c2bff9ae41266a93f5f4b962c3d2def"},
     {file = "mkinit-1.2.0.tar.gz", hash = "sha256:4b776ca991ccedbb202b079bd3e573d753121baa2a4f330324247325c9a1d346"},
+]
+
+[[package]]
+name = "more-itertools"
+version = "11.1.0"
+summary = ""
+files = [
+    {file = "more_itertools-11.1.0-py3-none-any.whl", hash = "sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192"},
+    {file = "more_itertools-11.1.0.tar.gz", hash = "sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d"},
 ]
 
 [[package]]
@@ -2395,6 +2488,15 @@ files = [
 ]
 
 [[package]]
+name = "protego"
+version = "0.6.1"
+summary = ""
+files = [
+    {file = "protego-0.6.1-py3-none-any.whl", hash = "sha256:cc8e328c7698b352e8967e5feae770aa597e4965c60bbf7e8200ba8c5017d77b"},
+    {file = "protego-0.6.1.tar.gz", hash = "sha256:b2b740edd5c691d882a198a66b1d463bf0d574ec915c29f44d2da2bac8efe139"},
+]
+
+[[package]]
 name = "protobuf"
 version = "6.33.6"
 summary = ""
@@ -2716,9 +2818,9 @@ files = [
 
 [[package]]
 name = "python-logging"
-version = "26.6.1"
+version = "26.6.5"
 git = "https://github.com/aurumorinc/python-logging.git"
-revision = "9539b9fe23a9c131dd735f18846ab088ec8c402f"
+revision = "ce179fa0de42af73c0455677f8f709a35b6eec0c"
 summary = ""
 dependencies = [
     "opentelemetry-api",
@@ -2949,6 +3051,18 @@ dependencies = [
 files = [
     {file = "requests-2.34.2-py3-none-any.whl", hash = "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"},
     {file = "requests-2.34.2.tar.gz", hash = "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed"},
+]
+
+[[package]]
+name = "requests-file"
+version = "3.0.1"
+summary = ""
+dependencies = [
+    "requests",
+]
+files = [
+    {file = "requests_file-3.0.1-py2.py3-none-any.whl", hash = "sha256:d0f5eb94353986d998f80ac63c7f146a307728be051d4d1cd390dbdb59c10fa2"},
+    {file = "requests_file-3.0.1.tar.gz", hash = "sha256:f14243d7796c588f3521bd423c5dea2ee4cc730e54a3cac9574d78aca1272576"},
 ]
 
 [[package]]
@@ -3405,6 +3519,21 @@ files = [
     {file = "tiktoken-0.13.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:5cb65b60b9408563676d874a3a4ee573370066f0dc4e29d84e82e989c6517424"},
     {file = "tiktoken-0.13.0-cp314-cp314t-win_amd64.whl", hash = "sha256:85b78cc3a2c3d48723ca751fa981f1fedccd54194ca0471b957364353a898b07"},
     {file = "tiktoken-0.13.0.tar.gz", hash = "sha256:c9435714c3a84c2319499de9a300c0e604449dd0799ff246458b3bb6a7f433c1"},
+]
+
+[[package]]
+name = "tldextract"
+version = "5.3.1"
+summary = ""
+dependencies = [
+    "filelock",
+    "idna",
+    "requests",
+    "requests-file",
+]
+files = [
+    {file = "tldextract-5.3.1-py3-none-any.whl", hash = "sha256:6bfe36d518de569c572062b788e16a659ccaceffc486d243af0484e8ecf432d9"},
+    {file = "tldextract-5.3.1.tar.gz", hash = "sha256:a72756ca170b2510315076383ea2993478f7da6f897eef1f4a5400735d5057fb"},
 ]
 
 [[package]]
