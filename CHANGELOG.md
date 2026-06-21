@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.37] - 2026-06-21
+
+### 🚜 Refactor
+
+- Migrate youtube scraper to crawlee
+
 ## [26.6.36] - 2026-06-21
 
 ### 🚀 Features
@@ -16,6 +22,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Update dev dependencies
+- Release 26.6.36
 
 ## [26.6.35] - 2026-06-21
 
