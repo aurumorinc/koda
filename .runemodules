@@ -13,3 +13,6 @@
 [runemodule ".agents/skills/windmill/modules/windmill"]
 	url = https://github.com/windmill-labs/windmill/tree/main
 	path = .agents/skills/windmill/modules/windmill
+[runemodule ".agents/skills/python-logging/modules/python-logging"]
+	url = https://github.com/aurumorinc/python-loggin/tree/main
+	path = .agents/skills/python-logging/modules/python-logging
