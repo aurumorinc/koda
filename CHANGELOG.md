@@ -2,12 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.30] - 2026-06-21
+
+### Build
+
+- Update youtube scrape script dependencies
+
 ## [26.6.29] - 2026-06-21
 
 ### ⚙️ Miscellaneous Tasks
 
 - Update koda dependency management
 - Upgrade koda dependency to version 26.6.28
+- Release 26.6.29
 
 ## [26.6.28] - 2026-06-21
 
