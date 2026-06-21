@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.31] - 2026-06-21
+
+### 🚀 Features
+
+- Add s3 and webhook support to batch scrape
+
 ## [26.6.30] - 2026-06-21
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.30
 
 ### Build
 
