@@ -1,0 +1,6 @@
+version: v2
+locks:
+  f/koda/batch_scrape: 9e41fd2ec03b7d5c7a176da2fac2be59e359cc650df7c420c3390490781cdcdf
+  f/koda/crawl: 36f9e8d2a01ef87860d0f9451f460941d06796413f6cde57e80c31db1308f490
+  f/koda/scouts/scrape_youtube_profile: b80d3d1544ed7539b2388765471829cb44f35566a4abd8f821e7f0043e49a2dc
+  f/koda/scrape: 82b2eac5fb3913012cab74623c73ac141466be83854893dd012d6d80bae75a34

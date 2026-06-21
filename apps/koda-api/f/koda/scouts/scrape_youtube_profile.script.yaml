@@ -1,0 +1,49 @@
+summary: Scrape YouTube Profile
+description: Scrape a YouTube profile URL. Extracts the channel handle and
+  performs a multi-tab scrape behind the scenes.
+lock: '!inline f/koda/scouts/scrape_youtube_profile.script.lock'
+kind: script
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  properties:
+    actions:
+      type: array
+      description: ''
+      default: []
+      items:
+        type: string
+      originalType: string[]
+    formats:
+      type: array
+      description: ''
+      default:
+        - markdown
+      items:
+        type: string
+      originalType: string[]
+    onlyMainContent:
+      type: boolean
+      description: ''
+      default: true
+    s3_resource:
+      type: string
+      description: ''
+      default: f/koda/default_s3
+      originalType: string
+    timeout:
+      type: integer
+      description: ''
+      default: 300000
+    url:
+      type: string
+      description: The URL to the YouTube profile (can be a redirect or shortened link)
+      default: null
+      originalType: string
+    webhook:
+      type: object
+      description: ''
+      default: null
+  required:
+    - url
+tag: koda
