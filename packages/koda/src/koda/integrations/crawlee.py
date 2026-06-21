@@ -146,6 +146,30 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
         **kwargs
     ):
         self.client = client
+        
+        # Register a pre-navigation hook to automatically dispatch webhooks on push_data
+        async def _pre_hook(context: PlaywrightCrawlingContext) -> None:
+            original_push_data = context.push_data
+            
+            async def custom_push_data(data: Any, *pd_args, **pd_kwargs) -> None:
+                # Execute the original push
+                await original_push_data(data, *pd_args, **pd_kwargs)
+                
+                # Intercept and dispatch webhook if configured globally
+                if settings.webhook_url:
+                    webhook_config = WebhookConfig(
+                        url=settings.webhook_url,
+                        events=settings.webhook_events,
+                        headers=settings.webhook_headers
+                    )
+                    await dispatch_webhook(webhook_config, "crawl.page", data)
+            
+            context.push_data = custom_push_data
+            
+        pre_hooks = list(kwargs.get("pre_navigation_hooks") or [])
+        pre_hooks.append(_pre_hook)
+        kwargs["pre_navigation_hooks"] = pre_hooks
+
         # We don't initialize the browser_pool here because we need the context
         # which is only available inside the run() async context.
         # But Crawlee might require it. We will override it in run().
@@ -172,27 +196,6 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
             
             # Replace the crawler's default browser pool with our custom one
             self._browser_pool = koda_browser_pool
-            
-            # Register a pre-navigation hook to automatically dispatch webhooks on push_data
-            async def _pre_hook(context: PlaywrightCrawlingContext) -> None:
-                original_push_data = context.push_data
-                
-                async def custom_push_data(data: Any, *pd_args, **pd_kwargs) -> None:
-                    # Execute the original push
-                    await original_push_data(data, *pd_args, **pd_kwargs)
-                    
-                    # Intercept and dispatch webhook if configured globally
-                    if settings.webhook_url:
-                        webhook_config = WebhookConfig(
-                            url=settings.webhook_url,
-                            events=settings.webhook_events,
-                            headers=settings.webhook_headers
-                        )
-                        await dispatch_webhook(webhook_config, "crawl.page", data)
-                
-                context.push_data = custom_push_data
-
-            self.pre_navigation_hooks.append(_pre_hook)
 
             # Also ensure the pool is started correctly.
             # BasePlaywrightCrawler normally starts the pool in its own run method.
