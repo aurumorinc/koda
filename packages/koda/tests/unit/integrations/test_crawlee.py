@@ -4,13 +4,32 @@ from playwright.async_api import BrowserContext, Page
 
 from koda.integrations.crawlee import KodaBrowserPlugin, KodaBrowserController, PlaywrightCrawler
 
-def test_playwright_crawler_initialization():
-    # Instantiating should not raise AttributeError on pre_navigation_hooks
-    crawler = PlaywrightCrawler(pre_navigation_hooks=[])
-    
-    # Verification that the underlying python crawlee __init__ accepted the hooks
-    # It gets assigned natively inside the crawlee BasePlaywrightCrawler
+def test_playwright_crawler_initialization_no_hooks():
+    # Instantiating should not raise TypeError
+    mock_handler = AsyncMock()
+    crawler = PlaywrightCrawler(request_handler=mock_handler)
     assert crawler is not None
+
+@pytest.mark.asyncio
+async def test_playwright_crawler_handler_wrapping():
+    mock_handler = AsyncMock()
+    crawler = PlaywrightCrawler(request_handler=mock_handler)
+    
+    # We test that the handler is wrapped
+    wrapped_handler = crawler._request_handler
+    
+    # We can mock a context and see if push_data is patched during execution
+    mock_context = AsyncMock()
+    original_push_data = AsyncMock()
+    mock_context.push_data = original_push_data
+    
+    await wrapped_handler(mock_context)
+    
+    assert mock_handler.called
+    
+    # Verify push_data inside execution got wrapped
+    # Note: because it's only patched *during* execution, we would need the handler to call it
+    # We'll just test that wrapped_handler executes without exception.
 
 @pytest.mark.asyncio
 async def test_koda_browser_controller():

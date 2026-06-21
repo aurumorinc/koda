@@ -147,28 +147,35 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
     ):
         self.client = client
         
-        # Register a pre-navigation hook to automatically dispatch webhooks on push_data
-        async def _pre_hook(context: PlaywrightCrawlingContext) -> None:
-            original_push_data = context.push_data
+        original_handler = kwargs.pop('request_handler', None)
+        args_list = list(args)
+        if not original_handler and args_list:
+            original_handler = args_list.pop(0)
             
-            async def custom_push_data(data: Any, *pd_args, **pd_kwargs) -> None:
-                # Execute the original push
-                await original_push_data(data, *pd_args, **pd_kwargs)
+        if original_handler:
+            async def koda_wrapped_handler(context: PlaywrightCrawlingContext, *h_args, **h_kwargs) -> None:
+                original_push_data = context.push_data
                 
-                # Intercept and dispatch webhook if configured globally
-                if settings.webhook_url:
-                    webhook_config = WebhookConfig(
-                        url=settings.webhook_url,
-                        events=settings.webhook_events,
-                        headers=settings.webhook_headers
-                    )
-                    await dispatch_webhook(webhook_config, "crawl.page", data)
-            
-            context.push_data = custom_push_data
-            
-        pre_hooks = list(kwargs.get("pre_navigation_hooks") or [])
-        pre_hooks.append(_pre_hook)
-        kwargs["pre_navigation_hooks"] = pre_hooks
+                async def custom_push_data(data: Any, *pd_args, **pd_kwargs) -> None:
+                    # Execute the original push
+                    await original_push_data(data, *pd_args, **pd_kwargs)
+                    
+                    # Intercept and dispatch webhook if configured globally
+                    if settings.webhook_url:
+                        from koda.modules.webhook.schema import WebhookConfig
+                        from koda.modules.webhook.utils import dispatch_webhook
+                        webhook_config = WebhookConfig(
+                            url=settings.webhook_url,
+                            events=settings.webhook_events,
+                            headers=settings.webhook_headers
+                        )
+                        await dispatch_webhook(webhook_config, "crawl.page", data)
+                
+                context.push_data = custom_push_data
+                return await original_handler(context, *h_args, **h_kwargs)
+                
+            kwargs['request_handler'] = koda_wrapped_handler
+            args = tuple(args_list)
 
         # We don't initialize the browser_pool here because we need the context
         # which is only available inside the run() async context.
