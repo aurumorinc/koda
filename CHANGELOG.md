@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.36] - 2026-06-21
+
+### 🚀 Features
+
+- Add webhook configuration to settings
+- Add webhook and S3 integration to crawler
+
+### 🚜 Refactor
+
+- Defer posthog integration initialization
+
+### ⚙️ Miscellaneous Tasks
+
+- Update dev dependencies
+
 ## [26.6.35] - 2026-06-21
 
 ### 🚜 Refactor
@@ -11,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Update gitignore patterns
+- Release 26.6.35
 
 ## [26.6.34] - 2026-06-21
 

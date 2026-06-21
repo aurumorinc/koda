@@ -1,6 +1,6 @@
 # /// script
 # dependencies = [
-#   "koda @ git+https://github.com/aurumorinc/koda.git@26.6.35#subdirectory=packages/koda",
+#   "koda @ git+https://github.com/aurumorinc/koda.git@26.6.36#subdirectory=packages/koda",
 # ]
 # ///
 import asyncio
