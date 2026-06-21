@@ -1,7 +1,31 @@
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock, call
 
-from koda.modules.browser.service import BrowserSession, _strip_csp_headers
+from koda.modules.browser.service import (
+    BrowserSession, 
+    _strip_csp_headers, 
+    _native_playwright_interceptor,
+    _invisible_playwright_modifier,
+    CSP_STRATEGIES
+)
+
+@pytest.mark.asyncio
+async def test_native_playwright_interceptor():
+    mock_context = AsyncMock()
+    await _native_playwright_interceptor(mock_context)
+    mock_context.route.assert_awaited_once_with("**/*", _strip_csp_headers)
+
+def test_invisible_playwright_modifier():
+    config = {"headless": True, "extra_prefs": {"existing": True}}
+    new_config = _invisible_playwright_modifier(config)
+    
+    assert new_config["headless"] is True
+    assert new_config["extra_prefs"]["existing"] is True
+    assert new_config["extra_prefs"]["security.csp.enable"] is False
+    assert new_config["extra_prefs"]["dom.security.trusted_types.enabled"] is False
+    
+    # Original config is unmodified
+    assert "security.csp.enable" not in config["extra_prefs"]
 
 @pytest.mark.asyncio
 async def test_strip_csp_headers_non_document():
@@ -57,13 +81,13 @@ async def test_launch_browser_yields_browser(mock_launchers):
     
     mock_launchers.get.return_value = mock_launcher
     
-    with patch("koda.config.main.settings.browser", "test_browser"):
+    with patch("koda.config.main.settings.browser", "default"):
         # Act
         async with BrowserSession({"key": "value"}) as ctx:
             assert ctx == mock_context
             
         # Assert
-        mock_launchers.get.assert_called_once_with("test_browser")
+        mock_launchers.get.assert_called_once_with("default")
         mock_launcher.assert_called_once_with("", {"key": "value"})
         mock_browser.new_context.assert_awaited_once_with(
             permissions=["geolocation", "notifications"],
@@ -85,7 +109,7 @@ async def test_launch_browser_yields_context(mock_launchers):
     
     mock_launchers.get.return_value = mock_launcher
     
-    with patch("koda.config.main.settings.browser", "test_browser"):
+    with patch("koda.config.main.settings.browser", "default"):
         # Act
         async with BrowserSession({"key": "value"}) as ctx:
             assert ctx == mock_context

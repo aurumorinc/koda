@@ -1,6 +1,8 @@
 import asyncio
-from typing import Any, AsyncGenerator, Dict, Protocol
+from typing import Any, AsyncGenerator, Dict, Protocol, Callable, Awaitable
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
+import copy
 from playwright.async_api import Page
 
 from koda.config.main import settings
@@ -39,6 +41,38 @@ async def _strip_csp_headers(route: Route):
     except Exception:
         # Fallback to continue if fetch fails (e.g. aborted request)
         await route.continue_()
+
+@dataclass(frozen=True)
+class CSPStrategy:
+    modify_launch_config: Callable[[Dict[str, Any]], Dict[str, Any]]
+    context_kwargs: Dict[str, Any]
+    intercept: Callable[[BrowserContext], Awaitable[None]]
+
+async def _native_playwright_interceptor(context: BrowserContext) -> None:
+    await context.route("**/*", _strip_csp_headers)
+
+def _invisible_playwright_modifier(config: dict) -> dict:
+    new_config = copy.deepcopy(config)
+    extra_prefs = new_config.get("extra_prefs", {})
+    extra_prefs.update({
+        "security.csp.enable": False,
+        "dom.security.trusted_types.enabled": False
+    })
+    new_config["extra_prefs"] = extra_prefs
+    return new_config
+
+CSP_STRATEGIES = {
+    "invisible_playwright": CSPStrategy(
+        modify_launch_config=_invisible_playwright_modifier,
+        context_kwargs={"bypass_csp": True},
+        intercept=_native_playwright_interceptor
+    ),
+    "default": CSPStrategy(
+        modify_launch_config=lambda c: c,
+        context_kwargs={"bypass_csp": True},
+        intercept=_native_playwright_interceptor
+    )
+}
 
 @asynccontextmanager
 async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "") -> AsyncGenerator[BrowserContext, None]:
@@ -85,13 +119,15 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
         loop.set_exception_handler(custom_exception_handler)
         loop._koda_exception_handler_set = True
     
+    strategy = CSP_STRATEGIES.get(browser_type, CSP_STRATEGIES["default"])
+    config = strategy.modify_launch_config(config)
+    
     async with launcher(user_data_dir, config) as browser_or_context:
             # Handle both Browser and persistent BrowserContext yields
             if hasattr(browser_or_context, 'new_context'):
-                context = await browser_or_context.new_context(
-                    permissions=["geolocation", "notifications"],
-                    bypass_csp=True
-                )
+                kwargs = {"permissions": ["geolocation", "notifications"]}
+                kwargs.update(strategy.context_kwargs)
+                context = await browser_or_context.new_context(**kwargs)
             else:
                 context = browser_or_context
                 await context.grant_permissions(["geolocation", "notifications"])
@@ -99,8 +135,8 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
             # Automatically accept dialogs to prevent hangs
             context.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
             
-            # Intercept CSP headers dynamically
-            await context.route("**/*", _strip_csp_headers)
+            # Intercept CSP dynamically based on strategy
+            await strategy.intercept(context)
             
             if settings.posthog_api_key and settings.posthog_host:
                 await setup_playwright_transport(context)

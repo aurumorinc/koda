@@ -19,15 +19,11 @@ async def launch_stealth_browser(headless: bool = True, **kwargs: Any) -> Browse
     try:
         from invisible_playwright.async_api import InvisiblePlaywright
         
-        # Merge default stealth preferences with any user-provided kwargs
-        extra_prefs = {
-            "security.csp.enable": False,
-            "dom.security.trusted_types.enabled": False,
-            **(kwargs.get("extra_prefs", {}))
-        }
+        # We merge any user-provided extra_prefs
+        extra_prefs = kwargs.get("extra_prefs", {})
         
-        # We instantiate InvisiblePlaywright with humanize=False and extra_prefs
-        # to ensure the PostHog monolith can execute without CSP blocks.
+        # We instantiate InvisiblePlaywright with humanize=False
+        # CSP overrides (if any) are handled by the BrowserSession's CSP strategy.
         _ip_instance = InvisiblePlaywright(
             headless=headless,
             humanize=kwargs.get("humanize", False),

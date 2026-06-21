@@ -23,7 +23,7 @@ async def test_launch_stealth_browser_success():
     mock_ip_class.assert_called_once_with(
         headless=True,
         humanize=False,
-        extra_prefs={"security.csp.enable": False, "dom.security.trusted_types.enabled": False}
+        extra_prefs={}
     )
 
 @pytest.mark.asyncio
