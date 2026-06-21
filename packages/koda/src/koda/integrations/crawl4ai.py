@@ -32,6 +32,11 @@ class KodaBrowserManager(BrowserManager):
         # Create a new page from the Koda context
         page = await self.koda_context.new_page()
         
+        # Enforce consistent viewport for screenshots if configured
+        width = self.config.viewport_width or 1366
+        height = self.config.viewport_height or 768
+        await page.set_viewport_size({"width": width, "height": height})
+        
         # Patch evaluate to prevent Crawl4AI from deadlocking the JS engine
         # on heavily obfuscated DOMs (like google.com) when combined with invisible_playwright
         import asyncio
