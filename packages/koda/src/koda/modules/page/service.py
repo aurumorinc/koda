@@ -72,15 +72,16 @@ class ScrapeJob:
                 
                 elif action.type == "scroll":
                     direction = action.direction or "down"
+                    amount = action.amount or 1000
                     if action.selector:
                         await page.evaluate(f"""
                             const el = document.querySelector('{action.selector}');
                             if (el) {{
-                                el.scrollBy(0, {1000 if direction == 'down' else -1000});
+                                el.scrollBy(0, {amount if direction == 'down' else -amount});
                             }}
                         """)
                     else:
-                        await page.mouse.wheel(0, 1000 if direction == 'down' else -1000)
+                        await page.mouse.wheel(0, amount if direction == 'down' else -amount)
                 
                 elif action.type == "executeJavascript":
                     if action.script:
@@ -134,6 +135,20 @@ class ScrapeJob:
                 if hasattr(action, 'ignoreError') and action.ignoreError is False:
                     raise
 
+        full_page = False
+        for f in self.request.formats:
+            if isinstance(f, dict) and f.get("type") == "screenshot" and f.get("fullPage"):
+                full_page = True
+                break
+
+        if full_page:
+            try:
+                shot_bytes = await page.screenshot(full_page=True, type="jpeg")
+                if shot_bytes:
+                    self.action_results["_format_screenshot_bytes"] = shot_bytes
+            except Exception as e:
+                print(f"Format full page screenshot failed: {e}")
+
         return page
 
     async def run(self) -> ScrapeResponse:
@@ -180,9 +195,13 @@ class ScrapeJob:
             if "images" in self.request.formats:
                 response.images = result.media.get("images", []) if result.media else []
                 
-            if "screenshot" in self.request.formats and result.screenshot:
-                screenshot_bytes = base64.b64decode(result.screenshot)
-                setattr(response, "_screenshot_bytes", screenshot_bytes)
+            if "_format_screenshot_bytes" in self.action_results:
+                setattr(response, "_screenshot_bytes", self.action_results.pop("_format_screenshot_bytes"))
+            else:
+                has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
+                if has_screenshot_format and result.screenshot:
+                    screenshot_bytes = base64.b64decode(result.screenshot)
+                    setattr(response, "_screenshot_bytes", screenshot_bytes)
                 
             if any(self.action_results.values()):
                 response.action_results = self.action_results
@@ -223,9 +242,10 @@ class BatchScrapeJob:
                     break
                     
         actions = target_req.actions if target_req else self.request.actions
+        formats = target_req.formats if target_req else self.request.formats
 
         if not actions:
-            return page
+            pass
 
         # page.url might be 'about:blank' initially if navigated differently,
         # but in crawl4ai hook 'before_retrieve_html' it should be the target URL.
@@ -265,15 +285,16 @@ class BatchScrapeJob:
                 
                 elif action.type == "scroll":
                     direction = action.direction or "down"
+                    amount = action.amount or 1000
                     if action.selector:
                         await page.evaluate(f"""
                             const el = document.querySelector('{action.selector}');
                             if (el) {{
-                                el.scrollBy(0, {1000 if direction == 'down' else -1000});
+                                el.scrollBy(0, {amount if direction == 'down' else -amount});
                             }}
                         """)
                     else:
-                        await page.mouse.wheel(0, 1000 if direction == 'down' else -1000)
+                        await page.mouse.wheel(0, amount if direction == 'down' else -amount)
                 
                 elif action.type == "executeJavascript":
                     if action.script:
@@ -324,6 +345,20 @@ class BatchScrapeJob:
                 # By default, we gracefully ignore the error so Crawl4AI can proceed with scraping.
                 if hasattr(action, 'ignoreError') and action.ignoreError is False:
                     raise
+
+        full_page = False
+        for f in formats:
+            if isinstance(f, dict) and f.get("type") == "screenshot" and f.get("fullPage"):
+                full_page = True
+                break
+
+        if full_page:
+            try:
+                shot_bytes = await page.screenshot(full_page=True, type="jpeg")
+                if shot_bytes:
+                    self.action_results[url_key]["_format_screenshot_bytes"] = shot_bytes
+            except Exception as e:
+                print(f"Format full page screenshot failed for {url_key}: {e}")
 
         return page
 
@@ -391,22 +426,30 @@ class BatchScrapeJob:
                         s_resp.links = res.links
                     if "images" in self.request.formats:
                         s_resp.images = res.media.get("images", []) if res.media else []
-                    if "screenshot" in self.request.formats and res.screenshot:
-                        s_resp._screenshot_bytes = base64.b64decode(res.screenshot)
                         
                     # Find action results matching this URL
                     # Exact URL match might be tricky due to redirects,
                     # so we try to find the closest match or the exact match.
                     match_url = res.url
-                    if match_url in self.action_results and any(self.action_results[match_url].values()):
-                        s_resp.action_results = self.action_results[match_url]
+                    acts_to_use = None
+                    if match_url in self.action_results:
+                        acts_to_use = self.action_results[match_url]
                     else:
                         # try to find by redirected_url or just fallback
                         for u_key, acts in self.action_results.items():
                             if u_key == res.redirected_url or u_key.rstrip("/") == res.url.rstrip("/"):
-                                if any(acts.values()):
-                                    s_resp.action_results = acts
+                                acts_to_use = acts
                                 break
+
+                    if acts_to_use and "_format_screenshot_bytes" in acts_to_use:
+                        s_resp._screenshot_bytes = acts_to_use.pop("_format_screenshot_bytes")
+                    else:
+                        has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
+                        if has_screenshot_format and res.screenshot:
+                            s_resp._screenshot_bytes = base64.b64decode(res.screenshot)
+
+                    if acts_to_use and any(acts_to_use.values()):
+                        s_resp.action_results = acts_to_use
 
                 response.results.append(s_resp)
                 
