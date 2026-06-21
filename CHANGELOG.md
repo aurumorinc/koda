@@ -2,11 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.38] - 2026-06-21
+
+### 🚜 Refactor
+
+- [**breaking**] Remove actions and unused params from scraper
+
+### 🧪 Testing
+
+- Remove deprecated arguments from youtube tests
+
 ## [26.6.37] - 2026-06-21
 
 ### 🚜 Refactor
 
 - Migrate youtube scraper to crawlee
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.37
 
 ## [26.6.36] - 2026-06-21
 
