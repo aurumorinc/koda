@@ -1,0 +1,48 @@
+summary: ''
+description: ''
+lock: '!inline f/koda/scrape.script.lock'
+kind: script
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  properties:
+    actions:
+      type: array
+      description: ''
+      default: []
+      items:
+        type: string
+      originalType: string[]
+    formats:
+      type: array
+      description: ''
+      default:
+        - markdown
+      items:
+        type: string
+      originalType: string[]
+    onlyMainContent:
+      type: boolean
+      description: ''
+      default: true
+    s3_resource:
+      type: string
+      description: ''
+      default: f/koda/default_s3
+      originalType: string
+    timeout:
+      type: integer
+      description: ''
+      default: 60000
+    url:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+    webhook:
+      type: ''
+      description: ''
+      default: null
+  required:
+    - url
+tag: koda
