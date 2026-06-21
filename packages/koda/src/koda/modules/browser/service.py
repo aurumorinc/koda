@@ -6,7 +6,6 @@ import copy
 from playwright.async_api import Page
 
 from koda.config.main import settings
-from koda.integrations.posthog import setup_playwright_transport, setup_network_capture, inject_posthog_monolith, flush_telemetry
 from koda.modules.browser.repositories import invisible_playwright
 from koda.modules.browser.repositories import cloakbrowser
 
@@ -138,6 +137,8 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
             # Intercept CSP dynamically based on strategy
             await strategy.intercept(context)
             
+            from koda.integrations.posthog import setup_playwright_transport, setup_network_capture, inject_posthog_monolith, flush_telemetry
+
             if settings.posthog_api_key and settings.posthog_host:
                 await setup_playwright_transport(context)
                 

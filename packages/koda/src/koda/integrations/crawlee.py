@@ -10,6 +10,13 @@ from crawlee.browsers._types import BrowserType
 from crawlee.proxy_configuration import ProxyInfo
 from crawlee.crawlers import PlaywrightCrawler as BasePlaywrightCrawler
 from crawlee.browsers import BrowserPool
+from crawlee.crawlers import PlaywrightCrawlingContext
+
+from koda.config.main import settings
+from koda.modules.webhook.schema import WebhookConfig
+from koda.modules.webhook.utils import dispatch_webhook
+from koda.modules.file.schema import S3Config
+from koda.modules.file.service import upload as s3_upload
 
 
 class KodaBrowserController(BrowserController):
@@ -166,7 +173,57 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
             # Replace the crawler's default browser pool with our custom one
             self._browser_pool = koda_browser_pool
             
+            # Register a pre-navigation hook to automatically dispatch webhooks on push_data
+            async def _pre_hook(context: PlaywrightCrawlingContext) -> None:
+                original_push_data = context.push_data
+                
+                async def custom_push_data(data: Any, *pd_args, **pd_kwargs) -> None:
+                    # Execute the original push
+                    await original_push_data(data, *pd_args, **pd_kwargs)
+                    
+                    # Intercept and dispatch webhook if configured globally
+                    if settings.webhook_url:
+                        webhook_config = WebhookConfig(
+                            url=settings.webhook_url,
+                            events=settings.webhook_events,
+                            headers=settings.webhook_headers
+                        )
+                        await dispatch_webhook(webhook_config, "crawl.page", data)
+                
+                context.push_data = custom_push_data
+
+            self.pre_navigation_hooks.append(_pre_hook)
+
             # Also ensure the pool is started correctly.
             # BasePlaywrightCrawler normally starts the pool in its own run method.
             # We can let the parent run() handle the execution.
             await super().run(*args, **kwargs)
+
+            # Post-run: upload dataset to S3 if configured globally
+            if settings.s3_bucket_name:
+                import json
+                import uuid
+                
+                dataset = await self.get_dataset()
+                dataset_data = await dataset.get_data()
+                
+                if dataset_data and dataset_data.items:
+                    json_data = json.dumps(dataset_data.items).encode("utf-8")
+                    
+                    s3_config_dict = {
+                        "bucket": settings.s3_bucket_name,
+                        "accessKey": settings.s3_access_key_id,
+                        "secretKey": settings.s3_secret_access_key,
+                        "endPoint": settings.s3_endpoint_url,
+                        "region": settings.s3_region_name,
+                    }
+                    if settings.s3_addressing_style != "auto":
+                        s3_config_dict["pathStyle"] = (settings.s3_addressing_style == "path")
+                        
+                    s3_config = S3Config(**s3_config_dict)
+                    
+                    run_id = str(uuid.uuid4())
+                    object_name = f"crawlee_datasets/{run_id}.json"
+                    
+                    # Run the synchronous or async upload
+                    s3_upload(json_data, object_name, "application/json", s3_config)

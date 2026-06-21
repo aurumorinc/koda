@@ -97,6 +97,11 @@ class Settings(LoggingSettings, BaseSettings):
     # Sentry Configuration
     sentry_dsn: Optional[str] = None
 
+    # Webhook Configuration
+    webhook_url: Optional[str] = None
+    webhook_events: Optional[list[str]] = None
+    webhook_headers: Optional[dict[str, str]] = None
+
 
 # Global settings instance
 settings = Settings()
