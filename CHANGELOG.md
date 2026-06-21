@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.27] - 2026-06-21
+
+### 🚀 Features
+
+- Update page schema definitions
+- Implement full page screenshot and custom scroll
+
+## [26.6.26] - 2026-06-21
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.26
+
 ## [26.6.25] - 2026-06-21
 
 ### ⚙️ Miscellaneous Tasks
