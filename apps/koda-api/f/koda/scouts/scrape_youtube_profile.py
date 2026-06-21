@@ -96,12 +96,6 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
         await page.wait_for_timeout(1500)
         await page.evaluate("window.scrollBy(0, 780);")
         await page.wait_for_timeout(1500)
-        
-    # Wait for actions passed
-    actions = user_data.get("actions", [])
-    for action in actions:
-        if action.get("type") == "wait":
-            await page.wait_for_timeout(action.get("milliseconds", 1000))
             
     # 3. Extraction
     extracted_data = {
@@ -135,9 +129,7 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
 
 async def _run_youtube_scrape(
     url: str,
-    formats: List[Union[str, Dict[str, Any]]],
-    onlyMainContent: bool,
-    actions: List[Dict[str, Any]],
+    formats: List[str],
     timeout: int,
     s3_resource: Optional[str],
     webhook: Optional[Dict[str, Any]],
@@ -164,18 +156,9 @@ async def _run_youtube_scrape(
         if "pathStyle" in s3_config_dict or "path_style" in s3_config_dict:
             settings.s3_addressing_style = "path" if s3_config_dict.get("pathStyle", s3_config_dict.get("path_style")) else "auto"
 
-    normalized_formats = []
-    if formats:
-        for f in formats:
-            if isinstance(f, dict):
-                normalized_formats.append(f.get("type", ""))
-            else:
-                normalized_formats.append(str(f))
+    normalized_formats = formats if formats else []
 
-    has_screenshot = any(
-        f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") 
-        for f in formats
-    )
+    has_screenshot = any(f == "screenshot" for f in normalized_formats)
 
     try:
         async with KodaClient() as client:
@@ -192,7 +175,6 @@ async def _run_youtube_scrape(
                     "user_data": {
                         "tabs": kwargs.get("tabs", ["videos", "shorts"]),
                         "normalized_formats": normalized_formats,
-                        "actions": actions,
                         "has_screenshot": has_screenshot
                     }
                 }
@@ -246,9 +228,7 @@ async def _run_youtube_scrape(
 
 def main(
     url: str,
-    formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
-    onlyMainContent: bool = True,
-    actions: List[Dict[str, Any]] = [],
+    formats: List[str] = ["markdown"],
     timeout: int = 300000,
     s3_resource: Optional[str] = "f/koda/default_s3",
     webhook: Optional[Dict[str, Any]] = None,
@@ -261,8 +241,6 @@ def main(
     return asyncio.run(_run_youtube_scrape(
         url=url,
         formats=formats,
-        onlyMainContent=onlyMainContent,
-        actions=actions,
         timeout=timeout,
         s3_resource=s3_resource,
         webhook=webhook,

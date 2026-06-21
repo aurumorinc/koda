@@ -51,8 +51,6 @@ async def test_youtube_orchestrator_success(mock_client_class, mock_crawler_clas
     result = await _run_youtube_scrape(
         url="https://www.youtube.com/@youtube",
         formats=["markdown", "links", "screenshot"],
-        onlyMainContent=True,
-        actions=[],
         timeout=60000,
         s3_resource="test_s3",
         webhook={"url": "https://webhook.test"},
@@ -102,8 +100,6 @@ async def test_youtube_orchestrator_redirect(mock_client_class, mock_crawler_cla
     result = await _run_youtube_scrape(
         url="https://crm.link/123",
         formats=["markdown"],
-        onlyMainContent=True,
-        actions=[],
         timeout=60000,
         s3_resource=None,
         webhook=None,
@@ -143,8 +139,6 @@ async def test_youtube_orchestrator_invalid_handle(mock_client_class, mock_crawl
     result = await _run_youtube_scrape(
         url="https://youtube.com/404",
         formats=["markdown"],
-        onlyMainContent=True,
-        actions=[],
         timeout=60000,
         s3_resource=None,
         webhook=None,
