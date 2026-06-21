@@ -13,12 +13,32 @@ _LAUNCHERS = {
     "cloakbrowser": cloakbrowser.launch,
 }
 
-from playwright.async_api import BrowserContext
+from playwright.async_api import BrowserContext, Route
 
 class BrowserTool(Protocol):
     """Protocol for tools that operate on a Playwright Page or Context."""
     async def execute(self, context_or_page: Any, request: Any) -> Any:
         ...
+
+async def _strip_csp_headers(route: Route):
+    """
+    Intercept document requests and strip Content-Security-Policy headers 
+    so inline scripts and eval() execute without restriction.
+    """
+    if route.request.resource_type != "document":
+        return await route.continue_()
+    
+    try:
+        response = await route.fetch()
+        headers = response.headers
+        filtered_headers = {
+            k: v for k, v in headers.items()
+            if k.lower() not in ("content-security-policy", "content-security-policy-report-only")
+        }
+        await route.fulfill(response=response, headers=filtered_headers)
+    except Exception:
+        # Fallback to continue if fetch fails (e.g. aborted request)
+        await route.continue_()
 
 @asynccontextmanager
 async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "") -> AsyncGenerator[BrowserContext, None]:
@@ -65,9 +85,22 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
         loop.set_exception_handler(custom_exception_handler)
         loop._koda_exception_handler_set = True
     
-    async with launcher(user_data_dir, config) as browser:
-            # Create a new context from the browser
-            context = await browser.new_context()
+    async with launcher(user_data_dir, config) as browser_or_context:
+            # Handle both Browser and persistent BrowserContext yields
+            if hasattr(browser_or_context, 'new_context'):
+                context = await browser_or_context.new_context(
+                    permissions=["geolocation", "notifications"],
+                    bypass_csp=True
+                )
+            else:
+                context = browser_or_context
+                await context.grant_permissions(["geolocation", "notifications"])
+            
+            # Automatically accept dialogs to prevent hangs
+            context.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+            
+            # Intercept CSP headers dynamically
+            await context.route("**/*", _strip_csp_headers)
             
             if settings.posthog_api_key and settings.posthog_host:
                 await setup_playwright_transport(context)
