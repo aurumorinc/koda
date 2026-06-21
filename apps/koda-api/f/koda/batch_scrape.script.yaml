@@ -1,0 +1,57 @@
+summary: Batch Scrape
+description: Scrape multiple URLs concurrently.
+lock: '!inline f/koda/batch_scrape.script.lock'
+kind: script
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  properties:
+    actions:
+      type: array
+      description: Actions to perform
+      default: []
+      items:
+        type: object
+    formats:
+      type: array
+      description: Formats to extract
+      default:
+        - markdown
+      items:
+        type: string
+      originalType: string[]
+    ignoreInvalidURLs:
+      type: boolean
+      description: Ignore invalid URLs
+      default: true
+    maxConcurrency:
+      type: integer
+      description: Maximum concurrent pages to process
+      default: null
+    onlyMainContent:
+      type: boolean
+      description: ''
+      default: true
+    s3_resource:
+      type: string
+      description: ''
+      default: f/koda/default_s3
+      originalType: string
+    timeout:
+      type: integer
+      description: ''
+      default: 60000
+    urls:
+      type: array
+      description: List of URLs to scrape
+      default: []
+      items:
+        type: string
+      originalType: string[]
+    webhook:
+      type: object
+      description: ''
+      default: null
+  required:
+    - urls
+tag: koda
