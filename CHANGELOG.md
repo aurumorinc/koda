@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.34] - 2026-06-21
+
+### 🚀 Features
+
+- Add crawlee skill documentation
+- Add crawlee integration for Koda
+
+### 📚 Documentation
+
+- Add Crawlee integration guide to README
+
+### 🧪 Testing
+
+- Add unit tests for crawlee integration
+
+### ⚙️ Miscellaneous Tasks
+
+- Add crawlee dependency and update lockfile
+
 ## [26.6.33] - 2026-06-21
 
 ### 🚀 Features
@@ -15,6 +34,10 @@ All notable changes to this project will be documented in this file.
 ### 🚜 Refactor
 
 - Optimize screenshot handling and result ordering
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.33
 
 ## [26.6.32] - 2026-06-21
 
