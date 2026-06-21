@@ -369,3 +369,15 @@ mutagen.yml.lock
 
 # Architect
 plans/
+
+# Rune
+.rune/*
+!.rune/config
+!.rune/index
+.agents/skills/crawl4ai/modules/crawl4ai
+.agents/skills/invisible-playwright/modules/invisible_playwright
+.agents/skills/posthog-js/modules/posthog-js
+.agents/skills/python-logging/modules/python-logging
+.agents/skills/stagehand/modules/stagehand
+.agents/skills/windmill/modules/windmill
+.agents/skills/cloakbrowser/modules/CloakBrowser

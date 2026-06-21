@@ -8,10 +8,7 @@ description: Provides specialized context, rules, and tools for implementing, co
 
 ```text
 posthog-js/
-├── assets
 ├── modules
 │   └── posthog-js @ 7a22ec9a
-├── references
-├── scripts
 └── SKILL.md
 ```

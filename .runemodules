@@ -1,0 +1,18 @@
+[runemodule ".agents/skills/stagehand/modules/stagehand"]
+	url = https://github.com/browserbase/stagehand/tree/main
+	path = .agents/skills/stagehand/modules/stagehand
+[runemodule ".agents/skills/invisible-playwright/modules/invisible_playwright"]
+	url = https://github.com/feder-cr/invisible_playwrigh/tree/main
+	path = .agents/skills/invisible-playwright/modules/invisible_playwright
+[runemodule ".agents/skills/cloakbrowser/modules/CloakBrowser"]
+	url = https://github.com/CloakHQ/CloakBrowser/tree/main
+	path = .agents/skills/cloakbrowser/modules/CloakBrowser
+[runemodule ".agents/skills/crawl4ai/modules/crawl4ai"]
+	url = https://github.com/unclecode/crawl4a/tree/main
+	path = .agents/skills/crawl4ai/modules/crawl4ai
+[runemodule ".agents/skills/windmill/modules/windmill"]
+	url = https://github.com/windmill-labs/windmill/tree/main
+	path = .agents/skills/windmill/modules/windmill
+[runemodule ".agents/skills/python-logging/modules/python-logging"]
+	url = https://github.com/aurumorinc/python-loggin/tree/main
+	path = .agents/skills/python-logging/modules/python-logging
