@@ -135,20 +135,6 @@ class ScrapeJob:
                 if hasattr(action, 'ignoreError') and action.ignoreError is False:
                     raise
 
-        full_page = False
-        for f in self.request.formats:
-            if isinstance(f, dict) and f.get("type") == "screenshot" and f.get("fullPage"):
-                full_page = True
-                break
-
-        if full_page:
-            try:
-                shot_bytes = await page.screenshot(full_page=True, type="jpeg")
-                if shot_bytes:
-                    self.action_results["_format_screenshot_bytes"] = shot_bytes
-            except Exception as e:
-                print(f"Format full page screenshot failed: {e}")
-
         return page
 
     async def run(self) -> ScrapeResponse:
@@ -156,12 +142,18 @@ class ScrapeJob:
         response = ScrapeResponse(url=self.request.url)
         
         browser_config = BrowserConfig(
-            headless=True
+            headless=True,
+            viewport_width=1366,
+            viewport_height=768
         )
         
+        has_screenshot = any(
+            f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot")
+            for f in self.request.formats
+        )
         run_config = CrawlerRunConfig(
             page_timeout=self.request.timeout,
-            screenshot="screenshot" in self.request.formats
+            screenshot=has_screenshot
         )
         
         if self.request.only_main_content:
@@ -195,13 +187,10 @@ class ScrapeJob:
             if "images" in self.request.formats:
                 response.images = result.media.get("images", []) if result.media else []
                 
-            if "_format_screenshot_bytes" in self.action_results:
-                setattr(response, "_screenshot_bytes", self.action_results.pop("_format_screenshot_bytes"))
-            else:
-                has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
-                if has_screenshot_format and result.screenshot:
-                    screenshot_bytes = base64.b64decode(result.screenshot)
-                    setattr(response, "_screenshot_bytes", screenshot_bytes)
+            has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
+            if has_screenshot_format and result.screenshot:
+                screenshot_bytes = base64.b64decode(result.screenshot)
+                setattr(response, "_screenshot_bytes", screenshot_bytes)
                 
             if any(self.action_results.values()):
                 response.action_results = self.action_results
@@ -346,20 +335,6 @@ class BatchScrapeJob:
                 if hasattr(action, 'ignoreError') and action.ignoreError is False:
                     raise
 
-        full_page = False
-        for f in formats:
-            if isinstance(f, dict) and f.get("type") == "screenshot" and f.get("fullPage"):
-                full_page = True
-                break
-
-        if full_page:
-            try:
-                shot_bytes = await page.screenshot(full_page=True, type="jpeg")
-                if shot_bytes:
-                    self.action_results[url_key]["_format_screenshot_bytes"] = shot_bytes
-            except Exception as e:
-                print(f"Format full page screenshot failed for {url_key}: {e}")
-
         return page
 
     async def run(self) -> BatchScrapeResponse:
@@ -388,12 +363,18 @@ class BatchScrapeJob:
             return response
 
         browser_config = BrowserConfig(
-            headless=True
+            headless=True,
+            viewport_width=1366,
+            viewport_height=768
         )
         
+        has_screenshot = any(
+            f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot")
+            for f in self.request.formats
+        )
         run_config = CrawlerRunConfig(
             page_timeout=self.request.timeout,
-            screenshot="screenshot" in self.request.formats
+            screenshot=has_screenshot
         )
         
         if self.request.max_concurrency:
@@ -411,7 +392,20 @@ class BatchScrapeJob:
                 "hook": self.execute_actions_hook
             })
             
-            for res in results:
+            ordered_results = []
+            for u in valid_urls:
+                found_res = next((r for r in results if r.url == u), None)
+                if not found_res:
+                    found_res = next((r for r in results if r.url.rstrip('/') == u.rstrip('/') or u in r.url), None)
+                if found_res:
+                    ordered_results.append(found_res)
+                else:
+                    # Provide an error fallback if a result is completely missing
+                    from crawl4ai.models import CrawlResult
+                    dummy = CrawlResult(url=u, html="", success=False, error_message="Scrape failed or timed out without result.")
+                    ordered_results.append(dummy)
+            
+            for res in ordered_results:
                 s_resp = ScrapeResponse(url=res.url)
                 if not res.success:
                     s_resp.error = res.error_message
@@ -428,8 +422,6 @@ class BatchScrapeJob:
                         s_resp.images = res.media.get("images", []) if res.media else []
                         
                     # Find action results matching this URL
-                    # Exact URL match might be tricky due to redirects,
-                    # so we try to find the closest match or the exact match.
                     match_url = res.url
                     acts_to_use = None
                     if match_url in self.action_results:
@@ -437,16 +429,13 @@ class BatchScrapeJob:
                     else:
                         # try to find by redirected_url or just fallback
                         for u_key, acts in self.action_results.items():
-                            if u_key == res.redirected_url or u_key.rstrip("/") == res.url.rstrip("/"):
+                            if u_key == getattr(res, "redirected_url", None) or u_key.rstrip("/") == res.url.rstrip("/"):
                                 acts_to_use = acts
                                 break
 
-                    if acts_to_use and "_format_screenshot_bytes" in acts_to_use:
-                        s_resp._screenshot_bytes = acts_to_use.pop("_format_screenshot_bytes")
-                    else:
-                        has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
-                        if has_screenshot_format and res.screenshot:
-                            s_resp._screenshot_bytes = base64.b64decode(res.screenshot)
+                    has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
+                    if has_screenshot_format and res.screenshot:
+                        s_resp._screenshot_bytes = base64.b64decode(res.screenshot)
 
                     if acts_to_use and any(acts_to_use.values()):
                         s_resp.action_results = acts_to_use
