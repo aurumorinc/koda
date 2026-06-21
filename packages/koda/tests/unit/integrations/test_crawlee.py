@@ -2,7 +2,15 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 from playwright.async_api import BrowserContext, Page
 
-from koda.integrations.crawlee import KodaBrowserPlugin, KodaBrowserController
+from koda.integrations.crawlee import KodaBrowserPlugin, KodaBrowserController, PlaywrightCrawler
+
+def test_playwright_crawler_initialization():
+    # Instantiating should not raise AttributeError on pre_navigation_hooks
+    crawler = PlaywrightCrawler(pre_navigation_hooks=[])
+    
+    # Verification that the underlying python crawlee __init__ accepted the hooks
+    # It gets assigned natively inside the crawlee BasePlaywrightCrawler
+    assert crawler is not None
 
 @pytest.mark.asyncio
 async def test_koda_browser_controller():
