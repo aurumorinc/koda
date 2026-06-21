@@ -3,7 +3,6 @@ name = "koda-workspace"
 version = "26.6.28"
 requires-python = ">=3.9"
 dependencies = [
-    "camoufox>=0.4.11",
     "httpx>=0.28.1",
 ]
 
@@ -34,6 +33,12 @@ push = false
 ]
 "packages/koda/src/koda/__init__.py" = [
     '__version__ = "{version}"',
+]
+"apps/koda-api/f/koda/*.py" = [
+    '"koda @ git+https://github.com/aurumorinc/koda.git@{version}#subdirectory=packages/koda",',
+]
+"apps/koda-api/f/koda/*/*.py" = [
+    '"koda @ git+https://github.com/aurumorinc/koda.git@{version}#subdirectory=packages/koda",',
 ]
 
 [dependency-groups]
