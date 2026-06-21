@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.39] - 2026-06-21
+
+### ⚙️ Miscellaneous Tasks
+
+- Add requests-file dependency
+
 ## [26.6.38] - 2026-06-21
 
 ### 🚜 Refactor
@@ -11,6 +17,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Remove deprecated arguments from youtube tests
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.38
 
 ## [26.6.37] - 2026-06-21
 
