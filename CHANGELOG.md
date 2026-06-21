@@ -2,11 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.40] - 2026-06-21
+
+### 🚀 Features
+
+- Move webhook hook registration to constructor
+
+### 🧪 Testing
+
+- Add initialization test for PlaywrightCrawler
+
 ## [26.6.39] - 2026-06-21
 
 ### ⚙️ Miscellaneous Tasks
 
 - Add requests-file dependency
+- Release 26.6.39
 
 ## [26.6.38] - 2026-06-21
 
