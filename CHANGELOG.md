@@ -2,11 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.32] - 2026-06-21
+
+### 🚀 Features
+
+- Add playwright agent skill documentation
+
+### ⚙️ Miscellaneous Tasks
+
+- Add playwright module
+- Ignore windmill resource files
+
 ## [26.6.31] - 2026-06-21
 
 ### 🚀 Features
 
 - Add s3 and webhook support to batch scrape
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.31
 
 ## [26.6.30] - 2026-06-21
 
