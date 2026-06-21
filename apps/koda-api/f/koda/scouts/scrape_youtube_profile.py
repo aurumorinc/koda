@@ -174,11 +174,25 @@ async def _run_youtube_scrape(
             aggregated_screenshots = {}
 
             tab_names = ["Home", "About"] + [t.capitalize() for t in tabs]
+            
+            url_to_tab = {
+                base_profile_url: "Home",
+                f"{base_profile_url}?about=1": "About",
+            }
+            for t in tabs:
+                url_to_tab[f"{base_profile_url}/{t}"] = t.capitalize()
 
             if batch_response.results:
                 for idx, result in enumerate(batch_response.results):
-                    # Robust tab matching based on request order, avoiding URL normalization collisions
-                    tab_name = tab_names[idx] if idx < len(tab_names) else f"Tab_{idx}"
+                    # Robust tab matching by URL, fallback to order index
+                    tab_name = url_to_tab.get(result.url)
+                    if not tab_name:
+                        for u, t in url_to_tab.items():
+                            if u.rstrip('/') == result.url.rstrip('/') or (u.split('?')[0] == result.url.split('?')[0] and u in result.url):
+                                tab_name = t
+                                break
+                    if not tab_name:
+                        tab_name = tab_names[idx] if idx < len(tab_names) else f"Tab_{idx}"
                         
                     if result.error:
                         aggregated_markdown += f"\n\n# {tab_name}\nError: {result.error}\n"
