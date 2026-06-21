@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Update gitignore with new paths
+- Release 26.6.21
 
 ### Build
 
