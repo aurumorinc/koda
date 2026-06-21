@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.33] - 2026-06-21
+
+### 🚀 Features
+
+- Set viewport size for crawl4ai integration
+
+### 🐛 Bug Fixes
+
+- Improve youtube tab name resolution
+
+### 🚜 Refactor
+
+- Optimize screenshot handling and result ordering
+
 ## [26.6.32] - 2026-06-21
 
 ### 🚀 Features
@@ -12,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 - Add playwright module
 - Ignore windmill resource files
+- Release 26.6.32
 
 ## [26.6.31] - 2026-06-21
 
