@@ -157,7 +157,9 @@ async def _run_youtube_scrape(
             batch_req = BatchScrapeRequest(
                 requests=target_requests,
                 timeout=timeout,
-                ignoreInvalidURLs=True
+                ignoreInvalidURLs=True,
+                s3_config=s3_config,
+                webhook=webhook
             )
             
             batch_response = await client.batch_scrape(batch_req)
