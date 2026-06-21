@@ -8,7 +8,7 @@ from crawlee.browsers._browser_controller import BrowserController
 from crawlee.browsers._browser_plugin import BrowserPlugin
 from crawlee.browsers._types import BrowserType
 from crawlee.proxy_configuration import ProxyInfo
-from crawlee.crawlers import PlaywrightCrawler as NativePlaywrightCrawler
+from crawlee.crawlers import PlaywrightCrawler as BasePlaywrightCrawler
 from crawlee.browsers import BrowserPool
 
 
@@ -127,7 +127,7 @@ class KodaBrowserPlugin(BrowserPlugin):
     async def new_browser(self) -> BrowserController:
         return KodaBrowserController(self._context)
 
-class PlaywrightCrawler(NativePlaywrightCrawler):
+class PlaywrightCrawler(BasePlaywrightCrawler):
     """
     A Koda-integrated PlaywrightCrawler that injects the KodaClient and
     wraps the entire crawl execution within Koda's BrowserSession.
@@ -167,6 +167,6 @@ class PlaywrightCrawler(NativePlaywrightCrawler):
             self._browser_pool = koda_browser_pool
             
             # Also ensure the pool is started correctly.
-            # NativePlaywrightCrawler normally starts the pool in its own run method.
+            # BasePlaywrightCrawler normally starts the pool in its own run method.
             # We can let the parent run() handle the execution.
             await super().run(*args, **kwargs)
