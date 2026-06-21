@@ -2,12 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.28] - 2026-06-21
+
+### 🚀 Features
+
+- Add youtube profile scraper script
+- Add batch scrape script
+- Upgrade crawl script to use KodaClient
+- Add RT namespace type definitions
+
+### 🚜 Refactor
+
+- Simplify koda scrape implementation
+
+### ⚙️ Miscellaneous Tasks
+
+- Add folder metadata for koda
+- Add Windmill configuration and lock files
+
 ## [26.6.27] - 2026-06-21
 
 ### 🚀 Features
 
 - Update page schema definitions
 - Implement full page screenshot and custom scroll
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.27
 
 ## [26.6.26] - 2026-06-21
 
