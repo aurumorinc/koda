@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.41] - 2026-06-21
+
+### 🚜 Refactor
+
+- Wrap request handler for webhook dispatch
+
+### 🧪 Testing
+
+- Update playwright crawler initialization tests
+
 ## [26.6.40] - 2026-06-21
 
 ### 🚀 Features
@@ -11,6 +21,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Add initialization test for PlaywrightCrawler
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.40
 
 ## [26.6.39] - 2026-06-21
 
