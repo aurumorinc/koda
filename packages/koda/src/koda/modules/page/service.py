@@ -30,7 +30,8 @@ class ScrapeJob:
             "screenshots": [],
             "scrapes": [],
             "javascriptReturns": [],
-            "pdfs": []
+            "pdfs": [],
+            "errors": []
         }
 
     async def execute_actions_hook(self, page, context, **kwargs):
@@ -124,7 +125,13 @@ class ScrapeJob:
                     
             except Exception as e:
                 print(f"Action {action.type} failed: {str(e)}")
-                if not action.ignoreError:
+                self.action_results["errors"].append({
+                    "action": action.type,
+                    "error": str(e)
+                })
+                # By default, we gracefully ignore the error so Crawl4AI can proceed with scraping.
+                # If explicit ignoreError=False is provided in a strict configuration, we raise.
+                if hasattr(action, 'ignoreError') and action.ignoreError is False:
                     raise
 
         return page
@@ -200,7 +207,8 @@ class BatchScrapeJob:
                 "screenshots": [],
                 "scrapes": [],
                 "javascriptReturns": [],
-                "pdfs": []
+                "pdfs": [],
+                "errors": []
             }
 
     async def execute_actions_hook(self, page, context, **kwargs):
@@ -309,7 +317,12 @@ class BatchScrapeJob:
                     
             except Exception as e:
                 print(f"Action {action.type} failed for {url_key}: {str(e)}")
-                if not action.ignoreError:
+                self.action_results[url_key]["errors"].append({
+                    "action": action.type,
+                    "error": str(e)
+                })
+                # By default, we gracefully ignore the error so Crawl4AI can proceed with scraping.
+                if hasattr(action, 'ignoreError') and action.ignoreError is False:
                     raise
 
         return page
