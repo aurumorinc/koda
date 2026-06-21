@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.21] - 2026-06-21
+
+### 🚀 Features
+
+- Add python-logging runemodule
+
+### 📚 Documentation
+
+- Add agent skill documentation for cloakbrowser
+- Update crawl4ai module structure documentation
+- Add AST map to SKILL.md
+- Clean up posthog-js directory structure documentation
+- Update python-logging AST map
+- Update stagehand skill documentation
+- Update windmill module documentation
+
+### ⚙️ Miscellaneous Tasks
+
+- Update gitignore with new paths
+
+### Build
+
+- [**breaking**] Migrate submodules to runemodules configuration
+
 ## [26.6.20] - 2026-06-21
 
 ### 🚀 Features
@@ -11,6 +35,10 @@ All notable changes to this project will be documented in this file.
 ### 🚜 Refactor
 
 - Remove default CSP preferences from playwright
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.20
 
 ## [26.6.19] - 2026-06-21
 
