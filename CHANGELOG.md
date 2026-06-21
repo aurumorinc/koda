@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.19] - 2026-06-21
+
+### 🚀 Features
+
+- Enhance browser session configuration
+- Add error tracking to page action execution
+
+### 🧪 Testing
+
+- Add integration test for CSP bypass
+
 ## [26.6.18] - 2026-06-20
 
 ### 🚀 Features
@@ -11,6 +22,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Add e2e and update integration tests for youtube scout
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.18
 
 ## [26.6.17] - 2026-06-19
 
