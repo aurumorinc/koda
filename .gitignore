@@ -367,8 +367,14 @@ vite.config.ts.timestamp-*
 mutagen.yml
 mutagen.yml.lock
 
-# Architect
+# Agents
 plans/
+
+# Windmill
+*.resource.yaml
+
+# Crawlee
+storage/
 
 # Rune
 .rune/*
@@ -382,8 +388,5 @@ plans/
 .agents/skills/windmill/modules/windmill
 .agents/skills/cloakbrowser/modules/CloakBrowser
 .agents/skills/playwright/modules/playwright
-
-# Windmill
-*.resource.yaml
 .agents/skills/crawlee-python/modules/crawlee-python
 .agents/skills/crawlee/modules/crawlee-python
