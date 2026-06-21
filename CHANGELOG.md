@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.35] - 2026-06-21
+
+### 🚜 Refactor
+
+- Rename native crawler to base crawler
+
+### ⚙️ Miscellaneous Tasks
+
+- Update gitignore patterns
+
 ## [26.6.34] - 2026-06-21
 
 ### 🚀 Features
@@ -20,6 +30,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Add crawlee dependency and update lockfile
+- Release 26.6.34
 
 ## [26.6.33] - 2026-06-21
 
