@@ -2,11 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.43] - 2026-06-22
+
+### 🐛 Bug Fixes
+
+- Update crawl4ai integration to handle stream
+- Ensure browser pool is active during execution
+
+### 🚜 Refactor
+
+- Optimize screenshot handling and cleanup
+- Simplify youtube scout e2e test imports
+- Use Request object for crawler initialization
+
+### 🧪 Testing
+
+- Update crawl service tests for stream API
+- Mock browser sessions in unit tests
+- Add local http server fixture for e2e tests
+- Add utility for dynamic script imports and mocking
+- Add e2e test for batch scraping
+- Add unit tests for batch scrape script
+- Add e2e crawl test case
+- Add unit tests for crawl script
+- Add end-to-end scrape test
+- Add unit tests for scrape script
+- Refactor youtube scout unit tests
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove unused browser automation dependencies
+
 ## [26.6.42] - 2026-06-22
 
 ### 🧪 Testing
 
 - Update crawlee integration tests with mocks
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.42
 
 ## [26.6.41] - 2026-06-21
 
