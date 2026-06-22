@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [26.6.42] - 2026-06-22
+
+### 🧪 Testing
+
+- Update crawlee integration tests with mocks
+
 ## [26.6.41] - 2026-06-21
 
 ### 🚜 Refactor
@@ -11,6 +17,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Update playwright crawler initialization tests
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 26.6.41
 
 ## [26.6.40] - 2026-06-21
 
