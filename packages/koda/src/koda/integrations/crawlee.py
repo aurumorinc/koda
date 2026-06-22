@@ -204,10 +204,9 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
             # Replace the crawler's default browser pool with our custom one
             self._browser_pool = koda_browser_pool
 
-            # Also ensure the pool is started correctly.
-            # BasePlaywrightCrawler normally starts the pool in its own run method.
-            # We can let the parent run() handle the execution.
-            await super().run(*args, **kwargs)
+            # The BrowserPool needs to be active
+            async with koda_browser_pool:
+                await super().run(*args, **kwargs)
 
             # Post-run: upload dataset to S3 if configured globally
             if settings.s3_bucket_name:
