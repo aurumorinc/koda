@@ -171,7 +171,8 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
                         )
                         await dispatch_webhook(webhook_config, "crawl.page", data)
                 
-                context.push_data = custom_push_data
+                # PlaywrightCrawlingContext is a frozen dataclass in Crawlee >= 1.7.3
+                object.__setattr__(context, 'push_data', custom_push_data)
                 return await original_handler(context, *h_args, **h_kwargs)
                 
             kwargs['request_handler'] = koda_wrapped_handler
