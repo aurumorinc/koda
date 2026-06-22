@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import asyncio
 import base64
 import uuid
-from typing import Dict, Any, Optional
+from typing import Dict
 
 from crawl4ai import BrowserConfig, CrawlerRunConfig
 from crawl4ai.content_filter_strategy import PruningContentFilter
@@ -187,10 +186,13 @@ class ScrapeJob:
             if "images" in self.request.formats:
                 response.images = result.media.get("images", []) if result.media else []
                 
-            has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
-            if has_screenshot_format and result.screenshot:
-                screenshot_bytes = base64.b64decode(result.screenshot)
-                setattr(response, "_screenshot_bytes", screenshot_bytes)
+            if "_format_screenshot_bytes" in self.action_results:
+                setattr(response, "_screenshot_bytes", self.action_results["_format_screenshot_bytes"])
+            else:
+                has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
+                if has_screenshot_format and result.screenshot:
+                    screenshot_bytes = base64.b64decode(result.screenshot)
+                    setattr(response, "_screenshot_bytes", screenshot_bytes)
                 
             if any(self.action_results.values()):
                 response.action_results = self.action_results
@@ -231,7 +233,6 @@ class BatchScrapeJob:
                     break
                     
         actions = target_req.actions if target_req else self.request.actions
-        formats = target_req.formats if target_req else self.request.formats
 
         if not actions:
             pass
@@ -492,12 +493,18 @@ async def scrape(request: ScrapeRequest) -> ScrapeResponse:
         # Webhook Domain handles outbound notifications
         if request.webhook:
             payload = {"success": True, "data": {}}
-            if response.markdown: payload["data"]["markdown"] = response.markdown
-            if response.html: payload["data"]["html"] = response.html
-            if response.links: payload["data"]["links"] = response.links
-            if response.images: payload["data"]["images"] = response.images
-            if response.metadata: payload["data"]["metadata"] = response.metadata
-            if response.screenshot: payload["data"]["screenshot"] = response.screenshot
+            if response.markdown:
+                payload["data"]["markdown"] = response.markdown
+            if response.html:
+                payload["data"]["html"] = response.html
+            if response.links:
+                payload["data"]["links"] = response.links
+            if response.images:
+                payload["data"]["images"] = response.images
+            if response.metadata:
+                payload["data"]["metadata"] = response.metadata
+            if response.screenshot:
+                payload["data"]["screenshot"] = response.screenshot
             await dispatch_webhook(request.webhook, "scrape.completed", payload)
             
         return response
