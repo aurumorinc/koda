@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any, Union
 
 from crawlee.router import Router
 from crawlee.crawlers import PlaywrightCrawlingContext
+from crawlee import Request
 
 from koda import KodaClient
 from koda.config.main import settings
@@ -170,14 +171,14 @@ async def _run_youtube_scrape(
             
             # Start Crawl
             await crawler.run([
-                {
-                    "url": url,
-                    "user_data": {
+                Request.from_url(
+                    url=url,
+                    user_data={
                         "tabs": kwargs.get("tabs", ["videos", "shorts"]),
                         "normalized_formats": normalized_formats,
                         "has_screenshot": has_screenshot
                     }
-                }
+                )
             ])
             
             # Post Crawl Formatting

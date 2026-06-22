@@ -1,37 +1,22 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-
-import sys
 import os
-import importlib.util
+import sys
 
-# Mock wmill before loading
-class MockWmill:
-    @staticmethod
-    def get_resource(res):
-        return {
-            "bucket": "test-bucket",
-            "accessKey": "test-key",
-            "secretKey": "test-secret",
-            "endPoint": "https://s3.test",
-            "region": "us-east-1"
-        }
+# Add tests directory to path to import utils
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from utils import import_script
+from crawlee import Request
 
-sys.modules["wmill"] = MagicMock()
-sys.modules["wmill"].get_resource = MockWmill.get_resource
-
-script_path = os.path.join(os.path.dirname(__file__), "../../../../apps/koda-api/f/koda/scouts/scrape_youtube_profile.py")
-spec = importlib.util.spec_from_file_location("scrape_youtube_profile", script_path)
-yp = importlib.util.module_from_spec(spec)
-sys.modules["scrape_youtube_profile"] = yp
-spec.loader.exec_module(yp)
+# Import the script via the helper
+yp = import_script("f/koda/scouts/scrape_youtube_profile.py", "scrape_youtube_profile")
 
 _run_youtube_scrape = yp._run_youtube_scrape
 
 @pytest.mark.asyncio
 @patch("scrape_youtube_profile.PlaywrightCrawler")
 @patch("scrape_youtube_profile.KodaClient")
-async def test_youtube_orchestrator_success(mock_client_class, mock_crawler_class):
+async def test_youtube_orchestrator_success(mock_client_class, mock_crawler_class, wmill_mock):
     mock_client = AsyncMock()
     mock_client_class.return_value.__aenter__.return_value = mock_client
     
@@ -78,11 +63,18 @@ async def test_youtube_orchestrator_success(mock_client_class, mock_crawler_clas
     from koda.config.main import settings
     assert settings.s3_bucket_name == "test-bucket"
     assert settings.webhook_url == "https://webhook.test"
+
+    # MOCK DRIFT PREVENTION
+    run_calls = mock_crawler_instance.run.call_args_list
+    assert len(run_calls) == 1
+    requests = run_calls[0][0][0]
+    assert len(requests) == 1
+    assert all(isinstance(r, Request) or isinstance(r, str) for r in requests), "Crawler run must be called with Request objects or strings, not dicts!"
     
 @pytest.mark.asyncio
 @patch("scrape_youtube_profile.PlaywrightCrawler")
 @patch("scrape_youtube_profile.KodaClient")
-async def test_youtube_orchestrator_redirect(mock_client_class, mock_crawler_class):
+async def test_youtube_orchestrator_redirect(mock_client_class, mock_crawler_class, wmill_mock):
     mock_client = AsyncMock()
     mock_client_class.return_value.__aenter__.return_value = mock_client
     
@@ -116,12 +108,18 @@ async def test_youtube_orchestrator_redirect(mock_client_class, mock_crawler_cla
     assert len(run_calls) == 1
     requests = run_calls[0][0][0]
     assert len(requests) == 1
-    assert requests[0]["url"] == "https://crm.link/123"
+    
+    # MOCK DRIFT PREVENTION
+    assert all(isinstance(r, Request) or isinstance(r, str) for r in requests), "Crawler run must be called with Request objects or strings, not dicts!"
+    if isinstance(requests[0], Request):
+        assert requests[0].url == "https://crm.link/123"
+    else:
+        assert requests[0] == "https://crm.link/123"
 
 @pytest.mark.asyncio
 @patch("scrape_youtube_profile.PlaywrightCrawler")
 @patch("scrape_youtube_profile.KodaClient")
-async def test_youtube_orchestrator_invalid_handle(mock_client_class, mock_crawler_class):
+async def test_youtube_orchestrator_invalid_handle(mock_client_class, mock_crawler_class, wmill_mock):
     mock_client = AsyncMock()
     mock_client_class.return_value.__aenter__.return_value = mock_client
     

@@ -126,8 +126,9 @@ class Crawl4AiTool(BrowserTool):
             if hook:
                 crawler.crawler_strategy.set_hook("before_retrieve_html", hook)
                 
-            async for result in crawler.arun(
+            stream = await crawler.arun(
                 url=request.get("url"),
                 config=run_config
-            ):
+            )
+            async for result in stream:
                 yield result

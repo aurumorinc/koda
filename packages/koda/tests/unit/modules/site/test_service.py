@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, MagicMock
 from koda.modules.site.schema import CrawlRequest
 from koda.modules.site.service import CrawlJob
 
@@ -51,18 +51,21 @@ async def test_crawl_basic():
     mock_result_2.links = {"internal": []}
     
     with patch("koda.modules.site.service.Crawl4AiTool") as mock_tool_cls:
-        mock_tool = AsyncMock()
+        mock_tool = MagicMock()
         mock_tool_cls.return_value = mock_tool
         
-        # First batch returns root, second batch returns page1
-        mock_tool.execute.side_effect = [[mock_result_1], [mock_result_2]]
+        async def mock_execute_stream(*args, **kwargs):
+            yield mock_result_1
+            yield mock_result_2
+
+        mock_tool.execute_stream = MagicMock(side_effect=mock_execute_stream)
         
         job = CrawlJob(request)
         response = await job.run()
         
         assert response.success is True
         assert response.total_pages_crawled == 2
-        assert mock_tool.execute.call_count == 2
+        assert mock_tool.execute_stream.call_count == 1
 
 @pytest.mark.asyncio
 async def test_crawl_with_webhook():
@@ -83,9 +86,13 @@ async def test_crawl_with_webhook():
     with patch("koda.modules.site.service.Crawl4AiTool") as mock_tool_cls, \
          patch("koda.modules.site.service.dispatch_webhook") as mock_dispatch:
         
-        mock_tool = AsyncMock()
+        mock_tool = MagicMock()
         mock_tool_cls.return_value = mock_tool
-        mock_tool.execute.return_value = [mock_result]
+        
+        async def mock_execute_stream(*args, **kwargs):
+            yield mock_result
+
+        mock_tool.execute_stream = MagicMock(side_effect=mock_execute_stream)
         
         job = CrawlJob(request)
         await job.run()
