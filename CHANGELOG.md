@@ -2,31 +2,46 @@
 
 ## Breaking Changes
 
-* **Removal of legacy KodaClient scraping and crawling methods**
-  The `KodaClient` legacy scraping and crawling methods have been removed in favor of the new `crawl4ai` implementation.
-  * **Migration Path:** Replace all instances of `KodaClient` scraping methods with the new `crawl4ai` wrapper classes. Update your integration code to utilize the native wrappers for Crawlee, Stagehand, or Browserforge as appropriate for your specific scraping requirements.
-  * **Commits:** [29861c5](https://github.com/aurumorinc/koda/commit/29861c50), [3c03b9e](https://github.com/aurumorinc/koda/commit/3c03b9e2), [af6eb32](https://github.com/aurumorinc/koda/commit/af6eb326)
+*   **Removal of Deprecated Scraping Methods**
+    Removed deprecated scraping methods from `KodaClient` and cleaned up unused parameters and actions from the YouTube scraper.
+    *   *Migration:* Update all client implementations to remove calls to the deprecated scraping methods.
+    *   *Commits:* [12f6d8f](https://github.com/aurumorinc/koda/commit/12f6d8f1), [0c88688](https://github.com/aurumorinc/koda/commit/0c886885)
+
+*   **Configuration and Logging Refactor**
+    Removed Sentry integration and global logging initialization; settings are now optional.
+    *   *Migration:* Update configuration files to remove Sentry-related settings. If global logging was previously relied upon, implement local logging configuration.
+    *   *Commits:* [e47c335](https://github.com/aurumorinc/koda/commit/e47c335e)
 
 ## Features
 
-* **Lightpanda agent skill integration**
-  Added support for Lightpanda as an agent skill, enabling enhanced browser automation capabilities.
-  * **Commits:** [19f6d8f](https://github.com/aurumorinc/koda/commit/19f6d8f1)
-* **Webhook dispatch decorators**
-  Introduced new decorators to facilitate easier webhook dispatching within agent workflows.
-  * **Commits:** [4715abb](https://github.com/aurumorinc/koda/commit/4715abb1), [8aa0efc](https://github.com/aurumorinc/koda/commit/8aa0efc5)
+*   **Migration to Crawl4AI and Crawlee**
+    Migrated scraping and crawling logic to Crawl4AI and Crawlee, including native browser integrations and updated scraping scripts.
+    *   *Commits:* [29861c5](https://github.com/aurumorinc/koda/commit/29861c50), [3c03b9e](https://github.com/aurumorinc/koda/commit/3c03b9e2), [15f4d5d](https://github.com/aurumorinc/koda/commit/15f4d5da)
 
-## Improvements
+*   **Webhook Dispatching Implementation**
+    Implemented native webhook dispatching to support event-driven architectures.
+    *   *Commits:* [de9f800](https://github.com/aurumorinc/koda/commit/de9f800a)
 
-* **Standardization of logging telemetry**
-  Migrated internal logging to `structlog` and `worldline-python` to ensure consistent telemetry across all services.
-  * **Commits:** [03ab903](https://github.com/aurumorinc/koda/commit/03ab9039), [95d92b8](https://github.com/aurumorinc/koda/commit/95d92b8c), [47b88b8](https://github.com/aurumorinc/koda/commit/47b88b8a)
+*   **S3 Storage Integration**
+    Added native S3 storage integration for persistent data handling.
+    *   *Commits:* [4327c99](https://github.com/aurumorinc/koda/commit/4327c99e)
+
+*   **Standardized Crawler Request Handling**
+    Implemented standardized request handling across all crawlers to ensure consistent data ingestion.
+    *   *Commits:* [70bdd25](https://github.com/aurumorinc/koda/commit/70bdd25e)
 
 ## Infrastructure
 
-* **Initialization of koda-api structure**
-  Established the foundational directory and module structure for the new `koda-api` package.
-  * **Commits:** [195da66](https://github.com/aurumorinc/koda/commit/195da664)
-* **Dependency group updates**
-  Refactored and updated dependency groups to support the new API architecture and crawling requirements.
-  * **Commits:** [4083994](https://github.com/aurumorinc/koda/commit/40839941), [19a16ee](https://github.com/aurumorinc/koda/commit/19a16eef)
+*   **Logging and Telemetry Migration**
+    Migrated standard logging to `structlog` and replaced `python-logging` with `worldline-python` for enhanced observability.
+    *   *Commits:* [03ab903](https://github.com/aurumorinc/koda/commit/03ab9039), [95d92b8](https://github.com/aurumorinc/koda/commit/95d92b8c), [47b88b8](https://github.com/aurumorinc/koda/commit/47b88b8a)
+
+## Other
+
+*   **Test Suite Expansion**
+    Comprehensive refactor and expansion of unit and E2E tests, including mocking browser sessions and dynamic script imports.
+    *   *Commits:* [6ce8b53](https://github.com/aurumorinc/koda/commit/6ce8b53b), [9fca25b](https://github.com/aurumorinc/koda/commit/9fca25b7), [c65ab21](https://github.com/aurumorinc/koda/commit/c65ab213)
+
+*   **Version and Dependency Management**
+    Ongoing project configuration, dependency updates, and version alignment across the workspace.
+    *   *Commits:* [8471eaa](https://github.com/aurumorinc/koda/commit/8471eaa9), [79d2530](https://github.com/aurumorinc/koda/commit/79d25306), [e3b2d6b](https://github.com/aurumorinc/koda/commit/e3b2d6bd)
