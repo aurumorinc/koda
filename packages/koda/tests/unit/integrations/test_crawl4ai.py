@@ -1,6 +1,39 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from koda.integrations.crawl4ai import KodaBrowserManager, Crawl4AiTool
+from koda.integrations.crawl4ai import KodaBrowserManager, Crawl4AiTool, KodaAsyncWebCrawler
+
+def test_crawl4ai_module_patching():
+    # Verify that the native crawl4ai library has been patched
+    import crawl4ai
+    assert crawl4ai.AsyncWebCrawler is KodaAsyncWebCrawler
+
+@pytest.mark.asyncio
+@patch("koda.modules.browser.service.BrowserSession")
+async def test_koda_async_web_crawler_lifecycle(mock_browser_session_cls):
+    mock_session = AsyncMock()
+    mock_browser_session_cls.return_value = mock_session
+    mock_context = AsyncMock()
+    mock_session.__aenter__.return_value = mock_context
+    
+    mock_client = MagicMock()
+    crawler = KodaAsyncWebCrawler(client=mock_client)
+    
+    # Since we monkeypatched crawl4ai.AsyncWebCrawler, we need to patch the actual base class
+    # which is accessible via KodaAsyncWebCrawler.__bases__[0]
+    BaseClass = crawler.__class__.__bases__[0]
+    with patch.object(BaseClass, "start", new_callable=AsyncMock) as mock_super_start:
+        with patch.object(BaseClass, "close", new_callable=AsyncMock) as mock_super_close:
+            await crawler.start()
+
+            assert crawler._koda_session == mock_session
+            mock_session.__aenter__.assert_called_once()
+            mock_super_start.assert_called_once()
+            
+            await crawler.close()
+            
+            mock_super_close.assert_called_once()
+            mock_session.__aexit__.assert_called_once()
+            assert crawler._koda_session is None
 
 @pytest.mark.asyncio
 async def test_koda_browser_manager():
@@ -15,7 +48,8 @@ async def test_koda_browser_manager():
     await manager.close()
     
     # get_page should return a new page from the context
-    page, context = await manager.get_page(None)
+    from crawl4ai import CrawlerRunConfig
+    page, context = await manager.get_page(CrawlerRunConfig())
     assert page == mock_page
     assert context == mock_context
     mock_context.new_page.assert_called_once()

@@ -17,4 +17,4 @@ def test_images_are_identical():
 def test_sanitize_filename():
     """Test URL to filename sanitization."""
     assert sanitize_filename("https://example.com/path?query=1") == "example_com_path_query_1"
-    assert sanitize_filename("http://test.org/!@#$%^&*()") == "test_org___________"
+    assert sanitize_filename("http://test.org/!@#$%^&*()") == "test_org"

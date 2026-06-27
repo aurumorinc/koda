@@ -1,5 +1,4 @@
 import os
-import shutil
 import pytest
 import aioboto3
 
@@ -83,11 +82,10 @@ async def test_s3_upload_download_flow(dummy_profile_dir, tmp_path):
     # 6. Cleanup S3
     session = aioboto3.Session()
     kwargs = {
-        "service_name": "s3",
         "region_name": settings.s3_region_name,
         "endpoint_url": settings.s3_endpoint_url,
         "aws_access_key_id": settings.s3_access_key_id,
         "aws_secret_access_key": settings.s3_secret_access_key,
     }
-    async with session.client(**kwargs) as s3:
+    async with session.client('s3', **kwargs) as s3:
         await s3.delete_object(Bucket=settings.s3_bucket_name, Key=s3_key)
