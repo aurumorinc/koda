@@ -1,6 +1,6 @@
 [project]
 name = "koda"
-version = "0.4.0"
+version = "0.4.1"
 description = "Koda - The Firecrawl Alternative"
 authors = [{name = "Aryan Singh", email = "aryan.singh@aurumor.com"}]
 requires-python = ">=3.11"
