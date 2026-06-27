@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, AsyncGenerator, Dict, Protocol, Callable, Awaitable
+from typing import Any, AsyncGenerator, Dict, Protocol, Callable, Awaitable, Optional
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 import copy
@@ -74,7 +74,7 @@ CSP_STRATEGIES = {
 }
 
 @asynccontextmanager
-async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "") -> AsyncGenerator[BrowserContext, None]:
+async def BrowserSession(config: Optional[Dict[str, Any]] = None, user_data_dir: str = "") -> AsyncGenerator[BrowserContext, None]:
     """
     Context manager that owns the browser lifecycle.
     Launches the browser, injects telemetry into all pages, and ensures safe teardown.
@@ -116,7 +116,7 @@ async def BrowserSession(config: Dict[str, Any] = None, user_data_dir: str = "")
                 loop.default_exception_handler(context_dict)
                 
         loop.set_exception_handler(custom_exception_handler)
-        loop._koda_exception_handler_set = True
+        setattr(loop, "_koda_exception_handler_set", True)
     
     strategy = CSP_STRATEGIES.get(browser_type, CSP_STRATEGIES["default"])
     config = strategy.modify_launch_config(config)
