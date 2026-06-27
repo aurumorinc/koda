@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:086f3996f2ff56b20de51960894e142414b919ec594c30d58611680c5ba3ad16"
+content_hash = "sha256:0ddd6337ad9c816b3440c3ac144c72ac31f35ec90dc18d47cf720d7a55924218"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -713,7 +713,7 @@ files = [
 
 [[package]]
 name = "crawlee"
-version = "1.7.2"
+version = "1.7.3"
 summary = ""
 dependencies = [
     "async-timeout",
@@ -731,8 +731,8 @@ dependencies = [
     "yarl",
 ]
 files = [
-    {file = "crawlee-1.7.2-py3-none-any.whl", hash = "sha256:dd22b2c1fa6b39312222ec0e732344b22eb26aa53d33758ec9a1a8ad16725d4d"},
-    {file = "crawlee-1.7.2.tar.gz", hash = "sha256:362f3f9e43d7c28c8c0133f8787ad2ff77d159ff205b9a72f2013ece882298ac"},
+    {file = "crawlee-1.7.3-py3-none-any.whl", hash = "sha256:ff61612bba8555a1d8d612045640dfe7808c198c5948cc933b26b578df629f8e"},
+    {file = "crawlee-1.7.3.tar.gz", hash = "sha256:5c0a2dad5ae13bc5e07f4e0184de54837e2ad465c4d3580637d8fa70d701b163"},
 ]
 
 [[package]]
@@ -2818,11 +2818,12 @@ files = [
 
 [[package]]
 name = "python-logging"
-version = "26.6.5"
+version = "26.6.7"
 git = "https://github.com/aurumorinc/python-logging.git"
-revision = "ce179fa0de42af73c0455677f8f709a35b6eec0c"
+revision = "ad8bdbd9e903665f654a87c5ea92dff33f8d1326"
 summary = ""
 dependencies = [
+    "colorama",
     "opentelemetry-api",
     "opentelemetry-exporter-otlp",
     "opentelemetry-sdk",

@@ -13,12 +13,12 @@
 [runemodule ".agents/skills/windmill/modules/windmill"]
 	url = https://github.com/windmill-labs/windmill/tree/main
 	path = .agents/skills/windmill/modules/windmill
-[runemodule ".agents/skills/python-logging/modules/python-logging"]
-	url = https://github.com/aurumorinc/python-loggin/tree/main
-	path = .agents/skills/python-logging/modules/python-logging
 [runemodule ".agents/skills/playwright/modules/playwright"]
 	url = https://github.com/microsoft/playwrigh/tree/main
 	path = .agents/skills/playwright/modules/playwright
 [runemodule ".agents/skills/crawlee/modules/crawlee-python"]
 	url = https://github.com/apify/crawlee-python/tree/master
 	path = .agents/skills/crawlee/modules/crawlee-python
+[runemodule ".agents/skills/worldline-python/modules/worldline-python"]
+	url = https://github.com/aurumorinc/worldline-python/tree/main
+	path = .agents/skills/worldline-python/modules/worldline-python

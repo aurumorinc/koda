@@ -1,0 +1,19 @@
+[project]
+name = "koda-api"
+version = "0.1.0"
+description = "Windmill app"
+dependencies = []
+
+[tool.pdm]
+distribution = false
+
+search_path = ["../../packages/koda/src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]

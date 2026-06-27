@@ -1,6 +1,6 @@
 [project]
 name = "koda"
-version = "26.6.43"
+version = "0.1.0"
 description = "Koda - The Firecrawl Alternative"
 authors = [{name = "Aryan Singh", email = "aryan.singh@aurumor.com"}]
 requires-python = ">=3.11"
@@ -12,17 +12,17 @@ dependencies = [
     "pyotp>=2.9.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    "python-logging @ git+https://github.com/aurumorinc/python-logging.git",
+    "worldline @ git+https://github.com/aurumorinc/worldline-python.git",
     "invisible-playwright @ git+https://github.com/feder-cr/invisible_playwright.git",
     "crawl4ai",
     "httpx>=0.28.1",
     "upstash-redis>=1.7.0",
     "aioimaplib>=2.0.1",
-    "camoufox>=0.4.11",
-    "sentry-sdk>=2.61.0",
     "aioboto3>=13.0.0",
-    "crawlee>=1.7.2",
+    "crawlee>=1.7.3",
     "requests-file>=3.0.1",
+    "stagehand>=3.21.0",
+    "browserforge>=1.2.4",
 ]
 
 [build-system]
@@ -37,9 +37,16 @@ dev = [
     "mkinit>=1.2.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pyrefly>=1.1.1",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_default_test_loop_scope = "function"
+
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]
