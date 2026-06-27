@@ -40,7 +40,7 @@ async def dispatch_webhook(
         except Exception as e:
             logger.warning("Failed to trigger webhook for event %s: %s", event.value, e)
 
-    asyncio.create_task(_send())
+    await _send()
 
 
 def webhook_dispatch(func: Callable[..., Any]) -> Callable[..., Any]:
