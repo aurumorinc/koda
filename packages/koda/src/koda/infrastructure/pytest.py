@@ -73,46 +73,47 @@ def main():
         failure_content = []
         test_filename = test_id.split("::")[0]
         
-        for line in process.stdout:
-            clean_line = re.sub(r'\x1b\[[0-9;]*m', '', line)
-            
-            # Capture failures for the summary
-            if "FAILURES" in clean_line or "ERRORS" in clean_line or in_failure:
-                if "short test summary info" in clean_line or (clean_line.startswith("===") and clean_line.endswith("===") and " in " in clean_line):
-                    in_failure = False
-                else:
-                    if "FAILURES" in clean_line or "ERRORS" in clean_line:
-                        in_failure = True
-                    if in_failure:
-                        failure_content.append(line.rstrip('\n'))
-                continue
-            
-            # Filter out pytest session start/end lines
-            is_session_line = "test session starts" in clean_line or "passed in" in clean_line or "collected" in clean_line
-            if is_session_line or "short test summary info" in clean_line:
-                continue
+        if process.stdout:
+            for line in process.stdout:
+                clean_line = re.sub(r'\x1b\[[0-9;]*m', '', line)
                 
-            # Process the actual test result line
-            if test_filename in clean_line and ("[" in clean_line and "%]" in clean_line):
-                parts = clean_line.split()
-                filename = parts[0]
+                # Capture failures for the summary
+                if "FAILURES" in clean_line or "ERRORS" in clean_line or in_failure:
+                    if "short test summary info" in clean_line or (clean_line.startswith("===") and clean_line.endswith("===") and " in " in clean_line):
+                        in_failure = False
+                    else:
+                        if "FAILURES" in clean_line or "ERRORS" in clean_line:
+                            in_failure = True
+                        if in_failure:
+                            failure_content.append(line.rstrip('\n'))
+                    continue
                 
-                if current_file != filename:
-                    if current_file is not None:
-                        print() # Newline for previous file
-                    current_file = filename
-                    print(f"{filename} ", end="")
+                # Filter out pytest session start/end lines
+                is_session_line = "test session starts" in clean_line or "passed in" in clean_line or "collected" in clean_line
+                if is_session_line or "short test summary info" in clean_line:
+                    continue
                     
-                # Extract just the colored dot
-                dot = parts[1] if len(parts) > 1 else "."
-                print(dot, end="")
-                sys.stdout.flush()
-                continue
-                
-            # Print any other output (e.g., stdout from the test itself)
-            if clean_line.strip():
-                print(line, end="")
-                sys.stdout.flush()
+                # Process the actual test result line
+                if test_filename in clean_line and ("[" in clean_line and "%]" in clean_line):
+                    parts = clean_line.split()
+                    filename = parts[0]
+                    
+                    if current_file != filename:
+                        if current_file is not None:
+                            print() # Newline for previous file
+                        current_file = filename
+                        print(f"{filename} ", end="")
+                        
+                    # Extract just the colored dot
+                    dot = parts[1] if len(parts) > 1 else "."
+                    print(dot, end="")
+                    sys.stdout.flush()
+                    continue
+                    
+                # Print any other output (e.g., stdout from the test itself)
+                if clean_line.strip():
+                    print(line, end="")
+                    sys.stdout.flush()
                 
         process.wait()
         
