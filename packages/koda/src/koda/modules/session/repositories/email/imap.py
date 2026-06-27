@@ -44,9 +44,15 @@ async def get_latest_email(address: str) -> Optional[str]:
         if msg.is_multipart():
             for part in msg.walk():
                 if part.get_content_type() == "text/plain":
-                    return part.get_payload(decode=True).decode("utf-8")
+                    payload = part.get_payload(decode=True)
+                    if isinstance(payload, bytes):
+                        return payload.decode("utf-8")
+                    return str(payload)
         else:
-            return msg.get_payload(decode=True).decode("utf-8")
+            payload = msg.get_payload(decode=True)
+            if isinstance(payload, bytes):
+                return payload.decode("utf-8")
+            return str(payload)
 
         return None
 

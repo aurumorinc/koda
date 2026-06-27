@@ -1,5 +1,5 @@
 import asyncio
-import logging
+from worldline import structlog
 import uuid
 from typing import Optional
 
@@ -7,7 +7,7 @@ from upstash_redis.asyncio import Redis
 
 from koda.config.main import settings
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _get_client() -> Redis:
@@ -111,7 +111,7 @@ async def _renew_lock_loop(lock_name: str, token: str, ttl_seconds: int) -> None
     
     while True:
         try:
-            result = await client.eval(script, [key], [token, ttl_ms])
+            result = await client.eval(script, [key], [str(token), str(ttl_ms)])
             if not result:
                 logger.warning(f"Redis lock {lock_name!r} lost or token mismatch, stopping heartbeat.")
                 break
