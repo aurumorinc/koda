@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 import os
 import sys
 
@@ -8,68 +8,77 @@ from utils import import_script
 
 crawl_script = import_script("f/koda/crawl.py", "crawl")
 
-@pytest.mark.asyncio
-@patch("crawl.KodaClient")
-async def test_crawl_success(mock_client_class, wmill_mock):
-    mock_client = AsyncMock()
-    mock_client_class.return_value.__aenter__.return_value = mock_client
-    
-    from unittest.mock import MagicMock
-    mock_response = MagicMock()
-    mock_response.model_dump.return_value = {
-        "success": True,
-        "id": "crawl-123",
-        "url": "https://example.com",
-        "total_pages_crawled": 5
-    }
-    mock_client.crawl.return_value = mock_response
 
-    result = await crawl_script._run_crawl(
+@pytest.mark.asyncio
+@patch("crawl._execute_crawl_job")
+async def test_crawl_success(mock_execute_job, wmill_mock):
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.id = "test-id"
+    mock_response.url = "https://example.com"
+    mock_response.total_pages_crawled = 5
+    mock_response.model_dump.return_value = {"success": True, "id": "test-id", "url": "https://example.com", "total_pages_crawled": 5}
+    
+    mock_execute_job.return_value = mock_response
+
+    result = await crawl_script.main(
         url="https://example.com",
-        limit=10,
+        prompt=None,
+        excludePaths=["/exclude/*"],
+        includePaths=["/include/*"],
         maxDiscoveryDepth=2,
-        allowExternalLinks=False,
-        allowSubdomains=False,
-        crawlEntireDomain=True,
+        sitemap="include",
         ignoreQueryParameters=True,
         regexOnFullURL=False,
-        excludePaths=None,
-        includePaths=None,
+        limit=10,
+        crawlEntireDomain=False,
+        allowExternalLinks=False,
+        allowSubdomains=False,
+        ignoreRobotsTxt=False,
+        robotsUserAgent="test-bot",
+        delay=0.5,
         maxConcurrency=5,
-        delay=1.0,
         webhook=None,
-        scrapeOptions={"formats": ["markdown"]}
+        scrapeOptions={"formats": ["markdown", "html"]},
+        zeroDataRetention=False
     )
 
     assert result["success"] is True
     assert result["total_pages_crawled"] == 5
     
-    call_args = mock_client.crawl.call_args[0][0]
-    assert str(call_args.url) == "https://example.com/"
+    call_args = mock_execute_job.call_args[0][0]
+    assert call_args.url == "https://example.com"
     assert call_args.limit == 10
-    assert call_args.scrapeOptions.formats == ["markdown"]
+    assert call_args.delay == 0.5
+    assert call_args.scrapeOptions.formats == ["markdown", "html"]
+
 
 @pytest.mark.asyncio
-@patch("crawl.KodaClient")
-async def test_crawl_exception(mock_client_class, wmill_mock):
-    mock_client_class.return_value.__aenter__.side_effect = Exception("Crawl Error")
-    
-    result = await crawl_script._run_crawl(
+@patch("crawl._execute_crawl_job")
+async def test_crawl_exception(mock_execute_job, wmill_mock):
+    mock_execute_job.side_effect = Exception("System Crash")
+
+    result = await crawl_script.main(
         url="https://example.com",
-        limit=10,
-        maxDiscoveryDepth=2,
-        allowExternalLinks=False,
-        allowSubdomains=False,
-        crawlEntireDomain=True,
-        ignoreQueryParameters=True,
-        regexOnFullURL=False,
+        prompt=None,
         excludePaths=None,
         includePaths=None,
+        maxDiscoveryDepth=1,
+        sitemap="include",
+        ignoreQueryParameters=False,
+        regexOnFullURL=False,
+        limit=10,
+        crawlEntireDomain=False,
+        allowExternalLinks=False,
+        allowSubdomains=False,
+        ignoreRobotsTxt=False,
+        robotsUserAgent=None,
+        delay=None,
         maxConcurrency=5,
-        delay=1.0,
         webhook=None,
-        scrapeOptions=None
+        scrapeOptions={},
+        zeroDataRetention=False
     )
 
     assert result["success"] is False
-    assert "Crawl Error" in result["error"]
+    assert "Crash" in result["error"]

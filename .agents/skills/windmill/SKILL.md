@@ -13,6 +13,8 @@ windmill/
 └── SKILL.md
 ```
 
+> **Agent Instructions:** The AST maps below provide a high-level overview of the `modules/` directory. Note that the complete repository source code is available within the `modules/` folder. You can and should use your file reading tools to access the actual source code within `modules/` for complete details, implementation logic, and context beyond what the AST map provides.
+
 ### AST Map: `modules/windmill`
 
 ```python
@@ -31,17 +33,6 @@ ai_evals/core/types.ts:
 │  requiredProposedCommands?: string[];
 │  forbiddenProposedCommands?: string[];
 │  orderedProposedCommands?: string[];
-⋮
-│export interface ToolValidationSpec {
-│  requiredToolsUsed?: string[];
-│  /**
-│   * Each inner array is an alternatives group: the check passes when at least
-│   * one tool in the group was used. Use when several tools satisfy the same
-│   * intent so a model that picks any valid path passes — e.g. inspecting an
-│   * app's files via either `read_app_file` or `search_app`.
-│   */
-│  requiredToolsAnyOf?: string[][];
-│  forbiddenToolsUsed?: string[];
 ⋮
 │export interface EvalCase {
 │  id: string;
@@ -200,19 +191,6 @@ backend/windmill-ai/src/types.rs:
 │                // If user provided a value (bool or schema), preserve it and let OpenAI handle it
 │                if self.additional_properties.is_none() {
 ⋮
-│    /// See https://github.com/windmill-labs/windmill/issues/7759
-│    pub fn sanitize_for_google(&mut self) {
-│        let mut schema_value = match serde_json::to_value(&*self) {
-│            Ok(value) => value,
-│            Err(err) => {
-│                tracing::error!("Failed to serialize OpenAPISchema for Google AI: {err}");
-│                return;
-│            }
-│        };
-│
-│        sanitize_schema_for_google(&mut schema_value);
-│
-⋮
 │mod tests {
 │    use super::*;
 │    use std::collections::HashMap;
@@ -305,7 +283,7 @@ backend/windmill-common/src/auth.rs:
 │    pub workspace_id: Option<String>,
 │    pub workspace_ids: Option<Vec<String>>,
 ⋮
-│pub async fn is_super_admin_email(db: &DB, email: &str) -> Result<bool> {
+│pub async fn is_super_admin_email<'c>(db: impl sqlx::PgExecutor<'c>, email: &str) -> Result<bool> {
 │    if email == SUPERADMIN_SECRET_EMAIL || email == SUPERADMIN_NOTIFICATION_EMAIL {
 │        return Ok(true);
 │    }
@@ -450,6 +428,33 @@ backend/windmill-common/src/utils.rs:
 │    fn build_from_caller(
 │        self,
 ⋮
+│pub fn merge_nested_raw_values_to_array<
+│    'a,
+│    It1: Iterator<Item = It2>,
+│    It2: Iterator<Item = &'a Box<serde_json::value::RawValue>>,
+⋮
+
+backend/windmill-common/src/worker.rs:
+⋮
+│impl SqlResultCollectionStrategy {
+│    pub fn parse(s: &str) -> Self {
+│        use SqlResultCollectionStrategy::*;
+│        match s {
+│            "last_statement_all_rows" => LastStatementAllRows,
+│            "last_statement_first_row" => LastStatementFirstRow,
+│            "last_statement_all_rows_scalar" => LastStatementAllRowsScalar,
+│            "last_statement_first_row_scalar" => LastStatementFirstRowScalar,
+│            "all_statements_all_rows" => AllStatementsAllRows,
+│            "all_statements_first_row" => AllStatementsFirstRow,
+⋮
+│    pub fn collect(
+│        &self,
+│        values: Vec<Vec<Box<serde_json::value::RawValue>>>,
+⋮
+│pub fn to_raw_value<T: Serialize>(result: &T) -> Box<RawValue> {
+│    serde_json::value::to_raw_value(result)
+│        .unwrap_or_else(|_| RawValue::from_string("{}".to_string()).unwrap())
+⋮
 
 backend/windmill-common/src/workspace_dependencies.rs:
 ⋮
@@ -457,31 +462,18 @@ backend/windmill-common/src/workspace_dependencies.rs:
 │    error::Error::FeatureUnavailable(e)
 ⋮
 
-backend/windmill-trigger-mqtt/src/listener.rs:
+backend/windmill-native-triggers/src/lib.rs:
 ⋮
-│impl EventLoop for V5EventLoop {
-│    type Event = V5Event;
-│    type Error = rumqttc::v5::ConnectionError;
-│
-│    async fn poll(&mut self) -> Result<Self::Event> {
-│        self.poll().await.map_err(|err| to_anyhow(err).into())
-│    }
-│
-│    async fn verify_connection(&mut self) -> Result<()> {
-│        let start = std::time::Instant::now();
-│
-⋮
-│impl EventLoop for V3EventLoop {
-│    type Event = V3Event;
-│    type Error = rumqttc::ConnectionError;
-│
-│    async fn poll(&mut self) -> Result<Self::Event> {
-│        self.poll().await.map_err(|err| to_anyhow(err).into())
-│    }
-│
-│    async fn verify_connection(&mut self) -> Result<()> {
-│        let start = std::time::Instant::now();
-│
+│impl TryFrom<String> for ServiceName {
+│    type Error = Error;
+│    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+│        let service = match value.as_str() {
+│            "nextcloud" => ServiceName::Nextcloud,
+│            "google" => ServiceName::Google,
+│            "github" => ServiceName::Github,
+│            _ => {
+│                return Err(anyhow::anyhow!(
+│                    "Unknown service, currently supported services are: [{}]",
 ⋮
 
 backend/windmill-types/src/flows.rs:
@@ -497,13 +489,16 @@ backend/windmill-types/src/flows.rs:
 │    #[serde(skip_serializing_if = "Option::is_none")]
 │    pub summary: Option<String>,
 ⋮
-
-backend/windmill-types/src/lib.rs:
-⋮
-│/// windmill-types cannot depend on windmill-common (it would be circular).
-│pub fn to_raw_value<T: serde::Serialize>(result: &T) -> Box<serde_json::value::RawValue> {
-│    serde_json::value::to_raw_value(result)
-│        .unwrap_or_else(|_| serde_json::value::RawValue::from_string("{}".to_string()).unwrap())
+│impl TryFrom<UntaggedInputTransform> for InputTransform {
+│    type Error = anyhow::Error;
+│    fn try_from(value: UntaggedInputTransform) -> Result<Self, Self::Error> {
+│        let input_transform = match value.type_.as_str() {
+│            "static" => InputTransform::new_static_value(value.value.unwrap_or_else(default_null)),
+│            "javascript" => InputTransform::new_javascript_expr(&value.expr.unwrap_or_default()),
+│            "ai" => InputTransform::Ai,
+│            other => {
+│                return Err(anyhow::anyhow!(
+│                    "got value: {other} for field `type`, expected value: `static` or `javascript`"
 ⋮
 
 backend/windmill-types/src/scripts.rs:
@@ -542,6 +537,23 @@ backend/windmill-worker/src/worker.rs:
 │    pub fn is_success(&self) -> bool {
 │        matches!(self, Self::Completed)
 │    }
+⋮
+
+cli/bootstrap/common.ts:
+⋮
+│export type EnumType = string[] | undefined;
+│
+⋮
+│export interface SchemaProperty {
+│  type: string | undefined;
+│  description?: string;
+│  pattern?: string;
+│  default?: any;
+│  enum?: EnumType;
+│  contentEncoding?: "base64" | "binary";
+│  format?: string;
+│  items?: {
+│    type?: "string" | "number" | "bytes" | "object" | "resource";
 ⋮
 
 cli/src/commands/instance/instance.ts:
@@ -639,6 +651,17 @@ cli/src/core/settings.ts:
 │  skipReencrypt?: boolean;
 ⋮
 
+cli/src/core/specific_items.ts:
+⋮
+│export interface SpecificItemsConfig {
+│  variables?: string[];
+│  resources?: string[];
+│  triggers?: string[];
+│  schedules?: string[];
+│  folders?: string[];
+│  settings?: boolean;
+⋮
+
 cli/src/types.ts:
 ⋮
 │export type GlobalOptions = {
@@ -650,6 +673,18 @@ cli/src/types.ts:
 
 cli/src/utils/script_common.ts:
 │export type ScriptLanguage =
+⋮
+
+cli/src/utils/upgrade.ts:
+⋮
+│export type NpmProviderOptions = { main?: string; logger?: any } & (
+│  | {
+│      package: string;
+│    }
+│  | {
+│      scope: string;
+│      name?: string;
+│    }
 ⋮
 
 cli/test/test_backend.ts:
@@ -664,6 +699,20 @@ cli/test/test_backend.ts:
 │  stop(): Promise<void>;
 │  reset(): Promise<void>;
 │
+⋮
+
+cli/windmill-utils-internal/src/parse/parse-schema.ts:
+⋮
+│export interface SchemaProperty {
+│  type: string | undefined;
+│  description?: string;
+│  pattern?: string;
+│  default?: any;
+│  enum?: EnumType;
+│  contentEncoding?: "base64" | "binary";
+│  format?: string;
+│  items?: {
+│    type?: "string" | "number" | "bytes" | "object" | "resource";
 ⋮
 
 debugger/test_dap_server.py:
@@ -724,20 +773,6 @@ debugger/test_dap_server_bun.ts:
 │		}
 ⋮
 
-debugger/test_debug_service.ts:
-⋮
-│class TestClient {
-│	private ws: WebSocket | null = null
-│	private seq = 1
-│	private pendingRequests = new Map<
-│		number,
-│		{ resolve: (value: DAPMessage) => void; reject: (error: Error) => void }
-│	>()
-│	private events: DAPMessage[] = []
-│	private output: string[] = []
-│	private result: unknown = undefined
-⋮
-
 docker/test_windmill_extra.ts:
 ⋮
 │class DAPTestClient {
@@ -761,6 +796,11 @@ ephemeral-backends/worktree-pool.ts:
 │  currentCommit?: string;
 ⋮
 
+examples/deploy/aws-ecs-terraform/rds.tf:
+⋮
+│resource "aws_db_instance" "windmill_cluster_rds" {
+⋮
+
 examples/deploy/aws-ecs-terraform/vpc.tf:
 │resource "aws_vpc" "windmill_cluster_vpc" {
 ⋮
@@ -781,6 +821,24 @@ frontend/src/lib/ata/apis.ts:
 │	usage: number
 ⋮
 
+frontend/src/lib/cancelable-promise-utils.ts:
+⋮
+│export namespace CancelablePromiseUtils {
+│	export function then<T, U>(
+│		promise: CancelablePromise<T>,
+│		f: (value: T) => CancelablePromise<U>
+│	): CancelablePromise<U> {
+│		let promiseToBeCanceled: CancelablePromise<any> = promise
+│		let p = new CancelablePromise<U>((resolve, reject) => {
+│			promise
+│				.then((value1) => {
+│					let promise2 = f(value1)
+⋮
+│	export function map<T, U>(
+│		promise: CancelablePromise<T>,
+│		f: (value: T) => U
+⋮
+
 frontend/src/lib/common.ts:
 ⋮
 │export interface SchemaProperty {
@@ -795,12 +853,42 @@ frontend/src/lib/common.ts:
 │		type?: 'string' | 'number' | 'bytes' | 'object' | 'resource'
 ⋮
 
+frontend/src/lib/components/apps/components/helpers/eval.ts:
+⋮
+│type WmFunctor = (
+│	context,
+│	state,
+│	createProxy,
+│	goto,
+│	setTab,
+│	recompute,
+│	globalRecompute,
+│	getAgGrid,
+│	setValue,
+⋮
+
 frontend/src/lib/components/apps/svelte-grid/utils/other.ts:
 │export function throttle(func, timeFrame) {
 ⋮
 
 frontend/src/lib/components/common/fileInput/model.ts:
 │export type ReadFileAs = 'buffer' | 'binary' | 'base64' | 'text'
+
+frontend/src/lib/components/copilot/chat/files/attachedFilesDB.ts:
+⋮
+│export type AttachedItemKind = 'snapshot' | 'dir-handle'
+│
+│export interface PersistedAttachedItem {
+│	/** Stable record id. */
+│	id: string
+│	sessionId: string
+│	/** 'snapshot' = a file copied into IndexedDB; 'dir-handle' = a live folder handle. */
+│	kind: AttachedItemKind
+│	/** Display name: relative path for files, folder name for dir-handle records. */
+│	name: string
+│	/** Top-level folder (for grouping); equals `name` for dir-handle records. */
+│	folder?: string
+⋮
 
 frontend/src/lib/components/copilot/chat/monaco-adapter.ts:
 ⋮
@@ -872,6 +960,20 @@ frontend/src/lib/components/runs/timeframes.ts:
 │			minTs: string | null
 ⋮
 
+frontend/src/lib/components/triggers.ts:
+⋮
+│export type TriggerKind =
+│	| 'webhooks'
+│	| 'emails'
+│	| 'default_emails'
+│	| 'schedules'
+│	| 'cli'
+│	| 'routes'
+│	| 'websockets'
+│	| 'scheduledPoll'
+│	| 'kafka'
+⋮
+
 frontend/src/lib/git-sync.ts:
 ⋮
 │export interface SettingsObject {
@@ -889,12 +991,6 @@ frontend/src/lib/monaco_workers/graphql.worker.bundle.js:
 │`);return a.message&&!m&&(E=`${" ".repeat(g+1)}${a.message}
 │${E}`),E}e.codeFrameColumns=i}),L_={};ih(L_,{__debug:()=>d4,check:()=>h4,doc:()=>gh,format:()=>Th,f
 ⋮
-│`)),Z_(s,n.loggerPrintWidth)};W1=[],c_=[];K_=(e,t,{descriptor:n,logger:r,schemas:i})=>{let s=[`Igno
-⋮
-│`,kt=F.split(/\r\n|[\n\r]/g),Vi=kt[x];if(Vi.length>120){let ir=Math.floor(rt/80),Gl=rt%80,$t=[];for
-│`)}function q4(p){let _=p[0];return _==null||"kind"in _||"length"in _?{nodes:_,source:p[1],position
-│
-⋮
 │spurious results.`)}}return!1},$h=class{constructor(p,_="GraphQL request",D={line:1,column:1}){type
 │
 │`+t.stack):new Error(t.message+`
@@ -910,35 +1006,11 @@ frontend/src/lib/monaco_workers/graphql.worker.bundle.js:
 │`).slice(2).join(`
 │`))}},ac=class extends Error{constructor(t,n){super(t),this.name="ListenerLeakError",this.stack=n}}
 │`||e==="	"}var Ut;(function(e){e[e.None=0]="None",e[e.NonBasicASCII=1]="NonBasicASCII",e[e.Invisibl
-│`?(n++,r=0):r++;return new e(n,r)}static ofSubstr(t,n){return e.ofText(n.substring(t))}static sum(t
 ⋮
-│`+this._getLineContent(t.endLineNumber).substring(0,t.endColumn-1),n}getLineLength(t){return this._
-│`,w);if(L===-1)throw new Oe("Text length mismatch");w=L+1,k++}return w+=I,[q.substring(0,w),q.subst
-│`):typeof t=="string"?this.toString(new Bn(t)):this.replacements.length===0?"":this.replacements.ma
-│`)}},xt=class e{static joinReplacements(t,n){if(t.length===0)throw new Oe;if(t.length===1)return t[
-⋮
-│`),i=Ki(n,r),s=xn.ofText(n.substring(0,n.length-i)).addToPosition(this.range.getStartPosition()),o=
-│`,`
-│`),r=t.getValueOfRange(this.range).replaceAll(`\r
-│`,`
-│`),i=Zi(n,r);n=n.substring(i),r=r.substring(i);let s=Ki(n,r);return n=n.substring(0,n.length-s),r=r
-│`);this.histogram[a]=(this.histogram[a]||0)+1}this.totalCount=i}computeSimilarity(t){let n=0,r=Math
-│`).length>=15&&eD(f,m=>m.length>=2)>=2}),o=iD(e,o),o}function eD(e,t){let n=0;for(let r of e)t(r)&&
 │`)}isStronglyEqual(t,n){return this.lines[t]===this.lines[n]}};function sm(e){let t=0;for(;t<e.leng
 │`);s.lastIndex=0;let c;for(;(c=s.exec(l))!==null;){let f=l.substring(0,c.index),d=(f.match(/\n/g)||
 │`),E=g.length,T=m+E-1,v=f.lastIndexOf(`
 │`)+1,A=c.index-v+1,S=g[g.length-1],C=E===1?A+c[0].length:S.length+1,q={startLineNumber:m,startColum
-│`,c=r.split(/\r\n|[\n\r]/g),f=c[i];if(f.length>120){let d=Math.floor(u/80),m=u%80,g=[];for(let E=0;
-│`)}function AD(e){let t=e[0];return t==null||"kind"in t||"length"in t?{nodes:t,source:e[1],position
-│
-⋮
-│  `))}function Um(e){var t;return(t=e?.some(n=>n.includes(`
-│`)))!==null&&t!==void 0?t:!1}function Wo(e,t){switch(e.kind){case b.NULL:return null;case b.INT:ret
-│
-⋮
-│`))}var yf=class{constructor(t){this._errors=[],this.schema=t}reportError(t,n){let r=Array.isArray(
-│
-│`))}function Ju(e){return{Field(t){let n=e.getFieldDef(),r=n?.deprecationReason;if(n&&r!=null){let 
 ⋮
 
 frontend/src/lib/navigation.ts:
@@ -988,6 +1060,12 @@ frontend/src/lib/userScopedDb.ts:
 ⋮
 
 frontend/src/lib/utils.ts:
+⋮
+│export type S3Object =
+│	| S3Uri
+│	| {
+│			s3: string
+│			storage?: string
 ⋮
 │export function assert(msg: string, condition: boolean, value?: any) {
 │	if (!condition) {
@@ -1048,6 +1126,7 @@ python-client/wmill/wmill/client.py:
 typescript-client/docs/assets/main.js:
 ⋮
 │"use strict";(()=>{var Ce=Object.create;var ie=Object.defineProperty;var Oe=Object.getOwnPropertyDe
+│`,e)},t.Pipeline.load=function(e){var n=new t.Pipeline;return e.forEach(function(r){var i=t.Pipelin
 ⋮
 
 typescript-client/sqlUtils.d.ts:
@@ -1113,6 +1192,12 @@ typescript-client/tests/sqlUtils.test.ts:
 │  preamble(): string;
 │  language: "postgresql" | "duckdb";
 │  extraArgs: Record<string, any>;
+⋮
+
+windmill-yaml-validator/src/validation/yaml-validator.ts:
+⋮
+│export type TriggerKind = (typeof SUPPORTED_TRIGGER_KINDS)[number];
+│
 ⋮
 
 wm-ts-nav/src/main.rs:
