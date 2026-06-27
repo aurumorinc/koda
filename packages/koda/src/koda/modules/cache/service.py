@@ -1,11 +1,11 @@
-import logging
+from worldline import structlog
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 from koda.config.main import settings
 from koda.modules.cache.schema import CacheEntry
 
-logger = logging.getLogger("koda.modules.cache")
+logger = structlog.get_logger("koda.modules.cache")
 
 
 class CacheService:
