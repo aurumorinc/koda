@@ -390,3 +390,4 @@ storage/
 .agents/skills/playwright/modules/playwright
 .agents/skills/crawlee-python/modules/crawlee-python
 .agents/skills/crawlee/modules/crawlee-python
+.agents/skills/worldline-python/modules/worldline-python
