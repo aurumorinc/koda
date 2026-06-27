@@ -1,8 +1,7 @@
 from typing import Optional, Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from python_logging.config import LoggingSettings
-from python_logging.main import setup_logging
+from worldline import LoggingSettings
 
 
 class Settings(LoggingSettings, BaseSettings):
@@ -54,7 +53,7 @@ class Settings(LoggingSettings, BaseSettings):
 
     # Windmill Configuration
     windmill_token: Optional[str] = None
-    windmill_base_url: str = "https://app.windmill.dev"
+    windmill_base_url: Optional[str] = "https://app.windmill.dev"
     windmill_workspace: Optional[str] = None
     windmill_state_path: Optional[str] = Field(default=None, validation_alias="WM_STATE_PATH")
     windmill_state_path_file: Optional[str] = Field(default=None, validation_alias="WM_STATE_PATH_FILE")
@@ -94,17 +93,5 @@ class Settings(LoggingSettings, BaseSettings):
     posthog_api_key: Optional[str] = None
     posthog_host: str = "https://eu.i.posthog.com"
 
-    # Sentry Configuration
-    sentry_dsn: Optional[str] = None
-
-    # Webhook Configuration
-    webhook_url: Optional[str] = None
-    webhook_events: Optional[list[str]] = None
-    webhook_headers: Optional[dict[str, str]] = None
-
-
 # Global settings instance
 settings = Settings()
-
-# Initialize global logging state
-setup_logging(settings)
