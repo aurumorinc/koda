@@ -33,6 +33,5 @@ def sanitize_filename(url: str) -> str:
     Returns:
         A sanitized string suitable for use as a filename or S3 key.
     """
-    sanitized_name = re.sub(r"^https?://", "", url)
-    sanitized_name = re.sub(r"[^a-zA-Z0-9]", "_", sanitized_name)
-    return sanitized_name[:200]
+    clean_url = url.split("://")[-1]
+    return re.sub(r"[^\w\-_]", "_", clean_url).strip("_")
