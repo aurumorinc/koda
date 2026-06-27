@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from playwright.async_api import BrowserContext
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
@@ -64,19 +64,66 @@ class KodaBrowserManager(BrowserManager):
         except Exception:
             pass
 
+class KodaAsyncWebCrawler(AsyncWebCrawler):
+    """
+    A custom AsyncWebCrawler that intercepts initialization to route browser
+    management through Koda's infrastructure if a `client` is provided.
+    """
+    def __init__(self, **kwargs):
+        self.client = kwargs.pop("client", None)
+        self._koda_session = None
+        super().__init__(**kwargs)
+
+    async def start(self) -> "KodaAsyncWebCrawler":
+        if self.client:
+            from koda.modules.browser.service import BrowserSession
+            
+            # Start the Koda BrowserSession context manager
+            self._koda_session = BrowserSession()
+            koda_context = await self._koda_session.__aenter__()
+            
+            # Construct KodaBrowserManager using the obtained context
+            manager = KodaBrowserManager(context=koda_context, browser_config=self.crawler_strategy.browser_config) # type: ignore[attr-defined]
+            self.crawler_strategy.browser_manager = manager # type: ignore[attr-defined]
+            
+        await super().start()
+        return self
+
+    async def close(self):
+        await super().close()
+        if self._koda_session:
+            await self._koda_session.__aexit__(None, None, None)
+            self._koda_session = None
+
+    async def __aenter__(self):
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+
+import sys
+import crawl4ai
+
+crawl4ai.AsyncWebCrawler = KodaAsyncWebCrawler  # type: ignore[attr-defined]
+
+if 'crawl4ai' in sys.modules:
+    sys.modules['crawl4ai'].AsyncWebCrawler = KodaAsyncWebCrawler  # type: ignore[attr-defined]
+
 class Crawl4AiTool(BrowserTool):
     """
     Adapter for crawl4ai that implements the BrowserTool protocol.
+    DEPRECATED: Use the native KodaAsyncWebCrawler wrapper instead.
     """
-    def __init__(self, browser_config: BrowserConfig = None):
+    def __init__(self, browser_config: Optional[BrowserConfig] = None):
         self.browser_config = browser_config or BrowserConfig(headless=True)
 
-    async def execute(self, context: BrowserContext, request: Any) -> Any:
+    async def execute(self, context_or_page: Any, request: Any) -> Any:
         """
         Execute a crawl4ai scrape using the provided context.
         """
         # Create our custom manager and strategy
-        manager = KodaBrowserManager(context=context, browser_config=self.browser_config)
+        manager = KodaBrowserManager(context=context_or_page, browser_config=self.browser_config)
         strategy = AsyncPlaywrightCrawlerStrategy(
             browser_config=self.browser_config,
             browser_manager=manager
@@ -90,7 +137,7 @@ class Crawl4AiTool(BrowserTool):
             # If there's a hook, set it
             hook = request.get("hook")
             if hook:
-                crawler.crawler_strategy.set_hook("before_retrieve_html", hook)
+                crawler.crawler_strategy.set_hook("before_retrieve_html", hook)  # type: ignore[attr-defined]
                 
             urls = request.get("urls")
             if urls:
@@ -106,11 +153,11 @@ class Crawl4AiTool(BrowserTool):
                     config=run_config
                 )
 
-    async def execute_stream(self, context: BrowserContext, request: Any) -> Any:
+    async def execute_stream(self, context_or_page: Any, request: Any) -> Any:
         """
         Execute a crawl4ai scrape using the provided context, yielding results as they arrive.
         """
-        manager = KodaBrowserManager(context=context, browser_config=self.browser_config)
+        manager = KodaBrowserManager(context=context_or_page, browser_config=self.browser_config)
         strategy = AsyncPlaywrightCrawlerStrategy(
             browser_config=self.browser_config,
             browser_manager=manager
@@ -124,7 +171,7 @@ class Crawl4AiTool(BrowserTool):
         async with AsyncWebCrawler(crawler_strategy=strategy, config=self.browser_config) as crawler:
             hook = request.get("hook")
             if hook:
-                crawler.crawler_strategy.set_hook("before_retrieve_html", hook)
+                crawler.crawler_strategy.set_hook("before_retrieve_html", hook)  # type: ignore[attr-defined]
                 
             stream = await crawler.arun(
                 url=request.get("url"),

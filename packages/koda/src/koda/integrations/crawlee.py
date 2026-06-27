@@ -1,20 +1,19 @@
-import asyncio
 from datetime import datetime, timezone, timedelta
-from typing import Any, Mapping, Sequence, Optional
+from typing import Any, Mapping, Optional, TYPE_CHECKING
 from types import TracebackType
+
+if TYPE_CHECKING:
+    from koda.client import KodaClient
 
 from playwright.async_api import BrowserContext, Page
 from crawlee.browsers._browser_controller import BrowserController
 from crawlee.browsers._browser_plugin import BrowserPlugin
 from crawlee.browsers._types import BrowserType
 from crawlee.proxy_configuration import ProxyInfo
-from crawlee.crawlers import PlaywrightCrawler as BasePlaywrightCrawler
+from crawlee.crawlers import PlaywrightCrawler 
 from crawlee.browsers import BrowserPool
-from crawlee.crawlers import PlaywrightCrawlingContext
 
 from koda.config.main import settings
-from koda.modules.webhook.schema import WebhookConfig
-from koda.modules.webhook.utils import dispatch_webhook
 from koda.modules.file.schema import S3Config
 from koda.modules.file.service import upload as s3_upload
 
@@ -134,60 +133,24 @@ class KodaBrowserPlugin(BrowserPlugin):
     async def new_browser(self) -> BrowserController:
         return KodaBrowserController(self._context)
 
-class PlaywrightCrawler(BasePlaywrightCrawler):
+class KodaPlaywrightCrawler(PlaywrightCrawler):
     """
     A Koda-integrated PlaywrightCrawler that injects the KodaClient and
     wraps the entire crawl execution within Koda's BrowserSession.
     """
-    def __init__(
-        self,
-        *args,
-        client: Optional['KodaClient'] = None,  # type: ignore
-        **kwargs
-    ):
-        self.client = client
-        
-        original_handler = kwargs.pop('request_handler', None)
-        args_list = list(args)
-        if not original_handler and args_list:
-            original_handler = args_list.pop(0)
-            
-        if original_handler:
-            async def koda_wrapped_handler(context: PlaywrightCrawlingContext, *h_args, **h_kwargs) -> None:
-                original_push_data = context.push_data
-                
-                async def custom_push_data(data: Any, *pd_args, **pd_kwargs) -> None:
-                    # Execute the original push
-                    await original_push_data(data, *pd_args, **pd_kwargs)
-                    
-                    # Intercept and dispatch webhook if configured globally
-                    if settings.webhook_url:
-                        from koda.modules.webhook.schema import WebhookConfig
-                        from koda.modules.webhook.utils import dispatch_webhook
-                        webhook_config = WebhookConfig(
-                            url=settings.webhook_url,
-                            events=settings.webhook_events,
-                            headers=settings.webhook_headers
-                        )
-                        await dispatch_webhook(webhook_config, "crawl.page", data)
-                
-                # PlaywrightCrawlingContext is a frozen dataclass in Crawlee >= 1.7.3
-                object.__setattr__(context, 'push_data', custom_push_data)
-                return await original_handler(context, *h_args, **h_kwargs)
-                
-            kwargs['request_handler'] = koda_wrapped_handler
-            args = tuple(args_list)
-
-        # We don't initialize the browser_pool here because we need the context
-        # which is only available inside the run() async context.
-        # But Crawlee might require it. We will override it in run().
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.pop('client', None)
         super().__init__(*args, **kwargs)
 
-    async def run(self, *args, **kwargs) -> None:
+    async def run(self, *args, **kwargs) -> None:  # type: ignore[override]
         """
         Executes the crawl inside a Koda BrowserSession, ensuring that
         we use Koda's invisible-playwright instance and telemetry.
         """
+        if self.client is None:
+            await super().run(*args, **kwargs)
+            return
+
         from koda.modules.browser.service import BrowserSession
         
         async with BrowserSession() as koda_context:
@@ -220,7 +183,7 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
                 if dataset_data and dataset_data.items:
                     json_data = json.dumps(dataset_data.items).encode("utf-8")
                     
-                    s3_config_dict = {
+                    s3_config_dict: dict[str, Any] = {
                         "bucket": settings.s3_bucket_name,
                         "accessKey": settings.s3_access_key_id,
                         "secretKey": settings.s3_secret_access_key,
@@ -237,3 +200,15 @@ class PlaywrightCrawler(BasePlaywrightCrawler):
                     
                     # Run the synchronous or async upload
                     s3_upload(json_data, object_name, "application/json", s3_config)
+
+import sys
+import crawlee
+import crawlee.crawlers
+
+crawlee.crawlers.PlaywrightCrawler = KodaPlaywrightCrawler  # type: ignore[attr-defined]
+crawlee.PlaywrightCrawler = KodaPlaywrightCrawler  # type: ignore[attr-defined]
+
+if 'crawlee' in sys.modules:
+    sys.modules['crawlee'].PlaywrightCrawler = KodaPlaywrightCrawler  # type: ignore[attr-defined]
+if 'crawlee.crawlers' in sys.modules:
+    sys.modules['crawlee.crawlers'].PlaywrightCrawler = KodaPlaywrightCrawler  # type: ignore[attr-defined]

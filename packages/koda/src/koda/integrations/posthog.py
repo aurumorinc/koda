@@ -1,11 +1,10 @@
 import os
-import json
 import time
 import logging
 from typing import Optional
 import httpx
 from opentelemetry import trace
-from playwright.async_api import Page, Request, Response, BrowserContext
+from playwright.async_api import Page, Request, BrowserContext
 from koda.config.main import settings
 
 logger = logging.getLogger("koda.posthog")
