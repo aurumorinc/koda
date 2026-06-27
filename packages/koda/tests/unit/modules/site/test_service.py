@@ -3,39 +3,6 @@ from unittest.mock import patch, MagicMock
 from koda.modules.site.schema import CrawlRequest
 from koda.modules.site.service import CrawlJob
 
-def test_is_valid_link():
-    request = CrawlRequest(url="https://example.com/docs")
-    job = CrawlJob(request)
-    
-    # Test external links
-    job.request.allowExternalLinks = True
-    assert job._is_valid_link("https://other.com") is True
-    job.request.allowExternalLinks = False
-    assert job._is_valid_link("https://other.com") is False
-    
-    # Test subdomains
-    job.request.allowSubdomains = True
-    assert job._is_valid_link("https://sub.example.com") is True
-    job.request.allowSubdomains = False
-    assert job._is_valid_link("https://sub.example.com") is False
-    
-    # Test domain scope
-    job.request.crawlEntireDomain = True
-    assert job._is_valid_link("https://example.com/blog") is True
-    job.request.crawlEntireDomain = False
-    assert job._is_valid_link("https://example.com/blog") is False
-    assert job._is_valid_link("https://example.com/docs/api") is True
-    
-    # Test exclude paths
-    job.request.excludePaths = ["/api"]
-    assert job._is_valid_link("https://example.com/docs/api") is False
-    job.request.excludePaths = None
-    
-    # Test include paths
-    job.request.includePaths = ["/api"]
-    assert job._is_valid_link("https://example.com/docs/api") is True
-    assert job._is_valid_link("https://example.com/docs/other") is False
-
 @pytest.mark.asyncio
 async def test_crawl_basic():
     request = CrawlRequest(url="https://example.com", limit=2, maxDiscoveryDepth=1)

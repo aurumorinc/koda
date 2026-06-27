@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-import httpx
 
 from koda.config.main import settings
 from koda.modules.cache.repositories import windmill

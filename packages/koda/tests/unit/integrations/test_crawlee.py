@@ -1,43 +1,25 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from playwright.async_api import BrowserContext, Page
 
-from koda.integrations.crawlee import KodaBrowserPlugin, KodaBrowserController, PlaywrightCrawler
+from koda.integrations.crawlee import KodaBrowserPlugin, KodaBrowserController, KodaPlaywrightCrawler
 
 from unittest.mock import patch
 
-@patch("koda.integrations.crawlee.BasePlaywrightCrawler.__init__")
-def test_playwright_crawler_initialization_no_hooks(mock_super_init):
+def test_playwright_crawler_initialization_no_hooks():
     # Instantiating should not raise TypeError
-    mock_super_init.return_value = None
     mock_handler = AsyncMock()
-    crawler = PlaywrightCrawler(request_handler=mock_handler)
+    # Provide dummy required args to avoid real initialization errors if any
+    crawler = KodaPlaywrightCrawler(request_handler=mock_handler)
     assert crawler is not None
-    assert mock_super_init.called
+    assert crawler.client is None
 
-@pytest.mark.asyncio
-@patch("koda.integrations.crawlee.BasePlaywrightCrawler.__init__")
-async def test_playwright_crawler_handler_wrapping(mock_super_init):
-    mock_super_init.return_value = None
-    mock_handler = AsyncMock()
-    
-    crawler = PlaywrightCrawler(request_handler=mock_handler)
-    
-    # Extract the wrapped handler passed to super().__init__
-    passed_kwargs = mock_super_init.call_args[1]
-    wrapped_handler = passed_kwargs.get("request_handler")
-    
-    assert wrapped_handler is not None
-    assert wrapped_handler is not mock_handler
-    
-    # Test that the wrapper calls the original handler
-    mock_context = AsyncMock()
-    original_push_data = AsyncMock()
-    mock_context.push_data = original_push_data
-    
-    await wrapped_handler(mock_context)
-    
-    assert mock_handler.called
+def test_crawlee_module_patching():
+    # Verify that the native crawlee library has been patched
+    import crawlee
+    import crawlee.crawlers
+    assert crawlee.PlaywrightCrawler is KodaPlaywrightCrawler  # type: ignore[attr-defined]
+    assert crawlee.crawlers.PlaywrightCrawler is KodaPlaywrightCrawler  # type: ignore[attr-defined]
 
 @pytest.mark.asyncio
 async def test_koda_browser_controller():

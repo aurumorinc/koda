@@ -1,6 +1,5 @@
-import pytest
 from datetime import datetime, timedelta, timezone
-from koda.modules.session.schema import SessionModel, Session, UserDataParam, MFAParam
+from koda.modules.session.schema import SessionModel, Session, UserDataParam
 
 def test_session_model_validation():
     """Test that SessionModel correctly validates and handles aliases."""
@@ -30,6 +29,7 @@ def test_session_model_validation():
     assert model.id == "test-session"
     assert model.max_age == timedelta(seconds=3000)
     assert model.user_data.username == "user"
+    assert model.user_data.mfa is not None
     assert model.user_data.mfa.strategy == "totp"
     assert model.error_score == 2.5
     assert model.metadata.get("provider") == "windmill"
@@ -38,7 +38,7 @@ def test_session_wrapper_methods():
     """Test the methods and properties of the Session wrapper."""
     model = SessionModel(
         id="test",
-        user_data=UserDataParam(username="u", password="p"),
+        userData=UserDataParam(username="u", password="p"),
         metadata={"provider": "test"},
         max_error_score=3.0,
         error_score_decrement=0.5,
@@ -73,7 +73,7 @@ def test_session_expiration():
     """Test session expiration logic."""
     model = SessionModel(
         id="test",
-        user_data=UserDataParam(username="u", password="p"),
+        userData=UserDataParam(username="u", password="p"),
         metadata={"provider": "test"},
         created_at=datetime.now(timezone.utc) - timedelta(minutes=30),
         max_age=timedelta(minutes=20)
@@ -86,7 +86,7 @@ def test_session_max_usage():
     """Test session max usage logic."""
     model = SessionModel(
         id="test",
-        user_data=UserDataParam(username="u", password="p"),
+        userData=UserDataParam(username="u", password="p"),
         metadata={"provider": "test"},
         usage_count=5,
         max_usage_count=5
@@ -99,7 +99,7 @@ def test_get_state():
     """Test get_state method."""
     model = SessionModel(
         id="test",
-        user_data=UserDataParam(username="u", password="p"),
+        userData=UserDataParam(username="u", password="p"),
         metadata={"provider": "test"}
     )
     session = Session(model=model)

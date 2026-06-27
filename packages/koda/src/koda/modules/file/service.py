@@ -70,13 +70,12 @@ def _get_client(s3_config: Dict[str, Any]):
     
     # Use s3v2 signature for GCS, otherwise s3v4
     sig_version = 's3' if endpoint_url and 'googleapis.com' in endpoint_url else 's3v4'
-    config_kwargs = {'signature_version': sig_version}
+    config_kwargs: Dict[str, Any] = {'signature_version': sig_version}
     
     if s3_config.get('path_style'):
         config_kwargs['s3'] = {'addressing_style': 'path'}
 
-    client_kwargs = {
-        'service_name': 's3',
+    client_kwargs: Dict[str, Any] = {
         'aws_access_key_id': s3_config.get('access_key'),
         'aws_secret_access_key': s3_config.get('secret_key'),
         'config': Config(**config_kwargs)
@@ -88,4 +87,4 @@ def _get_client(s3_config: Dict[str, Any]):
     if sig_version == 's3v4':
         client_kwargs['region_name'] = s3_config.get('region', 'us-east-1')
 
-    return boto3.client(**client_kwargs)
+    return boto3.client('s3', **client_kwargs)

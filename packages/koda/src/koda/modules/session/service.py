@@ -1,4 +1,4 @@
-import logging
+from worldline import structlog
 import os
 import re
 import shutil
@@ -11,7 +11,7 @@ from koda.exceptions import KodaError, SessionExhaustedError
 from koda.modules.browser.service import BrowserSession
 from koda.modules.session.schema import Session
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SessionService:
@@ -118,7 +118,7 @@ class SessionService:
             try:
                 s3_key = await self.s3_repo.upload_profile(local_profile_dir, session.id)
                 session.model.browser.user_data_dir = s3_key
-            except Exception as e:
+            except Exception:
                 logger.error(f"Failed to upload profile for session {session.id}", exc_info=True)
                 
             if os.path.exists(local_profile_dir):

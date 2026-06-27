@@ -1,5 +1,4 @@
-import json
-import logging
+from worldline import structlog
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -8,7 +7,7 @@ import httpx
 from koda.config.main import settings
 from koda.modules.cache.schema import CacheEntry
 
-logger = logging.getLogger("koda.modules.cache.windmill")
+logger = structlog.get_logger("koda.modules.cache.windmill")
 
 
 def _get_state_path() -> str:

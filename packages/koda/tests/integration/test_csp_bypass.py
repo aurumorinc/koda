@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from aiohttp import web
 from koda.modules.browser.service import BrowserSession
 
@@ -57,6 +56,7 @@ async def test_csp_bypass_via_network_interception():
             assert secret == "csp-blocked", "Inline script should have executed because CSP was stripped"
             
             # Ensure the actual response headers seen by Playwright don't contain CSP
+            assert response is not None
             headers = response.headers
             assert "content-security-policy" not in headers
             

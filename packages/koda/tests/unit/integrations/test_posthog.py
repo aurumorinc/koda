@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock, ANY, mock_open, PropertyMock
-from playwright.async_api import Request, Response
 
 from koda.integrations.posthog import (
     _get_otel_trace_id,

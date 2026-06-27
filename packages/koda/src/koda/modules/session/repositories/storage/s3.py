@@ -4,9 +4,9 @@ import aioboto3
 from typing import Optional
 
 from koda.config.main import settings
-from python_logging.main import get_logger
+from worldline import structlog
 
-logger = get_logger(__name__)
+logger = structlog.get_logger(__name__)
 
 def _get_s3_client_kwargs() -> dict:
     """Helper to build aioboto3 client kwargs from settings."""

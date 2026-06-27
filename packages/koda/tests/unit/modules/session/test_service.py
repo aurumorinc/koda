@@ -1,20 +1,22 @@
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from koda.modules.session.schema import SessionModel, Session, UserDataParam, MFAParam, BrowserParam
 from koda.exceptions import SessionExhaustedError, KodaError
 from koda.modules.session.service import SessionService
 
 
+from typing import Optional
+
 def create_mock_session_model(
-    id: str, 
-    provider: str = "test_provider", 
-    usage_count: int = 0, 
+    id: str,
+    provider: str = "test_provider",
+    usage_count: int = 0,
     error_score: float = 0.0,
     is_blocked: bool = False,
-    mfa: MFAParam = None,
-    browser: BrowserParam = None
+    mfa: Optional[MFAParam] = None,
+    browser: Optional[BrowserParam] = None
 ) -> SessionModel:
     """Helper to create a mock SessionModel."""
     if browser is None:

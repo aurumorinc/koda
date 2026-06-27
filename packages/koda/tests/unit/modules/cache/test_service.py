@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from koda.config.main import settings
 from koda.modules.cache.schema import CacheEntry
 from koda.modules.cache.service import CacheService
 

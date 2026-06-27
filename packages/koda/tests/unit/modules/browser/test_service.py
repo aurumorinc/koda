@@ -1,12 +1,11 @@
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock, call
+from unittest.mock import patch, AsyncMock, MagicMock
 
 from koda.modules.browser.service import (
     BrowserSession, 
     _strip_csp_headers, 
     _native_playwright_interceptor,
-    _invisible_playwright_modifier,
-    CSP_STRATEGIES
+    _invisible_playwright_modifier
 )
 
 @pytest.mark.asyncio

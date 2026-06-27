@@ -1,14 +1,14 @@
 import pytest
 import asyncio
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch
 from koda.modules.browser.service import BrowserSession
 from koda.config.main import settings
 
 @pytest.mark.asyncio
-@patch("koda.modules.browser.service.setup_playwright_transport")
-@patch("koda.modules.browser.service.setup_network_capture")
-@patch("koda.modules.browser.service.inject_posthog_monolith")
-@patch("koda.modules.browser.service.flush_telemetry")
+@patch("koda.integrations.posthog.setup_playwright_transport")
+@patch("koda.integrations.posthog.setup_network_capture")
+@patch("koda.integrations.posthog.inject_posthog_monolith")
+@patch("koda.integrations.posthog.flush_telemetry")
 async def test_browser_session_telemetry_injection(
     mock_flush, mock_inject, mock_network, mock_transport
 ):
@@ -40,7 +40,7 @@ async def test_browser_session_telemetry_injection(
         settings.posthog_host = old_host
 
 @pytest.mark.asyncio
-@patch("koda.modules.browser.service.flush_telemetry")
+@patch("koda.integrations.posthog.flush_telemetry")
 async def test_browser_session_no_telemetry(mock_flush):
     # Temporarily unset posthog settings
     old_key = settings.posthog_api_key

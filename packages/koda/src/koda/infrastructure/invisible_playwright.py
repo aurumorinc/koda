@@ -1,10 +1,8 @@
-import logging
-import os
-import sys
-from typing import Any, Tuple, Optional
-from playwright.async_api import Browser
+from worldline import structlog # type: ignore[import-untyped]
+from typing import Any, Optional
+from playwright.async_api import BrowserContext
 
-logger = logging.getLogger("koda.modules.browser")
+logger = structlog.get_logger("koda.modules.browser")
 
 class BrowserLaunchError(Exception):
     """Raised when the stealth browser fails to launch."""
@@ -13,7 +11,7 @@ class BrowserLaunchError(Exception):
 # Keep track of the active InvisiblePlaywright context manager instance
 _ip_instance: Optional[Any] = None
 
-async def launch_stealth_browser(headless: bool = True, **kwargs: Any) -> Browser:
+async def launch_stealth_browser(headless: bool = True, **kwargs: Any) -> BrowserContext:
     """Launch the InvisiblePlaywright browser (Firefox) with stealth configurations."""
     global _ip_instance
     try:
@@ -33,7 +31,7 @@ async def launch_stealth_browser(headless: bool = True, **kwargs: Any) -> Browse
         # Start the browser by entering the context manager manually
         browser = await _ip_instance.__aenter__()
         logger.info("Stealth browser (Firefox via invisible-playwright) launched successfully.")
-        return browser
+        return browser  # type: ignore[return-value]
     except Exception as e:
         logger.error(f"Failed to launch stealth browser: {e}")
         raise BrowserLaunchError(f"Failed to launch stealth browser: {e}") from e
