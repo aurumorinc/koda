@@ -2,6 +2,8 @@ import asyncio
 from worldline import structlog
 from typing import Any, Callable, Dict, Optional
 import functools
+import inspect
+from pydantic import BaseModel
 
 import httpx
 
@@ -44,21 +46,67 @@ async def dispatch_webhook(
 def webhook_dispatch(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to handle webhook lifecycle events (STARTED, COMPLETED, FAILED)."""
     @functools.wraps(func)
-    async def wrapper(request: Any, *args: Any, **kwargs: Any) -> Any:
-        webhook = getattr(request, "webhook", None)
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        sig = inspect.signature(func)
+        try:
+            bound = sig.bind(*args, **kwargs)
+        except TypeError:
+            return await func(*args, **kwargs)
+            
+        bound.apply_defaults()
+        
+        webhook_raw = None
+        var_kwarg_name = None
+        for param in sig.parameters.values():
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                var_kwarg_name = param.name
+                
+        if "webhook" in bound.arguments:
+            webhook_raw = bound.arguments["webhook"]
+        elif var_kwarg_name and "webhook" in bound.arguments.get(var_kwarg_name, {}):
+            webhook_raw = bound.arguments[var_kwarg_name]["webhook"]
+            
+        webhook = None
+        if webhook_raw:
+            if isinstance(webhook_raw, dict):
+                webhook = Webhook(**webhook_raw)
+            elif isinstance(webhook_raw, Webhook):
+                webhook = webhook_raw
+                
+        # Inject parsed webhook back
+        if "webhook" in bound.arguments:
+            bound.arguments["webhook"] = webhook
+        elif var_kwarg_name:
+            if bound.arguments[var_kwarg_name] is None:
+                bound.arguments[var_kwarg_name] = {}
+            bound.arguments[var_kwarg_name]["webhook"] = webhook
+
+        payload = {}
+        for k, v in bound.arguments.items():
+            if k == var_kwarg_name:
+                if isinstance(v, dict):
+                    for kw_k, kw_v in v.items():
+                        if isinstance(kw_v, BaseModel):
+                            payload[kw_k] = kw_v.model_dump(by_alias=True, exclude_none=True)
+                        else:
+                            payload[kw_k] = kw_v
+            else:
+                if isinstance(v, BaseModel):
+                    payload[k] = v.model_dump(by_alias=True, exclude_none=True)
+                else:
+                    payload[k] = v
         
         if webhook:
             await dispatch_webhook(
                 webhook=webhook,
                 event=WebhookEvent.STARTED,
-                payload=request.model_dump()
+                payload=payload
             )
 
         try:
-            response = await func(request, *args, **kwargs)
+            response = await func(*bound.args, **bound.kwargs)
         except Exception as e:
             if webhook:
-                payload = request.model_dump()
                 payload["error"] = str(e)
                 await dispatch_webhook(
                     webhook=webhook,
@@ -67,13 +115,20 @@ def webhook_dispatch(func: Callable[..., Any]) -> Callable[..., Any]:
                 )
             raise e
 
-        success = getattr(response, "success", True)
+        if isinstance(response, BaseModel) or hasattr(response, "model_dump"):
+            response_dict = response.model_dump(by_alias=True, exclude_none=True)
+        elif isinstance(response, dict):
+            response_dict = response
+        else:
+            response_dict = {"data": response}
+
+        success = response_dict.get("success", True)
         event = WebhookEvent.COMPLETED if success else WebhookEvent.FAILED
         if webhook:
             await dispatch_webhook(
                 webhook=webhook,
                 event=event,
-                payload=response.model_dump()
+                payload=response_dict
             )
         return response
 

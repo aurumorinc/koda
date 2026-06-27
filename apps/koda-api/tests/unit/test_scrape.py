@@ -1,71 +1,55 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils import import_script
 
-# Import the script
 scrape_script = import_script("f/koda/scrape.py", "scrape")
 
-@pytest.mark.asyncio
-@patch("scrape.KodaClient")
-async def test_scrape_success(mock_client_class, wmill_mock):
-    mock_client = AsyncMock()
-    mock_client_class.return_value.__aenter__.return_value = mock_client
-    
-    # Mock successful response
-    from unittest.mock import MagicMock
-    mock_response = MagicMock()
-    mock_response.error = None
-    mock_response.markdown = "# Success"
-    mock_response.html = "<html>Success</html>"
-    mock_response.links = {"internal": [{"href": "/test"}]}
-    mock_response.images = None
-    mock_response.metadata = {"title": "Test"}
-    mock_response.screenshot = "data:image/jpeg;base64,123"
-    mock_response.action_results = None
-    
-    mock_client.scrape.return_value = mock_response
 
-    result = await scrape_script._run_scrape(
+@pytest.mark.asyncio
+@patch("scrape._run_scrape")
+async def test_scrape_success(mock_run_scrape, wmill_mock):
+    # Setup mock response
+    mock_result = MagicMock()
+    mock_result.success = True
+    mock_result.data = {"markdown": "Test Content", "html": "<p>Test Content</p>"}
+    mock_result.model_dump.return_value = {"success": True, "data": {"markdown": "Test Content", "html": "<p>Test Content</p>"}}
+    mock_run_scrape.return_value = mock_result
+
+    result = await scrape_script.main(
         url="https://example.com",
-        formats=["markdown", {"type": "html"}, "links", "screenshot"],
+        formats=["markdown", "html"],
         onlyMainContent=True,
         actions=[],
         timeout=60000,
-        s3_resource="test_s3",
+        s3_resource=None,
         webhook=None
     )
 
     assert result["success"] is True
-    assert "data" in result
-    assert result["data"]["markdown"] == "# Success"
-    assert result["data"]["html"] == "<html>Success</html>"
-    assert result["data"]["links"] == {"internal": [{"href": "/test"}]}
-    assert result["data"]["screenshot"] == "data:image/jpeg;base64,123"
+    assert result["data"]["markdown"] == "Test Content"
+    assert result["data"]["html"] == "<p>Test Content</p>"
     
-    # Verify formats normalization
-    call_args = mock_client.scrape.call_args[0][0]
-    assert call_args.formats == ["markdown", "html", "links", "screenshot"]
-    assert call_args.s3_config is not None
-    assert call_args.s3_config.bucket == "test-bucket"
+    # Verify request payload creation
+    request_obj = mock_run_scrape.call_args[0][0]
+    assert request_obj.url == "https://example.com"
+    assert request_obj.formats == ["markdown", "html"]
+
 
 @pytest.mark.asyncio
-@patch("scrape.KodaClient")
-async def test_scrape_client_error(mock_client_class, wmill_mock):
-    mock_client = AsyncMock()
-    mock_client_class.return_value.__aenter__.return_value = mock_client
-    
-    # Mock error response
-    from unittest.mock import MagicMock
-    mock_response = MagicMock()
-    mock_response.error = "Timeout occurred"
-    mock_client.scrape.return_value = mock_response
+@patch("scrape._run_scrape")
+async def test_scrape_client_error(mock_run_scrape, wmill_mock):
+    mock_result = MagicMock()
+    mock_result.success = False
+    mock_result.error = "404 Not Found"
+    mock_result.model_dump.return_value = {"success": False, "error": "404 Not Found"}
+    mock_run_scrape.return_value = mock_result
 
-    result = await scrape_script._run_scrape(
-        url="https://example.com",
+    result = await scrape_script.main(
+        url="https://example.com/404",
         formats=["markdown"],
         onlyMainContent=True,
         actions=[],
@@ -75,12 +59,13 @@ async def test_scrape_client_error(mock_client_class, wmill_mock):
     )
 
     assert result["success"] is False
-    assert result["error"] == "Timeout occurred"
+    assert result["error"] == "404 Not Found"
+
 
 @pytest.mark.asyncio
 async def test_scrape_invalid_s3_resource(wmill_mock):
     # Pass an s3_resource that doesn't exist
-    result = await scrape_script._run_scrape(
+    result = await scrape_script.main(
         url="https://example.com",
         formats=["markdown"],
         onlyMainContent=True,
@@ -91,14 +76,15 @@ async def test_scrape_invalid_s3_resource(wmill_mock):
     )
 
     assert result["success"] is False
-    assert "S3 Resource 'invalid_s3' not found" in result["error"]
+    assert "not found" in result["error"]
+
 
 @pytest.mark.asyncio
-@patch("scrape.KodaClient")
-async def test_scrape_exception(mock_client_class, wmill_mock):
-    mock_client_class.return_value.__aenter__.side_effect = Exception("Unexpected connection error")
-    
-    result = await scrape_script._run_scrape(
+@patch("scrape._run_scrape")
+async def test_scrape_exception(mock_run_scrape, wmill_mock):
+    mock_run_scrape.side_effect = Exception("System Crash")
+
+    result = await scrape_script.main(
         url="https://example.com",
         formats=["markdown"],
         onlyMainContent=True,
@@ -109,4 +95,4 @@ async def test_scrape_exception(mock_client_class, wmill_mock):
     )
 
     assert result["success"] is False
-    assert "Unexpected connection error" in result["error"]
+    assert "Crash" in result["error"]

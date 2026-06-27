@@ -17,11 +17,11 @@ async def test_crawl_e2e(local_test_server, wmill_mock):
     url = f"{local_test_server}/index.html"
     
     try:
-        result = await crawl_script._run_crawl(
+        result = await crawl_script.main(
             url=url,
             limit=10,
             maxDiscoveryDepth=2,
-            allowExternalLinks=False,
+            allowExternalLinks=True,
             allowSubdomains=False,
             crawlEntireDomain=True,
             ignoreQueryParameters=True,
@@ -31,9 +31,9 @@ async def test_crawl_e2e(local_test_server, wmill_mock):
             maxConcurrency=2,
             delay=None,
             webhook=None,
-            scrapeOptions=None
+            scrapeOptions={}
         )
-        
+
         assert result.get("success") is True, f"Crawl failed: {result.get('error')}"
         
         # It should find index.html, page1.html, and page2.html

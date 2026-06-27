@@ -18,7 +18,7 @@ async def test_batch_scrape_e2e(local_test_server, wmill_mock):
     url2 = f"{local_test_server}/page1.html"
     
     try:
-        result = await batch_scrape_script._run_batch_scrape(
+        result = await batch_scrape_script.main(
             urls=[url1, url2],
             formats=["markdown"],
             onlyMainContent=False,
@@ -31,7 +31,7 @@ async def test_batch_scrape_e2e(local_test_server, wmill_mock):
         )
         
         assert result.get("success") is True, f"Batch scrape failed: {result.get('error')}"
-        results = result.get("results", [])
+        results = result.get("data", result.get("results", []))
         
         assert len(results) == 2
         
@@ -41,6 +41,7 @@ async def test_batch_scrape_e2e(local_test_server, wmill_mock):
         assert url2 in urls_crawled
         
         for r in results:
+            assert len(r.get("markdown", "")) > 0, f"Markdown should not be empty for {r['url']}"
             if r["url"] == url1:
                 assert "Welcome to the Test Server" in r["markdown"]
             elif r["url"] == url2:

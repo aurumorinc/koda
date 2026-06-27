@@ -17,7 +17,7 @@ async def test_scrape_e2e(local_test_server, wmill_mock):
     url = f"{local_test_server}/index.html"
     
     try:
-        result = await scrape_script._run_scrape(
+        result = await scrape_script.main(
             url=url,
             formats=["markdown", "html", "links"],
             onlyMainContent=False,
@@ -32,6 +32,7 @@ async def test_scrape_e2e(local_test_server, wmill_mock):
         
         # Check markdown content
         assert "markdown" in data
+        assert len(data["markdown"]) > 0, "Markdown should not be empty"
         assert "Welcome to the Test Server" in data["markdown"]
         
         # Check HTML content

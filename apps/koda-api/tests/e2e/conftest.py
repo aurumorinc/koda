@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os

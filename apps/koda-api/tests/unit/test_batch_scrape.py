@@ -9,20 +9,23 @@ from utils import import_script
 batch_scrape_script = import_script("f/koda/batch_scrape.py", "batch_scrape")
 
 @pytest.mark.asyncio
-@patch("batch_scrape.KodaClient")
-async def test_batch_scrape_success(mock_client_class, wmill_mock):
-    mock_client = AsyncMock()
-    mock_client_class.return_value.__aenter__.return_value = mock_client
-    
+@patch("batch_scrape._run_batch_scrape")
+async def test_batch_scrape_success(mock_execute_job, wmill_mock):
     from unittest.mock import MagicMock
     mock_response = MagicMock()
-    mock_response.model_dump.return_value = {
-        "success": True,
-        "results": [{"url": "https://example.com", "success": True, "markdown": "Test"}]
-    }
-    mock_client.batch_scrape.return_value = mock_response
+    mock_response.success = True
+    mock_response.id = "test-id"
+    mock_response.invalid_urls = []
+    
+    mock_res_item = MagicMock()
+    del mock_res_item._screenshot_bytes
+    mock_res_item.model_dump.return_value = {"url": "https://example.com", "success": True, "markdown": "Test"}
+    mock_response.data = [mock_res_item]
+    mock_response.model_dump.return_value = {"success": True, "id": "test-id", "data": [{"url": "https://example.com", "success": True, "markdown": "Test"}]}
+    
+    mock_execute_job.return_value = mock_response
 
-    result = await batch_scrape_script._run_batch_scrape(
+    result = await batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown", {"type": "html"}],
         onlyMainContent=True,
@@ -34,10 +37,10 @@ async def test_batch_scrape_success(mock_client_class, wmill_mock):
         ignoreInvalidURLs=True
     )
 
-    assert result["success"] is True
-    assert "results" in result
+    assert result["success"] is True, result.get("error")
+    assert "data" in result
     
-    call_args = mock_client.batch_scrape.call_args[0][0]
+    call_args = mock_execute_job.call_args[0][0]
     assert [str(u).rstrip("/") for u in call_args.urls] == ["https://example.com"]
     assert call_args.formats == ["markdown", "html"]
     assert call_args.max_concurrency == 5
@@ -45,7 +48,7 @@ async def test_batch_scrape_success(mock_client_class, wmill_mock):
 
 @pytest.mark.asyncio
 async def test_batch_scrape_invalid_s3(wmill_mock):
-    result = await batch_scrape_script._run_batch_scrape(
+    result = await batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown"],
         onlyMainContent=True,
@@ -61,11 +64,11 @@ async def test_batch_scrape_invalid_s3(wmill_mock):
     assert "not found" in result["error"]
 
 @pytest.mark.asyncio
-@patch("batch_scrape.KodaClient")
-async def test_batch_scrape_exception(mock_client_class, wmill_mock):
-    mock_client_class.return_value.__aenter__.side_effect = Exception("Crash")
+@patch("batch_scrape._run_batch_scrape")
+async def test_batch_scrape_exception(mock_execute_job, wmill_mock):
+    mock_execute_job.side_effect = Exception("Crash")
     
-    result = await batch_scrape_script._run_batch_scrape(
+    result = await batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown"],
         onlyMainContent=True,
