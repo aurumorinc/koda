@@ -2,6 +2,15 @@ import pytest
 from worldline import structlog
 import psutil
 import os
+import logging
+
+class AsyncioFilter(logging.Filter):
+    def filter(self, record):
+        if record.levelno >= logging.ERROR and "TargetClosedError" in record.getMessage():
+            return False
+        return True
+
+logging.getLogger("asyncio").addFilter(AsyncioFilter())
 
 logger = structlog.get_logger(__name__)
 
