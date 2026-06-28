@@ -4,7 +4,8 @@
 # ]
 # ///
 import asyncio
-from typing import Optional, List, Dict, Any, Union
+import wmill  # type: ignore
+from typing import Optional, List, Dict, Any, Union, cast
 from pydantic import BaseModel, Field, ConfigDict
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
@@ -40,7 +41,7 @@ class Action(BaseModel):
     ignoreError: Optional[bool] = Field(default=True)
 
 class ScrapeOptions(BaseModel):
-    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"]))
     onlyMainContent: bool = True
     onlyCleanContent: bool = False
     includeTags: Optional[List[str]] = None
@@ -52,7 +53,7 @@ class ScrapeOptions(BaseModel):
     mobile: bool = False
     skipTlsVerification: bool = True
     timeout: int = Field(default=60000, ge=1000, le=300000)
-    parsers: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["pdf"])
+    parsers: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["pdf"]))
     actions: Optional[List[Action]] = None
     location: Optional[Dict[str, Any]] = None
     removeBase64Images: bool = True
@@ -160,12 +161,12 @@ class CrawlJob:
         filters = []
         if self.request.includePaths:
             for p in self.request.includePaths:
-                filters.append(URLPatternFilter(pattern=p))
+                filters.append(URLPatternFilter(patterns=[p]))
         if self.request.excludePaths:
             for p in self.request.excludePaths:
-                filters.append(URLPatternFilter(pattern=p, reverse=True))
+                filters.append(URLPatternFilter(patterns=[p], reverse=True))
 
-        filter_chain = FilterChain(filters=filters) if filters else None
+        filter_chain = FilterChain(filters=filters) if filters else None  # type: ignore
 
         urls_to_crawl = [self.base_url]
         if self.request.sitemap in ("only", "include"):
@@ -192,7 +193,7 @@ class CrawlJob:
         if self.request.robotsUserAgent:
             browser_kwargs["user_agent"] = self.request.robotsUserAgent
 
-        browser_config = BrowserConfig(**browser_kwargs)
+        browser_config = BrowserConfig(**browser_kwargs)  # type: ignore
 
         normalized_formats = []
         for f in self.request.scrapeOptions.formats:
@@ -201,22 +202,23 @@ class CrawlJob:
             else:
                 normalized_formats.append(str(f))
 
-        run_config = CrawlerRunConfig(
-            page_timeout=self.request.scrapeOptions.timeout,
-            cache_mode=CacheMode.ENABLED if self.request.scrapeOptions.storeInCache else CacheMode.BYPASS,
-            wait_for=f"delay:{self.request.scrapeOptions.waitFor}" if self.request.scrapeOptions.waitFor > 0 else None,
-            exclude_external_links=not self.request.allowExternalLinks,
-            screenshot="screenshot" in normalized_formats,
-            check_robots_txt=not self.request.ignoreRobotsTxt,
-            remove_overlay_elements=self.request.scrapeOptions.blockAds,
-            remove_consent_popups=self.request.scrapeOptions.blockAds,
-            deep_crawl_strategy=BFSDeepCrawlStrategy(
+        run_kwargs = {
+            "page_timeout": self.request.scrapeOptions.timeout,
+            "cache_mode": CacheMode.ENABLED if self.request.scrapeOptions.storeInCache else CacheMode.BYPASS,
+            "wait_for": f"delay:{self.request.scrapeOptions.waitFor}" if self.request.scrapeOptions.waitFor > 0 else None,
+            "exclude_external_links": not self.request.allowExternalLinks,
+            "screenshot": "screenshot" in normalized_formats,
+            "check_robots_txt": not self.request.ignoreRobotsTxt,
+            "remove_overlay_elements": self.request.scrapeOptions.blockAds,
+            "remove_consent_popups": self.request.scrapeOptions.blockAds,
+            "deep_crawl_strategy": BFSDeepCrawlStrategy(
                 max_depth=self.request.maxDiscoveryDepth,
                 max_pages=self.request.limit,
                 include_external=self.request.allowExternalLinks,
-                filter_chain=filter_chain
+                filter_chain=filter_chain  # type: ignore
             ) if self.request.sitemap != "only" else None
-        )
+        }
+        run_config = CrawlerRunConfig(**run_kwargs)  # type: ignore
 
         if self.request.scrapeOptions.onlyMainContent:
             run_config.content_filter = PruningContentFilter()
@@ -224,7 +226,7 @@ class CrawlJob:
         async with KodaClient() as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.scrapeOptions.actions:
-                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)
+                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)  # type: ignore
 
                 if self.request.sitemap == "only":
                     chunk_size = self.request.maxConcurrency or 10
@@ -233,7 +235,13 @@ class CrawlJob:
                         if self.request.delay and self.total_crawled > 0:
                             await asyncio.sleep(self.request.delay)
                             
-                        results = await crawler.arun_many(urls=chunk, config=run_config)
+                        res_obj = await crawler.arun_many(urls=chunk, config=run_config)  # type: ignore
+                        results: List[Any] = []
+                        if hasattr(res_obj, "__aiter__"):
+                            results = [r async for r in res_obj]  # type: ignore
+                        else:
+                            results = list(res_obj)  # type: ignore
+                            
                         for result in results:
                             if result.success:
                                 self.total_crawled += 1
@@ -262,7 +270,7 @@ async def _execute_crawl_job(request: CrawlRequest) -> CrawlResponse:
     return await job.run()
 
 @webhook_dispatch
-async def main(
+async def async_main(
     url: str,
     prompt: Optional[str] = None,
     excludePaths: Optional[List[str]] = None,
@@ -316,5 +324,48 @@ async def main(
         error_msg = str(e)
         return {"success": False, "id": "sync-crawl", "url": url, "error": error_msg}
 
-def _run_main_sync(*args, **kwargs):
-    return asyncio.run(main(*args, **kwargs))
+def main(
+    url: str,
+    prompt: Optional[str] = None,
+    excludePaths: Optional[List[str]] = None,
+    includePaths: Optional[List[str]] = None,
+    maxDiscoveryDepth: int = 0,
+    sitemap: str = "include",
+    ignoreQueryParameters: bool = False,
+    regexOnFullURL: bool = False,
+    limit: int = 10000,
+    crawlEntireDomain: bool = False,
+    allowExternalLinks: bool = False,
+    allowSubdomains: bool = False,
+    ignoreRobotsTxt: bool = False,
+    robotsUserAgent: Optional[str] = None,
+    delay: Optional[float] = None,
+    maxConcurrency: int = 10,
+    webhook: Optional[Webhook] = None,
+    scrapeOptions: ScrapeOptions = ScrapeOptions(),
+    zeroDataRetention: bool = False,
+    **kwargs
+) -> dict:
+    """Synchronous entrypoint for Windmill execution."""
+    return asyncio.run(async_main(
+        url=url,
+        prompt=prompt,
+        excludePaths=excludePaths,
+        includePaths=includePaths,
+        maxDiscoveryDepth=maxDiscoveryDepth,
+        sitemap=sitemap,
+        ignoreQueryParameters=ignoreQueryParameters,
+        regexOnFullURL=regexOnFullURL,
+        limit=limit,
+        crawlEntireDomain=crawlEntireDomain,
+        allowExternalLinks=allowExternalLinks,
+        allowSubdomains=allowSubdomains,
+        ignoreRobotsTxt=ignoreRobotsTxt,
+        robotsUserAgent=robotsUserAgent,
+        delay=delay,
+        maxConcurrency=maxConcurrency,
+        webhook=webhook,
+        scrapeOptions=scrapeOptions,
+        zeroDataRetention=zeroDataRetention,
+        **kwargs
+    ))
