@@ -3,6 +3,7 @@
 #   "koda @ git+https://github.com/aurumorinc/koda.git@0.6.0#subdirectory=packages/koda",
 # ]
 # ///
+import asyncio
 import uuid
 import wmill  # type: ignore
 from typing import Optional, List, Dict, Any, Union
@@ -12,7 +13,7 @@ from koda.use_cases.schema import Action
 from koda.use_cases.scrape.schema import ScrapeRequest
 from koda.use_cases.scrape.service import scrape
 
-async def main(
+def main(
     url: str,
     formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
     onlyMainContent: bool = True,
@@ -53,7 +54,7 @@ async def main(
     )
 
     try:
-        result = await scrape(request)
+        result = asyncio.run(scrape(request))
         return result.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         return {"success": False, "error": str(e)}

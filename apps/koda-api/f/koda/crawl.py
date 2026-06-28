@@ -3,13 +3,14 @@
 #   "koda @ git+https://github.com/aurumorinc/koda.git@0.6.0#subdirectory=packages/koda",
 # ]
 # ///
+import asyncio
 from typing import Optional, List, Dict, Any
 
 from koda import Webhook
 from koda.use_cases.crawl.schema import CrawlRequest, ScrapeOptions
 from koda.use_cases.crawl.service import crawl
 
-async def main(
+def main(
     url: str,
     prompt: Optional[str] = None,
     excludePaths: Optional[List[str]] = None,
@@ -57,7 +58,7 @@ async def main(
     )
     
     try:
-        response = await crawl(request)
+        response = asyncio.run(crawl(request))
         return response.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         error_msg = str(e)
