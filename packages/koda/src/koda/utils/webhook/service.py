@@ -57,6 +57,7 @@ def webhook_dispatch(func: Callable[..., Any]) -> Callable[..., Any]:
         
         webhook_raw = None
         var_kwarg_name = None
+        request_obj = None
         for param in sig.parameters.values():
             if param.kind == inspect.Parameter.VAR_KEYWORD:
                 var_kwarg_name = param.name
@@ -65,6 +66,12 @@ def webhook_dispatch(func: Callable[..., Any]) -> Callable[..., Any]:
             webhook_raw = bound.arguments["webhook"]
         elif var_kwarg_name and "webhook" in bound.arguments.get(var_kwarg_name, {}):
             webhook_raw = bound.arguments[var_kwarg_name]["webhook"]
+        else:
+            for arg_val in bound.arguments.values():
+                if isinstance(arg_val, BaseModel) and hasattr(arg_val, "webhook"):
+                    webhook_raw = getattr(arg_val, "webhook")
+                    request_obj = arg_val
+                    break
             
         webhook = None
         if webhook_raw:
@@ -76,10 +83,10 @@ def webhook_dispatch(func: Callable[..., Any]) -> Callable[..., Any]:
         # Inject parsed webhook back
         if "webhook" in bound.arguments:
             bound.arguments["webhook"] = webhook
-        elif var_kwarg_name:
-            if bound.arguments[var_kwarg_name] is None:
-                bound.arguments[var_kwarg_name] = {}
+        elif var_kwarg_name and "webhook" in bound.arguments.get(var_kwarg_name, {}):
             bound.arguments[var_kwarg_name]["webhook"] = webhook
+        elif request_obj is not None:
+            setattr(request_obj, "webhook", webhook)
 
         payload = {}
         for k, v in bound.arguments.items():

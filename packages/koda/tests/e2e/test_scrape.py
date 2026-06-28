@@ -1,24 +1,18 @@
 import pytest
-import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script  # type: ignore
 from koda.config.main import settings
-
-scrape_script = import_script("f/koda/scrape.py", "scrape")
-
+from koda.use_cases.scrape.schema import ScrapeRequest
+from koda.use_cases.scrape.service import scrape
 
 @pytest.mark.asyncio
-async def test_scrape_e2e(local_test_server, wmill_mock):
-    """Test scraping a page from the local test server via the Windmill script."""
+async def test_scrape_e2e(local_test_server):
+    """Test scraping a page from the local test server."""
     old_key = settings.posthog_api_key
     settings.posthog_api_key = "mock_e2e_key"
     
     url = f"{local_test_server}/index.html"
     
     try:
-        result = await scrape_script.main(
+        req = ScrapeRequest(
             url=url,
             formats=["markdown", "html", "links"],
             onlyMainContent=False,
@@ -28,8 +22,10 @@ async def test_scrape_e2e(local_test_server, wmill_mock):
             webhook=None
         )
         
-        assert result.get("success") is True, f"Scrape failed: {result.get('error')}"
-        data = result.get("data", {})
+        result = await scrape(req)
+        
+        assert result.success is True, f"Scrape failed: {getattr(result, 'error', 'Unknown error')}"
+        data = result.data or {}
         
         # Check markdown content
         assert "markdown" in data

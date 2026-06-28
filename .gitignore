@@ -376,6 +376,9 @@ plans/
 # Crawlee
 storage/
 
+# Aider
+.aider.*
+
 # Rune
 .rune/*
 !.rune/config

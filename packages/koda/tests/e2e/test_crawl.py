@@ -1,24 +1,18 @@
 import pytest
-import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script  # type: ignore
 from koda.config.main import settings
-
-crawl_script = import_script("f/koda/crawl.py", "crawl")
-
+from koda.use_cases.crawl.schema import CrawlRequest, ScrapeOptions
+from koda.use_cases.crawl.service import crawl
 
 @pytest.mark.asyncio
-async def test_crawl_e2e(local_test_server, wmill_mock):
-    """Test crawling pages from the local test server via the Windmill script."""
+async def test_crawl_e2e(local_test_server):
+    """Test crawling pages from the local test server."""
     old_key = settings.posthog_api_key
     settings.posthog_api_key = "mock_e2e_key"
     
     url = f"{local_test_server}/index.html"
     
     try:
-        result = await crawl_script.main(
+        req = CrawlRequest(
             url=url,
             limit=10,
             maxDiscoveryDepth=2,
@@ -32,13 +26,15 @@ async def test_crawl_e2e(local_test_server, wmill_mock):
             maxConcurrency=2,
             delay=None,
             webhook=None,
-            scrapeOptions={}
+            scrapeOptions=ScrapeOptions()
         )
+        
+        result = await crawl(req)
 
-        assert result.get("success") is True, f"Crawl failed: {result.get('error')}"
+        assert result.success is True, f"Crawl failed: {getattr(result, 'error', 'Unknown error')}"
         
         # It should find index.html, page1.html, and page2.html
-        assert result.get("total_pages_crawled") >= 1
+        assert result.total_pages_crawled and result.total_pages_crawled >= 1
                 
     finally:
         settings.posthog_api_key = old_key

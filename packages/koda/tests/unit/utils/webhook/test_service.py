@@ -73,37 +73,32 @@ async def test_dispatch_webhook_http_error(webhook, caplog):
 
 
 # tests for webhook_dispatch decorator
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, Any
 
-class MockRequest:
-    def __init__(self, webhook=None, data="req_data"):
-        self.webhook = webhook
-        self.data = data
-        
-    def model_dump(self):
-        return {"data": self.data}
+class MockRequest(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    webhook: Optional[Any] = None
+    data: str = "req_data"
 
 
-class MockResponse:
-    def __init__(self, success=True, data="resp_data"):
-        self.success = success
-        self.data = data
-        
-    def model_dump(self):
-        return {"data": self.data, "success": self.success}
+class MockResponse(BaseModel):
+    success: bool = True
+    data: str = "resp_data"
 
 
 @webhook_dispatch
-async def dummy_success_func(request):
+async def dummy_success_func(request, webhook=None):
     return MockResponse(success=True)
 
 
 @webhook_dispatch
-async def dummy_failure_func(request):
+async def dummy_failure_func(request, webhook=None):
     return MockResponse(success=False)
 
 
 @webhook_dispatch
-async def dummy_exception_func(request):
+async def dummy_exception_func(request, webhook=None):
     raise ValueError("dummy error")
 
 
@@ -111,26 +106,25 @@ async def dummy_exception_func(request):
 async def test_webhook_dispatch_success(webhook):
     req = MockRequest(webhook=webhook)
     with patch("koda.utils.webhook.service.dispatch_webhook", new_callable=AsyncMock) as mock_dispatch:
-        response = await dummy_success_func(req)
+        response = await dummy_success_func(req, webhook=webhook)
         
         assert response.success is True
         assert mock_dispatch.call_count == 2
-        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.STARTED, payload={"data": "req_data"})
+        req_payload = req.model_dump(by_alias=True, exclude_none=True)
+        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.STARTED, payload={"request": req_payload, "webhook": webhook.model_dump(by_alias=True, exclude_none=True)})
         mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.COMPLETED, payload={"data": "resp_data", "success": True})
 
 
 @pytest.mark.asyncio
 async def test_webhook_dispatch_handled_failure(webhook):
-    # If the webhook is not configured to receive FAILED events, dispatch_webhook will still be called but will return early internally.
-    # However, for this test, we should add FAILED to the webhook so we are testing the decorator's behavior, not dispatch_webhook's filtering.
-    # The decorator blindly calls dispatch_webhook.
     req = MockRequest(webhook=webhook)
     with patch("koda.utils.webhook.service.dispatch_webhook", new_callable=AsyncMock) as mock_dispatch:
-        response = await dummy_failure_func(req)
+        response = await dummy_failure_func(req, webhook=webhook)
         
         assert response.success is False
         assert mock_dispatch.call_count == 2
-        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.STARTED, payload={"data": "req_data"})
+        req_payload = req.model_dump(by_alias=True, exclude_none=True)
+        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.STARTED, payload={"request": req_payload, "webhook": webhook.model_dump(by_alias=True, exclude_none=True)})
         mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.FAILED, payload={"data": "resp_data", "success": False})
 
 
@@ -139,18 +133,26 @@ async def test_webhook_dispatch_unhandled_exception(webhook):
     req = MockRequest(webhook=webhook)
     with patch("koda.utils.webhook.service.dispatch_webhook", new_callable=AsyncMock) as mock_dispatch:
         with pytest.raises(ValueError, match="dummy error"):
-            await dummy_exception_func(req)
+            await dummy_exception_func(req, webhook=webhook)
         
         assert mock_dispatch.call_count == 2
-        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.STARTED, payload={"data": "req_data"})
-        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.FAILED, payload={"data": "req_data", "error": "dummy error"})
+        req_payload = req.model_dump(by_alias=True, exclude_none=True)
+        # Note: the webhook itself gets added to payload if it's passed as a kwarg too.
+        # Since payload is a mutable dict, the 'error' key added later modifies the recorded call's payload in the mock.
+        expected_payload = {
+            "request": req_payload,
+            "webhook": webhook.model_dump(by_alias=True, exclude_none=True),
+            "error": "dummy error"
+        }
+        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.STARTED, payload=expected_payload)
+        mock_dispatch.assert_any_call(webhook=webhook, event=WebhookEvent.FAILED, payload=expected_payload)
 
 
 @pytest.mark.asyncio
 async def test_webhook_dispatch_no_webhook():
     req = MockRequest(webhook=None)
     with patch("koda.utils.webhook.service.dispatch_webhook", new_callable=AsyncMock) as mock_dispatch:
-        response = await dummy_success_func(req)
+        response = await dummy_success_func(req, webhook=None)
         
         assert response.success is True
         mock_dispatch.assert_not_called()

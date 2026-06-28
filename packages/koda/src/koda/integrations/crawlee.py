@@ -14,7 +14,6 @@ from crawlee.crawlers import PlaywrightCrawler
 from crawlee.browsers import BrowserPool
 
 from koda.config.main import settings
-from koda.modules.file.schema import S3Config
 from koda.modules.file.service import upload as s3_upload
 
 
@@ -192,7 +191,7 @@ class KodaPlaywrightCrawler(PlaywrightCrawler):
 
             # Post-run: upload dataset to S3 if configured globally
 
-            if settings.s3_bucket_name:
+            if settings.s3:
                 import json
                 import uuid
                 
@@ -202,23 +201,11 @@ class KodaPlaywrightCrawler(PlaywrightCrawler):
                 if dataset_data and dataset_data.items:
                     json_data = json.dumps(dataset_data.items).encode("utf-8")
                     
-                    s3_config_dict: dict[str, Any] = {
-                        "bucket": settings.s3_bucket_name,
-                        "accessKey": settings.s3_access_key_id,
-                        "secretKey": settings.s3_secret_access_key,
-                        "endPoint": settings.s3_endpoint_url,
-                        "region": settings.s3_region_name,
-                    }
-                    if settings.s3_addressing_style != "auto":
-                        s3_config_dict["pathStyle"] = (settings.s3_addressing_style == "path")
-                        
-                    s3_config = S3Config(**s3_config_dict)
-                    
                     run_id = str(uuid.uuid4())
                     object_name = f"crawlee_datasets/{run_id}.json"
                     
                     # Run the synchronous or async upload
-                    s3_upload(json_data, object_name, "application/json", s3_config)
+                    s3_upload(json_data, object_name, "application/json")
 
 import sys
 import crawlee
