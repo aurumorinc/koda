@@ -1,5 +1,12 @@
+import os
+import sys
+
+# Prevent VSCode or OS BROWSER leak during tests
+if "pytest" in sys.argv[0]:
+    os.environ.pop("BROWSER", None)
+
 from typing import Optional, Literal
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from worldline import LoggingSettings
 
@@ -14,8 +21,8 @@ class Settings(LoggingSettings, BaseSettings):
 
     # Client Configuration
     timeout: int = 30000
-    browser: Optional[Literal["invisible_playwright", "cloakbrowser"]] = "invisible_playwright"
-    browser_type: Optional[Literal["firefox", "chromium"]] = "firefox"
+    browser: Optional[Literal["invisible_playwright", "cloakbrowser"]] = Field(default="invisible_playwright", validation_alias=AliasChoices("koda_browser", "browser"))
+    browser_type: Optional[Literal["firefox", "chromium"]] = Field(default="firefox", validation_alias=AliasChoices("koda_browser_type", "browser_type"))
 
     @model_validator(mode="after")
     def validate_browser(self) -> "Settings":

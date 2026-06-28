@@ -3,6 +3,9 @@ import subprocess
 import re
 import os
 
+# Clear BROWSER to prevent pydantic crashes during import
+os.environ.pop("BROWSER", None)
+
 def main():
     """
     Wrapper around pytest to run tests sequentially in completely isolated processes.
