@@ -1,7 +1,7 @@
 import httpx
 from typing import Optional
 from koda.config.main import settings
-from koda.exceptions import KodaError
+from koda.exceptions import Error
 
 
 async def get_latest_email(address: str) -> Optional[str]:
@@ -9,7 +9,7 @@ async def get_latest_email(address: str) -> Optional[str]:
     Fetches the raw text of the most recent email for a given address using JMAP.
     """
     if not settings.jmap_url or not settings.jmap_token:
-        raise KodaError("JMAP configuration is missing.")
+        raise Error("JMAP configuration is missing.")
 
     headers = {
         "Authorization": f"Bearer {settings.jmap_token}",

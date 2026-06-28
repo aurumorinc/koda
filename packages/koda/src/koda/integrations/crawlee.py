@@ -68,7 +68,16 @@ class KodaBrowserController(BrowserController):
         browser_new_context_options: Mapping[str, Any] | None = None,
         proxy_info: ProxyInfo | None = None,
     ) -> Page:
-        page = await self._context.new_page()
+        from koda.exceptions import BrowserLaunchError
+        
+        try:
+            page = await self._context.new_page()
+        except Exception as e:
+            error_msg = str(e)
+            if "TargetClosedError" in error_msg or "browsingContext is undefined" in error_msg:
+                self._is_closed = True
+                raise BrowserLaunchError(f"Browser crashed or context closed prematurely: {error_msg}") from e
+            raise
         
         async def _on_close(*args, **kwargs):
             if page in self._pages:
@@ -147,8 +156,14 @@ class KodaPlaywrightCrawler(PlaywrightCrawler):
         Executes the crawl inside a Koda BrowserSession, ensuring that
         we use Koda's invisible-playwright instance and telemetry.
         """
+        import asyncio
+        from koda.exceptions import TimeoutError
+        
         if self.client is None:
-            await super().run(*args, **kwargs)
+            try:
+                await asyncio.wait_for(super().run(*args, **kwargs), timeout=settings.timeout / 1000.0)
+            except asyncio.TimeoutError as e:
+                raise TimeoutError("Crawler execution timed out.") from e
             return
 
         from koda.modules.browser.service import BrowserSession
@@ -170,9 +185,13 @@ class KodaPlaywrightCrawler(PlaywrightCrawler):
 
             # The BrowserPool needs to be active
             async with koda_browser_pool:
-                await super().run(*args, **kwargs)
+                try:
+                    await asyncio.wait_for(super().run(*args, **kwargs), timeout=settings.timeout / 1000.0)
+                except asyncio.TimeoutError as e:
+                    raise TimeoutError("Crawler execution timed out.") from e
 
             # Post-run: upload dataset to S3 if configured globally
+
             if settings.s3_bucket_name:
                 import json
                 import uuid

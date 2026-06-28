@@ -3,7 +3,7 @@ from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime, timezone
 
 from koda.modules.session.schema import SessionModel, Session, UserDataParam, MFAParam, BrowserParam
-from koda.exceptions import SessionExhaustedError, KodaError
+from koda.exceptions import SessionExhaustedError, Error
 from koda.modules.session.service import SessionService
 
 
@@ -262,5 +262,5 @@ async def test_resolve_mfa_unknown_strategy(session_service):
     session = Session.from_model(model)
     
     # Act & Assert
-    with pytest.raises(KodaError, match="Unknown MFA strategy: unknown"):
+    with pytest.raises(Error, match="Unknown MFA strategy: unknown"):
         await session_service.resolve_mfa(session)
