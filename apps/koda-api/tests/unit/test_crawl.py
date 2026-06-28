@@ -10,8 +10,9 @@ crawl_script = import_script("f/koda/crawl.py", "crawl")
 
 
 
-@patch.object(crawl_script, "_execute_crawl_job")
-def test_crawl_success(mock_execute_job, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(crawl_script, "crawl")
+async def test_crawl_success(mock_execute_job, wmill_mock):
     mock_response = MagicMock()
     mock_response.success = True
     mock_response.id = "test-id"
@@ -21,7 +22,7 @@ def test_crawl_success(mock_execute_job, wmill_mock):
     
     mock_execute_job.return_value = mock_response
 
-    result =  crawl_script.main(
+    result = await crawl_script.main(
         url="https://example.com",
         prompt=None,
         excludePaths=["/exclude/*"],
@@ -54,11 +55,12 @@ def test_crawl_success(mock_execute_job, wmill_mock):
 
 
 
-@patch.object(crawl_script, "_execute_crawl_job")
-def test_crawl_exception(mock_execute_job, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(crawl_script, "crawl")
+async def test_crawl_exception(mock_execute_job, wmill_mock):
     mock_execute_job.side_effect = Exception("System Crash")
 
-    result =  crawl_script.main(
+    result = await crawl_script.main(
         url="https://example.com",
         prompt=None,
         excludePaths=None,

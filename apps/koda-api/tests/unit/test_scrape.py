@@ -10,8 +10,9 @@ scrape_script = import_script("f/koda/scrape.py", "scrape")
 
 
 
-@patch.object(scrape_script, "_run_scrape")
-def test_scrape_success(mock_run_scrape, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(scrape_script, "scrape")
+async def test_scrape_success(mock_run_scrape, wmill_mock):
     # Setup mock response
     mock_result = MagicMock()
     mock_result.success = True
@@ -19,7 +20,7 @@ def test_scrape_success(mock_run_scrape, wmill_mock):
     mock_result.model_dump.return_value = {"success": True, "data": {"markdown": "Test Content", "html": "<p>Test Content</p>"}}
     mock_run_scrape.return_value = mock_result
 
-    result =  scrape_script.main(
+    result = await scrape_script.main(
         url="https://example.com",
         formats=["markdown", "html"],
         onlyMainContent=True,
@@ -39,16 +40,16 @@ def test_scrape_success(mock_run_scrape, wmill_mock):
     assert request_obj.formats == ["markdown", "html"]
 
 
-
-@patch.object(scrape_script, "_run_scrape")
-def test_scrape_client_error(mock_run_scrape, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(scrape_script, "scrape")
+async def test_scrape_client_error(mock_run_scrape, wmill_mock):
     mock_result = MagicMock()
     mock_result.success = False
     mock_result.error = "404 Not Found"
     mock_result.model_dump.return_value = {"success": False, "error": "404 Not Found"}
     mock_run_scrape.return_value = mock_result
 
-    result =  scrape_script.main(
+    result = await scrape_script.main(
         url="https://example.com/404",
         formats=["markdown"],
         onlyMainContent=True,
@@ -62,10 +63,10 @@ def test_scrape_client_error(mock_run_scrape, wmill_mock):
     assert result["error"] == "404 Not Found"
 
 
-
-def test_scrape_invalid_s3_resource(wmill_mock):
+@pytest.mark.asyncio
+async def test_scrape_invalid_s3_resource(wmill_mock):
     # Pass an s3_resource that doesn't exist
-    result =  scrape_script.main(
+    result = await scrape_script.main(
         url="https://example.com",
         formats=["markdown"],
         onlyMainContent=True,
@@ -79,12 +80,12 @@ def test_scrape_invalid_s3_resource(wmill_mock):
     assert "not found" in result["error"]
 
 
-
-@patch.object(scrape_script, "_run_scrape")
-def test_scrape_exception(mock_run_scrape, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(scrape_script, "scrape")
+async def test_scrape_exception(mock_run_scrape, wmill_mock):
     mock_run_scrape.side_effect = Exception("System Crash")
 
-    result =  scrape_script.main(
+    result = await scrape_script.main(
         url="https://example.com",
         formats=["markdown"],
         onlyMainContent=True,

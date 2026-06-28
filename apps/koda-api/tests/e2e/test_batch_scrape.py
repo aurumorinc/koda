@@ -9,7 +9,8 @@ from koda.config.main import settings
 batch_scrape_script = import_script("f/koda/batch_scrape.py", "batch_scrape")
 
 
-def test_batch_scrape_e2e(local_test_server, wmill_mock):
+@pytest.mark.asyncio
+async def test_batch_scrape_e2e(local_test_server, wmill_mock):
     """Test batch scraping pages from the local test server via the Windmill script."""
     old_key = settings.posthog_api_key
     settings.posthog_api_key = "mock_e2e_key"
@@ -18,7 +19,7 @@ def test_batch_scrape_e2e(local_test_server, wmill_mock):
     url2 = f"{local_test_server}/page1.html"
     
     try:
-        result =  batch_scrape_script.main(
+        result = await batch_scrape_script.main(
             urls=[url1, url2],
             formats=["markdown"],
             onlyMainContent=False,

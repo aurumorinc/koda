@@ -9,8 +9,9 @@ from utils import import_script  # type: ignore
 batch_scrape_script = import_script("f/koda/batch_scrape.py", "batch_scrape")
 
 
-@patch.object(batch_scrape_script, "_run_batch_scrape")
-def test_batch_scrape_success(mock_execute_job, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(batch_scrape_script, "batch_scrape")
+async def test_batch_scrape_success(mock_execute_job, wmill_mock):
     from unittest.mock import MagicMock
     mock_response = MagicMock()
     mock_response.success = True
@@ -25,7 +26,7 @@ def test_batch_scrape_success(mock_execute_job, wmill_mock):
     
     mock_execute_job.return_value = mock_response
 
-    result =  batch_scrape_script.main(
+    result = await batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown", {"type": "html"}],
         onlyMainContent=True,
@@ -47,8 +48,9 @@ def test_batch_scrape_success(mock_execute_job, wmill_mock):
     assert call_args.ignore_invalid_urls is True
 
 
-def test_batch_scrape_invalid_s3(wmill_mock):
-    result =  batch_scrape_script.main(
+@pytest.mark.asyncio
+async def test_batch_scrape_invalid_s3(wmill_mock):
+    result = await batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown"],
         onlyMainContent=True,
@@ -64,11 +66,12 @@ def test_batch_scrape_invalid_s3(wmill_mock):
     assert "not found" in result["error"]
 
 
-@patch.object(batch_scrape_script, "_run_batch_scrape")
-def test_batch_scrape_exception(mock_execute_job, wmill_mock):
+@pytest.mark.asyncio
+@patch.object(batch_scrape_script, "batch_scrape")
+async def test_batch_scrape_exception(mock_execute_job, wmill_mock):
     mock_execute_job.side_effect = Exception("Crash")
     
-    result =  batch_scrape_script.main(
+    result = await batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown"],
         onlyMainContent=True,

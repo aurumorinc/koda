@@ -43,7 +43,28 @@ def main():
     total_tests = len(tests)
     
     # Step 2: Print the authentic pytest header
-    run_args = [arg for arg in args if arg != "-q"]
+    run_args = []
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            skip_next = False
+            run_args.append(arg)
+            continue
+            
+        # Keep options that take paths so we don't accidentally drop their values
+        if arg in ["--rootdir", "--ignore", "--ignore-glob", "-c", "--confcutdir", "--basetemp", "--junitxml", "--html", "-W"]:
+            run_args.append(arg)
+            skip_next = True
+            continue
+            
+        if arg == "-q":
+            continue
+            
+        # Skip positional arguments that are files or directories (these are test targets)
+        if not arg.startswith("-") and (os.path.exists(arg) or "::" in arg):
+            continue
+            
+        run_args.append(arg)
     
     # We will run the first test normally but capture it to extract the header
     first_test_cmd = [sys.executable, "-m", "pytest"] + run_args + [tests[0], "--no-summary", "--color=yes"]
@@ -52,8 +73,9 @@ def main():
     lines = first_result.stdout.splitlines()
     header_lines = []
     
+    first_test_filename = tests[0].split("::")[0]
     for i, line in enumerate(lines):
-        if tests[0] in line:
+        if first_test_filename in line and ("[" in line and "%]" in line):
             break
         header_lines.append(line)
         
@@ -92,7 +114,8 @@ def main():
                     continue
                 
                 # Filter out pytest session start/end lines
-                is_session_line = "test session starts" in clean_line or "passed in" in clean_line or "collected" in clean_line
+                is_summary_line = clean_line.startswith("===") and clean_line.strip().endswith("===")
+                is_session_line = "test session starts" in clean_line or "collected" in clean_line or is_summary_line
                 if is_session_line or "short test summary info" in clean_line:
                     continue
                     
@@ -143,7 +166,8 @@ def main():
                     failures_output.append(line.rstrip('\n'))
             continue
                     
-        is_session_line = "passed in" in clean_line or "collected" in clean_line
+        is_summary_line = clean_line.startswith("===") and clean_line.strip().endswith("===")
+        is_session_line = "collected" in clean_line or is_summary_line
         if is_session_line or "short test summary info" in clean_line or line.rstrip('\n') in header_lines:
             continue
             
