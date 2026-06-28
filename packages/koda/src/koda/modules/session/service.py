@@ -7,7 +7,7 @@ from typing import Any, AsyncGenerator, Tuple
 
 import pyotp
 
-from koda.exceptions import KodaError, SessionExhaustedError
+from koda.exceptions import Error, SessionExhaustedError
 from koda.modules.browser.service import BrowserSession
 from koda.modules.session.schema import Session
 
@@ -137,7 +137,7 @@ class SessionService:
             The resolved MFA code as a string.
             
         Raises:
-            KodaError: If MFA configuration is missing, invalid, or resolution fails.
+            Error: If MFA configuration is missing, invalid, or resolution fails.
         """
         if not session.model.user_data.mfa:
             return ""
@@ -150,20 +150,20 @@ class SessionService:
         elif strategy in ("imap", "jmap"):
             return await self._resolve_email_otp(strategy, config)
         else:
-            raise KodaError(f"Unknown MFA strategy: {strategy}")
+            raise Error(f"Unknown MFA strategy: {strategy}")
 
     async def _resolve_totp(self, config: dict[str, Any]) -> str:
         """Resolve a TOTP MFA challenge."""
         secret = config.get("secret")
         if not secret:
-            raise KodaError("TOTP secret is missing in MFA config.")
+            raise Error("TOTP secret is missing in MFA config.")
         return pyotp.TOTP(secret).now()
 
     async def _resolve_email_otp(self, strategy: str, config: dict[str, Any]) -> str:
         """Resolve an email-based OTP MFA challenge using IMAP or JMAP."""
         address = config.get("address")
         if not address:
-            raise KodaError(f"Email address is missing in {strategy} MFA config.")
+            raise Error(f"Email address is missing in {strategy} MFA config.")
             
         # Fetch the latest email
         if strategy == "imap":
@@ -172,7 +172,7 @@ class SessionService:
             raw_text = await self.email_repo_jmap.get_latest_email(address)
             
         if not raw_text:
-            raise KodaError(f"Failed to fetch email for {address} via {strategy} or email is empty.")
+            raise Error(f"Failed to fetch email for {address} via {strategy} or email is empty.")
             
         # Extract the code using regex
         pattern = config.get("pattern", r"\b\d{6}\b")
@@ -181,4 +181,4 @@ class SessionService:
         if match:
             return match.group(0)
             
-        raise KodaError(f"Failed to extract MFA code from {strategy} email using pattern {pattern}.")
+        raise Error(f"Failed to extract MFA code from {strategy} email using pattern {pattern}.")

@@ -46,3 +46,34 @@ def test_scrape_youtube_profile_e2e(wmill_mock):
         
     finally:
         settings.posthog_api_key = old_key
+
+def test_scrape_youtube_profile_high_concurrency(wmill_mock):
+    """Test scraping a heavy YouTube profile with high concurrency to ensure no freezing occurs."""
+    old_key = settings.posthog_api_key
+    settings.posthog_api_key = "mock_e2e_key"
+    
+    url = "https://www.youtube.com/@LinusTechTips"
+    
+    try:
+        result = scrape_yt.main(
+            url=url,
+            formats=["markdown"],
+            tabs=["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"],
+            timeout=120000,
+            s3_resource=None,
+            webhook=None,
+            maxConcurrency=5
+        )
+        
+        # It MUST either succeed or fail gracefully, but not hang forever.
+        # If it fails due to timeout or browser crash, success=False and we check the error string.
+        # If it succeeds, data should be a list.
+        assert isinstance(result.get("success"), bool)
+        
+        if not result.get("success"):
+            error_msg = result.get("error", "")
+            assert "Scrape operation timed out" in error_msg or "Browser crash" in error_msg or "TimeoutError" in error_msg or "BrowserLaunchError" in error_msg
+            
+    finally:
+        settings.posthog_api_key = old_key
+

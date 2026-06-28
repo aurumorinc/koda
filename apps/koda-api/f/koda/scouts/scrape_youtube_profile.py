@@ -268,11 +268,15 @@ async def _run_youtube_scrape(request: ScrapeYoutubeProfileRequest) -> ScrapeYou
     has_screenshot = any(f == "screenshot" for f in normalized_formats)
 
     try:
-        async with KodaClient() as client:
+        from datetime import timedelta
+        from koda.exceptions import TimeoutError, BrowserLaunchError
+
+        async with KodaClient(timeout=request.timeout) as client:
             crawler = PlaywrightCrawler(
                 client=client,  # type: ignore
                 request_handler=router,
                 max_request_retries=1,
+                request_handler_timeout=timedelta(milliseconds=request.timeout),
                 concurrency_settings=ConcurrencySettings(
                     max_concurrency=request.maxConcurrency,
                     desired_concurrency=min(10, request.maxConcurrency)
@@ -320,6 +324,10 @@ async def _run_youtube_scrape(request: ScrapeYoutubeProfileRequest) -> ScrapeYou
             
             return ScrapeYoutubeProfileResponse(success=True, data=data_list)
 
+    except (TimeoutError, asyncio.TimeoutError):
+        return ScrapeYoutubeProfileResponse(success=False, error="Scrape operation timed out")
+    except BrowserLaunchError as e:
+        return ScrapeYoutubeProfileResponse(success=False, error=f"Browser crash: {e}")
     except Exception as e:
         return ScrapeYoutubeProfileResponse(success=False, error=str(e))
 

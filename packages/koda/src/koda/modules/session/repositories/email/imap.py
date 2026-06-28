@@ -2,7 +2,7 @@ import aioimaplib
 import email
 from typing import Optional
 from koda.config.main import settings
-from koda.exceptions import KodaError
+from koda.exceptions import Error
 
 
 async def get_latest_email(address: str) -> Optional[str]:
@@ -10,7 +10,7 @@ async def get_latest_email(address: str) -> Optional[str]:
     Fetches the raw text of the most recent email for a given address using IMAP.
     """
     if not settings.imap_host or not settings.imap_user or not settings.imap_password:
-        raise KodaError("IMAP configuration is missing.")
+        raise Error("IMAP configuration is missing.")
 
     client = aioimaplib.IMAP4_SSL(host=settings.imap_host, port=settings.imap_port)
     await client.wait_hello_from_server()
