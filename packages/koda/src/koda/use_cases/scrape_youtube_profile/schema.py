@@ -9,7 +9,7 @@ class ScrapeYoutubeProfileRequest(BaseModel):
     timeout: int = 300000
     s3_resource: Optional[Dict[str, Any]] = None
     webhook: Optional[Webhook] = None
-    maxConcurrency: int = 1
+    max_concurrency: int = 10
 
 class ScrapeYoutubeProfileResponse(BaseModel):
     success: bool

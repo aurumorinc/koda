@@ -257,8 +257,8 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
                 max_request_retries=1,
                 request_handler_timeout=timedelta(milliseconds=request.timeout),
                 concurrency_settings=ConcurrencySettings(
-                    max_concurrency=request.maxConcurrency,
-                    desired_concurrency=min(10, request.maxConcurrency)
+                    max_concurrency=request.max_concurrency,
+                    desired_concurrency=min(10, request.max_concurrency)
                 )
             )
 
