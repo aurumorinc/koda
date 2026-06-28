@@ -4,14 +4,14 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script
+from utils import import_script  # type: ignore
 
 crawl_script = import_script("f/koda/crawl.py", "crawl")
 
 
-@pytest.mark.asyncio
-@patch("crawl._execute_crawl_job")
-async def test_crawl_success(mock_execute_job, wmill_mock):
+
+@patch.object(crawl_script, "_execute_crawl_job")
+def test_crawl_success(mock_execute_job, wmill_mock):
     mock_response = MagicMock()
     mock_response.success = True
     mock_response.id = "test-id"
@@ -21,7 +21,7 @@ async def test_crawl_success(mock_execute_job, wmill_mock):
     
     mock_execute_job.return_value = mock_response
 
-    result = await crawl_script.main(
+    result =  crawl_script.main(
         url="https://example.com",
         prompt=None,
         excludePaths=["/exclude/*"],
@@ -53,12 +53,12 @@ async def test_crawl_success(mock_execute_job, wmill_mock):
     assert call_args.scrapeOptions.formats == ["markdown", "html"]
 
 
-@pytest.mark.asyncio
-@patch("crawl._execute_crawl_job")
-async def test_crawl_exception(mock_execute_job, wmill_mock):
+
+@patch.object(crawl_script, "_execute_crawl_job")
+def test_crawl_exception(mock_execute_job, wmill_mock):
     mock_execute_job.side_effect = Exception("System Crash")
 
-    result = await crawl_script.main(
+    result =  crawl_script.main(
         url="https://example.com",
         prompt=None,
         excludePaths=None,

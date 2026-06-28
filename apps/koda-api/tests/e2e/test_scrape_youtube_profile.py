@@ -3,13 +3,13 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script
+from utils import import_script  # type: ignore
 from koda.config.main import settings
 
 scrape_yt = import_script("f/koda/scouts/scrape_youtube_profile.py", "scrape_yt")
 
-@pytest.mark.asyncio
-async def test_scrape_youtube_profile_e2e(wmill_mock):
+
+def test_scrape_youtube_profile_e2e(wmill_mock):
     """Test scraping a real YouTube profile."""
     # Temporarily disable posthog to speed up/avoid issues
     old_key = settings.posthog_api_key
@@ -19,13 +19,14 @@ async def test_scrape_youtube_profile_e2e(wmill_mock):
     
     try:
         # We only want to test a couple of tabs to keep the test fast
-        result = await scrape_yt.main(
+        result =  scrape_yt.main(
             url=url,
             formats=["markdown"],
             tabs=["home", "videos", "fake-tab-that-does-not-exist"],
             timeout=120000,
             s3_resource=None,
-            webhook=None
+            webhook=None,
+            maxConcurrency=2
         )
         
         assert result.get("success") is True, f"Scrape failed: {result.get('error')}"

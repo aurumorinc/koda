@@ -3,13 +3,13 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script
+from utils import import_script  # type: ignore
 from koda.config.main import settings
 
 scrape_script = import_script("f/koda/scrape.py", "scrape")
 
-@pytest.mark.asyncio
-async def test_scrape_e2e(local_test_server, wmill_mock):
+
+def test_scrape_e2e(local_test_server, wmill_mock):
     """Test scraping a page from the local test server via the Windmill script."""
     old_key = settings.posthog_api_key
     settings.posthog_api_key = "mock_e2e_key"
@@ -17,7 +17,7 @@ async def test_scrape_e2e(local_test_server, wmill_mock):
     url = f"{local_test_server}/index.html"
     
     try:
-        result = await scrape_script.main(
+        result =  scrape_script.main(
             url=url,
             formats=["markdown", "html", "links"],
             onlyMainContent=False,

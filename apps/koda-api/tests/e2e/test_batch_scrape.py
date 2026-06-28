@@ -3,13 +3,13 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script
+from utils import import_script  # type: ignore
 from koda.config.main import settings
 
 batch_scrape_script = import_script("f/koda/batch_scrape.py", "batch_scrape")
 
-@pytest.mark.asyncio
-async def test_batch_scrape_e2e(local_test_server, wmill_mock):
+
+def test_batch_scrape_e2e(local_test_server, wmill_mock):
     """Test batch scraping pages from the local test server via the Windmill script."""
     old_key = settings.posthog_api_key
     settings.posthog_api_key = "mock_e2e_key"
@@ -18,7 +18,7 @@ async def test_batch_scrape_e2e(local_test_server, wmill_mock):
     url2 = f"{local_test_server}/page1.html"
     
     try:
-        result = await batch_scrape_script.main(
+        result =  batch_scrape_script.main(
             urls=[url1, url2],
             formats=["markdown"],
             onlyMainContent=False,
