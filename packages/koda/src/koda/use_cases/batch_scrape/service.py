@@ -163,13 +163,13 @@ class BatchScrapeJob:
         return response
 
 @webhook_dispatch
-async def batch_scrape(BatchScrapeRequest: BatchScrapeRequest) -> BatchScrapeResponse:
-    job = BatchScrapeJob(BatchScrapeRequest)
+async def batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
+    job = BatchScrapeJob(request)
     
     try:
         response = await asyncio.wait_for(
             job.run(),
-            timeout=BatchScrapeRequest.timeout / 1000.0 if BatchScrapeRequest.timeout else settings.timeout / 1000.0
+            timeout=request.timeout / 1000.0 if request.timeout else settings.timeout / 1000.0
         )
         
         if settings.s3 and response.data:

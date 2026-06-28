@@ -237,9 +237,9 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
 
 
 @webhook_dispatch
-async def scrape_youtube_profile(ScrapeYoutubeProfileRequest: ScrapeYoutubeProfileRequest) -> ScrapeYoutubeProfileResponse:
+async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> ScrapeYoutubeProfileResponse:
     normalized_formats = []
-    for f in ScrapeYoutubeProfileRequest.formats:
+    for f in request.formats:
         if isinstance(f, dict):
             normalized_formats.append(str(f.get("type", "")))
         else:
@@ -250,15 +250,15 @@ async def scrape_youtube_profile(ScrapeYoutubeProfileRequest: ScrapeYoutubeProfi
     try:
         from datetime import timedelta
 
-        async with KodaClient(s3_resource=ScrapeYoutubeProfileRequest.s3_resource, timeout=ScrapeYoutubeProfileRequest.timeout) as client:
+        async with KodaClient(s3_resource=request.s3_resource, timeout=request.timeout) as client:
             crawler = PlaywrightCrawler(
                 client=client,  # type: ignore
                 request_handler=router,
                 max_request_retries=1,
-                request_handler_timeout=timedelta(milliseconds=ScrapeYoutubeProfileRequest.timeout),
+                request_handler_timeout=timedelta(milliseconds=request.timeout),
                 concurrency_settings=ConcurrencySettings(
-                    max_concurrency=ScrapeYoutubeProfileRequest.maxConcurrency,
-                    desired_concurrency=min(10, ScrapeYoutubeProfileRequest.maxConcurrency)
+                    max_concurrency=request.maxConcurrency,
+                    desired_concurrency=min(10, request.maxConcurrency)
                 )
             )
 
@@ -274,7 +274,7 @@ async def scrape_youtube_profile(ScrapeYoutubeProfileRequest: ScrapeYoutubeProfi
             # Start Crawl
             await crawler.run([
                 Request.from_url(
-                    url=ScrapeYoutubeProfileRequest.url,
+                    url=request.url,
                     user_data={
                         "tabs": ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"],
                         "normalized_formats": normalized_formats,

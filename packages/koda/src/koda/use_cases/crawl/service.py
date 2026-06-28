@@ -137,6 +137,6 @@ class CrawlJob:
         )
 
 @webhook_dispatch
-async def crawl(CrawlRequest: CrawlRequest) -> CrawlResponse:
-    job = CrawlJob(CrawlRequest)
+async def crawl(request: CrawlRequest) -> CrawlResponse:
+    job = CrawlJob(request)
     return await job.run()

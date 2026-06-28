@@ -95,19 +95,19 @@ class ScrapeJob:
         return response
 
 @webhook_dispatch
-async def scrape(ScrapeRequest: ScrapeRequest) -> ScrapeResult:
-    job = ScrapeJob(ScrapeRequest)
+async def scrape(request: ScrapeRequest) -> ScrapeResult:
+    job = ScrapeJob(request)
     try:
         response = await asyncio.wait_for(
             job.run(),
-            timeout=ScrapeRequest.timeout / 1000.0 if ScrapeRequest.timeout else settings.timeout / 1000.0
+            timeout=request.timeout / 1000.0 if request.timeout else settings.timeout / 1000.0
         )
         if response.error:
             return ScrapeResult(success=False, error=response.error)
             
         if getattr(response, "_screenshot_bytes", None) and settings.s3:
             screenshot_bytes = response._screenshot_bytes
-            object_name = f"{sanitize_filename(ScrapeRequest.url)}_{uuid.uuid4().hex[:8]}.jpg"
+            object_name = f"{sanitize_filename(request.url)}_{uuid.uuid4().hex[:8]}.jpg"
             
             await asyncio.to_thread(
                 upload,

@@ -4,7 +4,7 @@ from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileReq
 from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile
 
 @pytest.mark.asyncio
-async def test_scrape_youtube_profile_e2e():
+async def test_scrape_youtube_profile():
     """Test scraping a real YouTube profile."""
     # Temporarily disable posthog to speed up/avoid issues
     old_key = settings.posthog_api_key
