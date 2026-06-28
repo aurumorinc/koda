@@ -4,13 +4,13 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils import import_script
+from utils import import_script  # type: ignore
 
 batch_scrape_script = import_script("f/koda/batch_scrape.py", "batch_scrape")
 
-@pytest.mark.asyncio
-@patch("batch_scrape._run_batch_scrape")
-async def test_batch_scrape_success(mock_execute_job, wmill_mock):
+
+@patch.object(batch_scrape_script, "_run_batch_scrape")
+def test_batch_scrape_success(mock_execute_job, wmill_mock):
     from unittest.mock import MagicMock
     mock_response = MagicMock()
     mock_response.success = True
@@ -25,7 +25,7 @@ async def test_batch_scrape_success(mock_execute_job, wmill_mock):
     
     mock_execute_job.return_value = mock_response
 
-    result = await batch_scrape_script.main(
+    result =  batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown", {"type": "html"}],
         onlyMainContent=True,
@@ -46,9 +46,9 @@ async def test_batch_scrape_success(mock_execute_job, wmill_mock):
     assert call_args.max_concurrency == 5
     assert call_args.ignore_invalid_urls is True
 
-@pytest.mark.asyncio
-async def test_batch_scrape_invalid_s3(wmill_mock):
-    result = await batch_scrape_script.main(
+
+def test_batch_scrape_invalid_s3(wmill_mock):
+    result =  batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown"],
         onlyMainContent=True,
@@ -63,12 +63,12 @@ async def test_batch_scrape_invalid_s3(wmill_mock):
     assert result["success"] is False
     assert "not found" in result["error"]
 
-@pytest.mark.asyncio
-@patch("batch_scrape._run_batch_scrape")
-async def test_batch_scrape_exception(mock_execute_job, wmill_mock):
+
+@patch.object(batch_scrape_script, "_run_batch_scrape")
+def test_batch_scrape_exception(mock_execute_job, wmill_mock):
     mock_execute_job.side_effect = Exception("Crash")
     
-    result = await batch_scrape_script.main(
+    result =  batch_scrape_script.main(
         urls=["https://example.com"],
         formats=["markdown"],
         onlyMainContent=True,

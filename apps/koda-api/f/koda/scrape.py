@@ -6,8 +6,8 @@
 import asyncio
 import base64
 import uuid
-import wmill
-from typing import Optional, List, Dict, Any, Union
+import wmill  # type: ignore
+from typing import Optional, List, Dict, Any, Union, cast
 from pydantic import BaseModel, Field, ConfigDict
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
@@ -46,7 +46,7 @@ class ScrapeRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     url: str
-    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown", "screenshot"]))
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
@@ -184,20 +184,22 @@ class ScrapeJob:
     async def run(self) -> ScrapeResponse:
         response = ScrapeResponse(url=self.request.url)
         
-        browser_config = BrowserConfig(
-            headless=True,
-            viewport_width=1366,
-            viewport_height=768
-        )
+        browser_kwargs = {
+            "headless": True,
+            "viewport_width": 1366,
+            "viewport_height": 768
+        }
+        browser_config = BrowserConfig(**browser_kwargs)  # type: ignore
         
         has_screenshot = any(
             f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot")
             for f in self.request.formats
         )
-        run_config = CrawlerRunConfig(
-            page_timeout=self.request.timeout,
-            screenshot=has_screenshot
-        )
+        run_kwargs = {
+            "page_timeout": self.request.timeout,
+            "screenshot": has_screenshot
+        }
+        run_config = CrawlerRunConfig(**run_kwargs)  # type: ignore
         
         if self.request.only_main_content:
             run_config.content_filter = PruningContentFilter()
@@ -205,7 +207,7 @@ class ScrapeJob:
         async with KodaClient() as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.actions:
-                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)
+                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)  # type: ignore
                 
                 result = await crawler.arun(url=self.request.url, config=run_config)
                 
@@ -271,7 +273,7 @@ async def _run_scrape(request: ScrapeRequest) -> ScrapeResult:
                 s3_config=s3_conf_obj
             )
             
-        data = {}
+        data: Dict[str, Any] = {}
         if response.markdown is not None:
             data["markdown"] = response.markdown
         if response.html is not None:
@@ -296,7 +298,7 @@ async def _run_scrape(request: ScrapeRequest) -> ScrapeResult:
         return ScrapeResult(success=False, error=error_msg)
 
 @webhook_dispatch
-async def main(
+async def async_main(
     url: str,
     formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
     onlyMainContent: bool = True,
@@ -339,5 +341,24 @@ async def main(
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-def _run_main_sync(*args, **kwargs):
-    return asyncio.run(main(*args, **kwargs))
+def main(
+    url: str,
+    formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
+    onlyMainContent: bool = True,
+    actions: List[Action] = [],
+    timeout: int = 60000,
+    s3_resource: Optional[str] = "f/koda/default_s3",
+    webhook: Optional[Webhook] = None,
+    **kwargs
+) -> dict:
+    """Synchronous entrypoint for Windmill execution."""
+    return asyncio.run(async_main(
+        url=url,
+        formats=formats,
+        onlyMainContent=onlyMainContent,
+        actions=actions,
+        timeout=timeout,
+        s3_resource=s3_resource,
+        webhook=webhook,
+        **kwargs
+    ))

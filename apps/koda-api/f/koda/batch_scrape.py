@@ -6,8 +6,8 @@
 import asyncio
 import base64
 import uuid
-import wmill
-from typing import Optional, List, Dict, Any, Union
+import wmill  # type: ignore
+from typing import Optional, List, Dict, Any, Union, cast
 from pydantic import BaseModel, Field, ConfigDict
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
@@ -45,7 +45,7 @@ class Action(BaseModel):
 class ScrapeRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     url: str
-    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown", "screenshot"]))
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
@@ -67,7 +67,7 @@ class BatchScrapeRequest(BaseModel):
 
     urls: Optional[List[str]] = None
     requests: Optional[List[ScrapeRequest]] = None
-    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown", "screenshot"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown", "screenshot"]))
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
@@ -82,8 +82,8 @@ class BatchScrapeResponse(BaseModel):
     success: bool
     id: str
     url: Optional[str] = None
-    invalid_urls: Optional[List[str]] = Field(default_factory=list, alias="invalidURLs")
-    data: Optional[List[ScrapeResponse]] = Field(default_factory=list)
+    invalid_urls: List[str] = Field(default_factory=list, alias="invalidURLs")
+    data: List[ScrapeResponse] = Field(default_factory=list)
 
 class BatchScrapeJob:
     def __init__(self, request: BatchScrapeRequest):
@@ -240,20 +240,22 @@ class BatchScrapeJob:
             response.success = False
             return response
 
-        browser_config = BrowserConfig(
-            headless=True,
-            viewport_width=1366,
-            viewport_height=768
-        )
+        browser_kwargs = {
+            "headless": True,
+            "viewport_width": 1366,
+            "viewport_height": 768
+        }
+        browser_config = BrowserConfig(**browser_kwargs)  # type: ignore
         
         has_screenshot = any(
             f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot")
             for f in self.request.formats
         )
-        run_config = CrawlerRunConfig(
-            page_timeout=self.request.timeout,
-            screenshot=has_screenshot
-        )
+        run_kwargs = {
+            "page_timeout": self.request.timeout,
+            "screenshot": has_screenshot
+        }
+        run_config = CrawlerRunConfig(**run_kwargs)  # type: ignore
         
         if self.request.max_concurrency:
             run_config.semaphore_count = self.request.max_concurrency
@@ -264,9 +266,14 @@ class BatchScrapeJob:
         async with KodaClient() as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.actions or (self.request.requests and any(r.actions for r in self.request.requests)):
-                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)
+                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)  # type: ignore
                 
-                results = await crawler.arun_many(urls=valid_urls, config=run_config)
+                res_obj = await crawler.arun_many(urls=valid_urls, config=run_config)  # type: ignore
+                results: List[Any] = []
+                if hasattr(res_obj, "__aiter__"):
+                    results = [r async for r in res_obj]  # type: ignore
+                else:
+                    results = list(res_obj)  # type: ignore
                 
                 ordered_results = []
                 for u in valid_urls:
@@ -361,7 +368,7 @@ async def _run_batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
         raise Exception(error_msg)
 
 @webhook_dispatch
-async def main(
+async def async_main(
     urls: List[str] = [],
     requests: List[ScrapeRequest] = [],
     formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
@@ -410,5 +417,30 @@ async def main(
     except Exception as e:
         return {"success": False, "id": uuid.uuid4().hex, "data": [], "error": str(e)}
 
-def _run_main_sync(*args, **kwargs):
-    return asyncio.run(main(*args, **kwargs))
+def main(
+    urls: List[str] = [],
+    requests: List[ScrapeRequest] = [],
+    formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
+    onlyMainContent: bool = True,
+    actions: List[Action] = [],
+    timeout: int = 60000,
+    s3_resource: Optional[str] = "f/koda/default_s3",
+    webhook: Optional[Webhook] = None,
+    maxConcurrency: int = 10,
+    ignoreInvalidURLs: bool = True,
+    **kwargs
+) -> dict:
+    """Synchronous entrypoint for Windmill execution."""
+    return asyncio.run(async_main(
+        urls=urls,
+        requests=requests,
+        formats=formats,
+        onlyMainContent=onlyMainContent,
+        actions=actions,
+        timeout=timeout,
+        s3_resource=s3_resource,
+        webhook=webhook,
+        maxConcurrency=maxConcurrency,
+        ignoreInvalidURLs=ignoreInvalidURLs,
+        **kwargs
+    ))

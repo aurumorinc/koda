@@ -4,9 +4,9 @@
 # ]
 # ///
 import asyncio
-import wmill
+import wmill  # type: ignore
 import base64
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, cast
 from pydantic import BaseModel, ConfigDict, Field
 
 from crawlee.router import Router
@@ -14,7 +14,8 @@ from crawlee.crawlers import PlaywrightCrawlingContext
 from crawlee import Request
 
 from koda import KodaClient, Webhook, settings, webhook_dispatch
-from crawlee import PlaywrightCrawler
+from crawlee.crawlers import PlaywrightCrawler
+from crawlee import ConcurrencySettings
 
 router = Router[PlaywrightCrawlingContext]()
 
@@ -41,7 +42,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
                 break
         
     # Enqueue sub-tabs
-    tabs = context.request.user_data.get("tabs", ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"])
+    tabs = cast(List[str], context.request.user_data.get("tabs", ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"]))
     
     # 1. Enqueue About (handled separately)
     await context.add_requests([
@@ -53,7 +54,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
     ])
     
     # 2. Enqueue Home Tab if requested
-    if "home" in [t.lower() for t in tabs]:
+    if "home" in [str(t).lower() for t in tabs if t]:
         await context.add_requests([
             Request.from_url(
                 url=base_profile_url,
@@ -64,7 +65,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
     
     # 3. Enqueue Other Sub Tabs
     for tab in tabs:
-        tab_lower = tab.lower()
+        tab_lower = str(tab).lower()
         if tab_lower == "home":
             continue
         await context.add_requests([
@@ -78,7 +79,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
 async def about_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     user_data = context.request.user_data
-    normalized_formats = user_data.get("normalized_formats", ["markdown"])
+    normalized_formats = cast(List[str], user_data.get("normalized_formats", ["markdown"]))
     has_screenshot = user_data.get("has_screenshot", False)
     
     # 1. Click consent
@@ -97,7 +98,7 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
     except Exception:
         pass
         
-    extracted_data = {
+    extracted_data: Dict[str, Any] = {
         "url": page.url,
         "tab_name": "About"
     }
@@ -153,8 +154,8 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
 async def tab_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     user_data = context.request.user_data
-    tab_name = user_data["tab_name"]
-    normalized_formats = user_data.get("normalized_formats", ["markdown"])
+    tab_name = str(user_data.get("tab_name", ""))
+    normalized_formats = cast(List[str], user_data.get("normalized_formats", ["markdown"]))
     has_screenshot = user_data.get("has_screenshot", False)
     
     # 1. Click consent
@@ -195,7 +196,7 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
         await page.wait_for_timeout(1500)
             
     # 3. Extraction
-    extracted_data = {
+    extracted_data: Dict[str, Any] = {
         "url": page.url,
         "tab_name": tab_name
     }
@@ -230,11 +231,12 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
 class ScrapeYoutubeProfileRequest(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     url: str
-    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: ["markdown"])
+    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"]))
     timeout: int = 300000
     s3_resource: Optional[str] = "f/koda/default_s3"
     webhook: Optional[Webhook] = None
-    tabs: List[str] = Field(default_factory=lambda: ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"])
+    tabs: List[str] = Field(default_factory=lambda: cast(List[str], ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"]))
+    maxConcurrency: int = 5
 
 class ScrapeYoutubeProfileResponse(BaseModel):
     success: bool
@@ -259,7 +261,7 @@ async def _run_youtube_scrape(request: ScrapeYoutubeProfileRequest) -> ScrapeYou
     normalized_formats = []
     for f in request.formats:
         if isinstance(f, dict):
-            normalized_formats.append(f.get("type", ""))
+            normalized_formats.append(str(f.get("type", "")))
         else:
             normalized_formats.append(str(f))
 
@@ -268,9 +270,13 @@ async def _run_youtube_scrape(request: ScrapeYoutubeProfileRequest) -> ScrapeYou
     try:
         async with KodaClient() as client:
             crawler = PlaywrightCrawler(
-                client=client,
+                client=client,  # type: ignore
                 request_handler=router,
-                max_request_retries=1
+                max_request_retries=1,
+                concurrency_settings=ConcurrencySettings(
+                    max_concurrency=request.maxConcurrency,
+                    desired_concurrency=min(10, request.maxConcurrency)
+                )
             )
             
             # Start Crawl
@@ -318,7 +324,7 @@ async def _run_youtube_scrape(request: ScrapeYoutubeProfileRequest) -> ScrapeYou
         return ScrapeYoutubeProfileResponse(success=False, error=str(e))
 
 @webhook_dispatch
-async def main(
+async def async_main(
     url: str,
     formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
     timeout: int = 300000,
@@ -343,5 +349,20 @@ async def main(
     response = await _run_youtube_scrape(request)
     return response.model_dump(exclude_none=True)
 
-def _run_main_sync(*args, **kwargs):
-    return asyncio.run(main(*args, **kwargs))
+def main(
+    url: str,
+    formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
+    timeout: int = 300000,
+    s3_resource: Optional[str] = "f/koda/default_s3",
+    webhook: Optional[Webhook] = None,
+    **kwargs
+) -> dict:
+    """Synchronous entrypoint for Windmill execution."""
+    return asyncio.run(async_main(
+        url=url,
+        formats=formats,
+        timeout=timeout,
+        s3_resource=s3_resource,
+        webhook=webhook,
+        **kwargs
+    ))
