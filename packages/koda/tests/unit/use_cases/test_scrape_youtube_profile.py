@@ -4,7 +4,7 @@ from crawlee import Request
 from crawlee.crawlers import PlaywrightCrawlingContext
 
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest
-from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile, default_handler, _validate_redirect, videos_handler
+from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile, _handler, _validate_redirect, tab_handler
 
 @pytest.fixture
 def mock_crawlee():
@@ -50,35 +50,23 @@ async def test_default_handler_routing():
     context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
     context_mock.page = AsyncMock()
     context_mock.page.url = "https://youtube.com/@testuser"
-    context_mock.request = Request.from_url("https://youtube.com/@testuser", user_data={"tabs": ["videos", "store"]})
+    context_mock.request = Request.from_url("https://youtube.com/@testuser")
     
-    await default_handler(context_mock)
+    await _handler(context_mock)
     
-    # Assert add_requests called multiple times (1 for ABOUT, 2 for TABS)
-    assert context_mock.add_requests.call_count == 3
+    assert context_mock.add_requests.call_count == 2
     
-    # ABOUT
-    about_call = context_mock.add_requests.call_args_list[0][0][0]
-    assert about_call[0].label == "ABOUT"
-    assert about_call[0].url == "https://youtube.com/@testuser"
-    
-    # VIDEOS
-    videos_call = context_mock.add_requests.call_args_list[1][0][0]
-    assert videos_call[0].label == "VIDEOS"
-    assert videos_call[0].url == "https://youtube.com/@testuser/videos"
-
-    # STORE
-    store_call = context_mock.add_requests.call_args_list[2][0][0]
-    assert store_call[0].label == "STORE"
-    assert store_call[0].url == "https://youtube.com/@testuser/store"
+    dialog_call = context_mock.add_requests.call_args_list[0][0][0]
+    assert dialog_call[0].label == "DIALOG"
+    assert dialog_call[0].url == "https://youtube.com/@testuser"
 
 @pytest.mark.asyncio
 async def test_validate_redirect():
     page_mock = AsyncMock()
+    page_mock.is_closed.return_value = False
     
     # Valid redirect
     page_mock.url = "https://youtube.com/@test/videos"
-    page_mock.locator.return_value.first.inner_text.return_value = "Videos"
     
     res = await _validate_redirect(page_mock, "videos")
     assert res is True
@@ -88,19 +76,15 @@ async def test_validate_redirect():
     res = await _validate_redirect(page_mock, "videos")
     assert res is False
     
-    # Invalid selected tab
-    page_mock.url = "https://youtube.com/@test/videos"
-    page_mock.locator.return_value.first.inner_text.return_value = "Home"
-    res = await _validate_redirect(page_mock, "videos")
-    assert res is False
-    
 @pytest.mark.asyncio
 async def test_missing_tab_handling():
     context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
     context_mock.page = AsyncMock()
+    context_mock.page.is_closed.return_value = False
+    context_mock.request = Request.from_url("https://youtube.com/@test/featured", user_data={"slug": "videos"})
     context_mock.page.url = "https://youtube.com/@test/featured" # Wrong URL for videos
     
-    await videos_handler(context_mock)
+    await tab_handler(context_mock)
     
     # push_data should not be called because it aborted
     assert not context_mock.push_data.called
