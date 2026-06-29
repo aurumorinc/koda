@@ -77,6 +77,27 @@ async def test_validate_redirect():
     assert res is False
     
 @pytest.mark.asyncio
+@patch("koda.use_cases.scrape_youtube_profile.service.scroll_to", autospec=True)
+@patch("koda.use_cases.scrape_youtube_profile.service.screenshot", autospec=True)
+async def test_tab_handler_scroll_bounds(mock_screenshot, mock_scroll_to):
+    context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
+    context_mock.page = AsyncMock()
+    context_mock.page.is_closed.return_value = False
+    context_mock.page.url = "https://youtube.com/@test/videos"
+    context_mock.request = Request.from_url("https://youtube.com/@test/videos", user_data={"slug": "videos", "full_page": True})
+    
+    # Mock screenshot to return bytes
+    mock_screenshot.return_value = b"bytes"
+    
+    await tab_handler(context_mock)
+    
+    # Assert scroll_to bounded properly even on full_page=True
+    assert mock_scroll_to.call_count == 1
+    _, kwargs = mock_scroll_to.call_args
+    assert kwargs.get("y") == 10000  # MAX_SCREENSHOT_HEIGHT
+    assert "wait_callback" in kwargs
+
+@pytest.mark.asyncio
 async def test_missing_tab_handling():
     context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
     context_mock.page = AsyncMock()
