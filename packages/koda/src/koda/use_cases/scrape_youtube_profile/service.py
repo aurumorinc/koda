@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import uuid
+from contextlib import suppress
 from typing import Dict, List, Any, cast
 
 from crawlee.router import Router
@@ -9,52 +10,84 @@ from crawlee import Request, ConcurrencySettings
 from playwright.async_api import Page
 
 from koda.client import KodaClient
-from koda.config.main import settings
 from koda.exceptions import TimeoutError, BrowserLaunchError
 from koda.utils.webhook.service import webhook_dispatch
 from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
 from koda.utils.file.main import File
 from .schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
 
+CHANNEL_PATH_PREFIXES = {"c", "user", "channel"}
+TABS = [
+    {"name": "home", "slug": "featured", "full_page": True},
+    {"name": "videos", "slug": "videos", "full_page": False},
+    {"name": "shorts", "slug": "shorts", "full_page": False},
+    {"name": "live", "slug": "streams", "full_page": False},
+    {"name": "podcasts", "slug": "podcasts", "full_page": False},
+    {"name": "playlists", "slug": "playlists", "full_page": False},
+    {"name": "posts", "slug": "posts", "full_page": False},
+    {"name": "store", "slug": "store", "full_page": False}
+]
+
+VIEWPORT = {"width": 1366, "height": 768}
+MAX_SCROLL_Y = 3072
+MAX_SCREENSHOT_HEIGHT = 10000
+
 router = Router[PlaywrightCrawlingContext]()
 
+async def _push_screenshot_data(context: PlaywrightCrawlingContext, url: str, screenshot_bytes: bytes | str) -> None:
+    if isinstance(screenshot_bytes, str):
+        screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({
+        "url": url,
+        "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"),
+        "screenshot_filename": f"{uuid.uuid4().hex}.png"
+    })
+
 @router.default_handler
-async def default_handler(context: PlaywrightCrawlingContext) -> None:
+async def _handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     
-    try:
+    with suppress(Exception):
         await page.wait_for_load_state("domcontentloaded", timeout=5000)
-    except Exception:
-        pass
     
     resolved_url = page.url
     
     parts = resolved_url.split("/")
     if len(parts) > 4 and parts[3].startswith("@"):
         base_profile_url = "/".join(parts[:4])
-    elif len(parts) > 4 and parts[3] in ['c', 'user', 'channel']:
+    elif len(parts) > 4 and parts[3] in CHANNEL_PATH_PREFIXES:
         base_profile_url = "/".join(parts[:5])
     else:
         base_profile_url = resolved_url.split("?")[0].rstrip("/")
-        for suffix in ["/featured", "/videos", "/shorts", "/streams", "/podcasts", "/playlists", "/posts", "/store"]:
-            if base_profile_url.endswith(suffix):
-                base_profile_url = base_profile_url[:-len(suffix)]
+        for tab in TABS:
+            if tab["slug"] and base_profile_url.endswith(f"/{tab['slug']}"):
+                base_profile_url = base_profile_url[:-len(f"/{tab['slug']}")]
                 break
         
     # Determine which tabs actually exist on the channel
+    found_slugs = set()
     try:
         # Wait a moment for tabs to render
-        await page.wait_for_selector('yt-tab-shape a, tp-yt-paper-tab a', timeout=5000)
-        found_tabs = await page.evaluate('''() => {
-            const tabs = Array.from(document.querySelectorAll('yt-tab-shape a, tp-yt-paper-tab a'));
-            return tabs.map(tab => ({
-                href: tab.href,
-                text: tab.innerText.trim().toLowerCase()
-            })).filter(tab => tab.href);
+        await page.wait_for_selector('yt-tab-shape, tp-yt-paper-tab', timeout=5000)
+        tab_texts = await page.evaluate('''() => {
+            const tabs = Array.from(document.querySelectorAll('yt-tab-shape, tp-yt-paper-tab'));
+            return tabs.map(tab => tab.innerText.trim().toLowerCase());
         }''')
+        
+        for text in tab_texts:
+            for tab in TABS:
+                if tab["name"] in text:
+                    found_slugs.add(tab["slug"])
     except Exception:
-        # Fallback to home if DOM parsing fails
-        found_tabs = [{"href": base_profile_url, "text": "home"}]
+        pass
+        
+    if not found_slugs:
+        # Fallback to all if DOM parsing fails
+        found_slugs = {tab["slug"] for tab in TABS}
+
+    # "home" should be treated like any other tab, but YouTube always has a home page (root URL)
+    # The home tab's slug is "featured". If it's missing, ensure it's scraped.
+    found_slugs.add("featured")
 
     user_data = context.request.user_data or {}
     
@@ -69,34 +102,34 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
     ])
     
     # 2. Enqueue Tab Handlers
-    for tab in found_tabs:
-        url = tab["href"]
-        
-        # Extract slug from URL for the handler logic
-        slug = "home"
-        current_url = url.split("?")[0].rstrip("/")
-        if current_url != base_profile_url:
-            slug = current_url.split("/")[-1]
+    for tab in TABS:
+        slug = tab["slug"]
+        if slug not in found_slugs:
+            continue
             
+        url = f"{base_profile_url}/{slug}" if slug != "featured" else base_profile_url
         await context.add_requests([
             Request.from_url(
                 url=url,
                 unique_key=f"{url}#TAB",
                 label="TAB",
-                user_data={**user_data, "slug": slug}
+                user_data={**user_data, "slug": slug, "full_page": tab["full_page"]}
             )
         ])
 
 
-async def _validate_redirect(page: Page, expected_tab: str) -> bool:
+async def _validate_redirect(page: Page, expected_slug: str) -> bool:
     # Allow time for YouTube's client-side router to resolve any redirects
-    try:
+    with suppress(Exception):
         await page.wait_for_load_state("networkidle", timeout=3000)
-    except Exception:
-        await page.wait_for_timeout(2000)
+    
+    if not page.is_closed():
+        with suppress(Exception):
+            await page.wait_for_timeout(2000)
         
     current_url = page.url.split("?")[0].rstrip("/")
-    if expected_tab.lower() not in ["home", "featured"] and not current_url.lower().endswith(f"/{expected_tab.lower()}"):
+    # "featured" is typically at the root url, so it won't end with /featured in some cases
+    if expected_slug and expected_slug != "featured" and not current_url.lower().endswith(f"/{expected_slug.lower()}"):
         return False
     return True
 
@@ -105,29 +138,29 @@ async def _validate_redirect(page: Page, expected_tab: str) -> bool:
 async def tab_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     user_data = context.request.user_data or {}
-    slug = user_data.get("slug", "home")
+    slug = user_data.get("slug", "featured")
+    full_page = user_data.get("full_page", False)
     
     if not await _validate_redirect(page, slug):
         return
         
     await wait_for_networkidle(page)
     
-    if slug in ["home", "featured"]:
+    if full_page:
         await scroll_to(page, y=None, wait_callback=lambda: wait_for_networkidle(page))
-        screenshot_bytes = await screenshot(page, max_height=10000)
+        screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
     else:
-        await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-        screenshot_bytes = await screenshot(page, max_height=3072)
+        await scroll_to(page, y=MAX_SCROLL_Y, wait_callback=lambda: wait_for_networkidle(page))
+        screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
         
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
+    await _push_screenshot_data(context, page.url, screenshot_bytes)
 
 
 @router.handler('DIALOG')
 async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     
-    await page.set_viewport_size({"width": 1366, "height": 3072})
+    await page.set_viewport_size({"width": VIEWPORT["width"], "height": MAX_SCROLL_Y})
     try:
         # Some channels don't have the "...more" button. Fail fast if it doesn't exist within 5 seconds.
         more_button = page.get_by_role("button").filter(has_text="...more")
@@ -154,12 +187,12 @@ async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
             raise Exception("Dialog bounding box is null (element hidden?)")
             
         screenshot_bytes = await page.screenshot(clip=box)
-        if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-        await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
+        await _push_screenshot_data(context, page.url, screenshot_bytes)
     except Exception as e:
         context.log.error(f"Failed to capture About dialog: {e}")
     finally:
-        await page.set_viewport_size({"width": 1366, "height": 768})
+        with suppress(Exception):
+            await page.set_viewport_size(VIEWPORT)
 
 
 @webhook_dispatch
@@ -171,7 +204,7 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
             crawler = PlaywrightCrawler(
                 client=client,  # type: ignore
                 request_handler=router,
-                max_request_retries=1,
+                max_request_retries=3,
                 request_handler_timeout=timedelta(milliseconds=request.timeout),
                 concurrency_settings=ConcurrencySettings(
                     max_concurrency=request.max_concurrency,
@@ -182,18 +215,16 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
             @crawler.pre_navigation_hook
             async def block_unnecessary_resources(context) -> None:
                 # Force viewport
-                await context.page.set_viewport_size({"width": 1366, "height": 768})
+                await context.page.set_viewport_size(VIEWPORT)
                 
                 # Add consent cookies
-                try:
+                with suppress(Exception):
                     await context.page.context.add_cookies([{
                         "name": "CONSENT",
                         "value": "YES+cb",
                         "domain": ".youtube.com",
                         "path": "/"
                     }])
-                except Exception:
-                    pass
 
                 # We deliberately do not block images, media, or stylesheets because screenshots are the primary objective.
             
