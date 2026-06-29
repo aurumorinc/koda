@@ -186,7 +186,7 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
     try:
         from datetime import timedelta
 
-        async with KodaClient(s3_resource=request.s3_resource, timeout=request.timeout) as client:
+        async with KodaClient(s3_resource=request.s3_resource, timeout=request.timeout, substitute_pixels=False) as client:
             crawler = PlaywrightCrawler(
                 client=client,  # type: ignore
                 request_handler=router,
