@@ -1,7 +1,13 @@
-# Changelog v0.10.6
+# Changelog v0.10.7
 
-## Other
+## Fixes
 
-* **YouTube Profile Scraping Test Refactoring**
-  Updated unit tests for YouTube profile scraping to utilize `screenshot_base64` and `screenshot_filename` fields, ensuring mock configurations and test expectations align with current schema requirements.
-  Commits: [3c6b8a3](https://github.com/aurumorinc/koda/commit/3c6b8a3b), [b0d2da2](https://github.com/aurumorinc/koda/commit/b0d2da2e)
+* **YouTube Scraping Timeout**
+  Increased the default request timeout for YouTube scraping operations to 600,000ms to prevent premature connection termination during long-running requests.
+  (Commit: [c06eb30](https://github.com/aurumorinc/koda/commit/c06eb30a))
+
+## Performance
+
+* **S3 Multipart Upload Threshold**
+  Increased the multipart upload threshold to 500MB to resolve `SignatureDoesNotMatch` errors occurring during large file transfers.
+  (Commits: [284121e](https://github.com/aurumorinc/koda/commit/284121ea), [309cb51](https://github.com/aurumorinc/koda/commit/309cb516))

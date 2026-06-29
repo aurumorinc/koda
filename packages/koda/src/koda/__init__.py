@@ -1,6 +1,6 @@
 """Koda - Web scraping and extraction engine."""
 
-__version__ = "0.10.6"
+__version__ = "0.10.7"
 
 from koda import client
 from koda import config
