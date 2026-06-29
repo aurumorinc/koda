@@ -83,6 +83,8 @@ async def BrowserSession(config: Optional[Dict[str, Any]] = None, user_data_dir:
     """
     if config is None:
         config = {"headless": settings.headless, "substitute_pixels": settings.substitute_pixels}
+    else:
+        config.setdefault("substitute_pixels", settings.substitute_pixels)
         
     browser_type = settings.browser or "invisible_playwright"
     launcher = _LAUNCHERS.get(browser_type)
