@@ -39,13 +39,12 @@ def save_base64_image(base64_string: str, filename: str, output_dir: str = "outp
     return filepath
 
 async def main():
-    logger.info("Testing YouTube Profile Scraper in Headed Mode...")
     
     req = ScrapeYoutubeProfileRequest(
         url="https://www.youtube.com/@LinusTechTips",
         formats=["screenshot"],
-        timeout=120000,
-        maxConcurrency=2
+        timeout=300000,
+        maxConcurrency=10
     )
 
     logger.info("Starting crawler...")
