@@ -37,6 +37,11 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
     req = ScrapeYoutubeProfileRequest(url="https://youtube.com/@test", formats=["screenshot"], tabs=["about", "videos"])
     res = await scrape_youtube_profile(req)
     
+    # Verify PlaywrightCrawler was initialized with the 2048MB memory limit
+    _, crawler_kwargs = mock_crawlee.call_args
+    assert "configuration" in crawler_kwargs, "Configuration was not passed to PlaywrightCrawler"
+    assert crawler_kwargs["configuration"].memory_mbytes == 2048, "Memory limit was not set to 2048MB"
+    
     assert res.success is True
     assert res.data is not None
     assert len(res.data) == 2
