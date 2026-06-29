@@ -25,7 +25,6 @@ def main(
     webhook: Optional[Webhook] = None,
     maxConcurrency: int = 10,
     ignoreInvalidURLs: bool = True,
-    **kwargs
 ) -> dict:
     """
     Scrape a batch of URLs concurrently using Koda infrastructure.

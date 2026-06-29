@@ -21,7 +21,6 @@ def main(
     timeout: int = 60000,
     s3_resource: Optional[str] = "f/koda/default_s3",
     webhook: Optional[Webhook] = None,
-    **kwargs
 ) -> dict:
     """
     Scrape a single URL and extract information using Koda infrastructure.

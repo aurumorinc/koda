@@ -23,7 +23,7 @@ class BrowserTool(Protocol):
 
 async def _strip_csp_headers(route: Route):
     """
-    Intercept document requests and strip Content-Security-Policy headers 
+    Intercept document requests and strip Content-Security-Policy headers
     so inline scripts and eval() execute without restriction.
     """
     if route.request.resource_type != "document":
@@ -36,7 +36,9 @@ async def _strip_csp_headers(route: Route):
             k: v for k, v in headers.items()
             if k.lower() not in ("content-security-policy", "content-security-policy-report-only")
         }
-        await route.fulfill(response=response, headers=filtered_headers)
+        # Safely fulfill by passing explicitly status, headers, and body to avoid Playwright retaining original headers
+        body = await response.body()
+        await route.fulfill(status=response.status, headers=filtered_headers, body=body)
     except Exception:
         # Fallback to continue if fetch fails (e.g. aborted request)
         await route.continue_()
@@ -80,7 +82,9 @@ async def BrowserSession(config: Optional[Dict[str, Any]] = None, user_data_dir:
     Launches the browser, injects telemetry into all pages, and ensures safe teardown.
     """
     if config is None:
-        config = {"headless": True}
+        config = {"headless": settings.headless, "substitute_pixels": settings.substitute_pixels}
+    else:
+        config.setdefault("substitute_pixels", settings.substitute_pixels)
         
     browser_type = settings.browser or "invisible_playwright"
     launcher = _LAUNCHERS.get(browser_type)
@@ -130,6 +134,9 @@ async def BrowserSession(config: Optional[Dict[str, Any]] = None, user_data_dir:
             else:
                 context = browser_or_context
                 await context.grant_permissions(["geolocation", "notifications"])
+                # Note: strategy.context_kwargs cannot be passed to a persistent context natively.
+                # CSP bypassing relies on extra_prefs (e.g. security.csp.enable=False)
+                # being handled by the launcher.
             
             # Automatically accept dialogs to prevent hangs
             context.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))

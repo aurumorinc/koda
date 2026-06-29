@@ -1,7 +1,71 @@
 import asyncio
 import base64
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Callable, Optional, Awaitable
+from playwright.async_api import Page
 from .schema import Action
+
+async def wait_for_networkidle(page: Page, wait_for_timeout: int = 1000, timeout_ms: int = 10000) -> None:
+    """Waits for a predefined delay, then safely awaits networkidle load state, catching timeouts."""
+    await page.wait_for_timeout(wait_for_timeout)
+    try:
+        await page.wait_for_load_state("networkidle", timeout=timeout_ms)
+    except Exception:
+        pass
+
+async def scroll_to(page: Page, y: Optional[int] = None, viewport_height: int = 768, wait_callback: Optional[Callable[[], Awaitable[None]]] = None) -> None:
+    """Scrolls down utilizing PageDown. If y is provided, terminates once window.scrollY >= y.
+    If y is None, loops until absolute bottom is reached.
+    """
+    while True:
+        last_scroll_y = await page.evaluate("window.scrollY")
+        if y is not None and last_scroll_y >= y:
+            break
+            
+        await page.keyboard.press("PageDown")
+        
+        if wait_callback:
+            await wait_callback()
+        else:
+            await page.wait_for_timeout(100) # Small fallback wait
+            
+        new_scroll_y = await page.evaluate("window.scrollY")
+        if new_scroll_y == last_scroll_y:
+            break
+            
+    await page.evaluate("window.scrollTo(0, 0)")
+    await page.wait_for_timeout(1000)
+
+async def screenshot(page: Page, max_height: int = 3072) -> bytes:
+    """Calculates exactly document.documentElement.scrollHeight and takes clipped screenshot bounded by max_height."""
+    # Bring the page to the front to avoid WSL/Headed Firefox occlusion bugs
+    try:
+        await page.bring_to_front()
+    except Exception:
+        pass
+
+    doc_height = await page.evaluate("document.documentElement.scrollHeight")
+    capture_height = min(doc_height, max_height)
+    
+    # Store original viewport
+    original_viewport = page.viewport_size
+    
+    # Expand viewport to force Firefox to render the full area in memory
+    # This avoids the "static noise" bug caused by using clip + full_page in Firefox Nightly
+    await page.set_viewport_size({"width": 1366, "height": capture_height})
+    
+    # Small delay for Firefox to paint the expanded viewport
+    await page.wait_for_timeout(500)
+    
+    shot_bytes = await page.screenshot(
+        full_page=False
+    )
+    
+    # Restore original viewport
+    if original_viewport:
+        await page.set_viewport_size(original_viewport)
+        
+    return shot_bytes
+
 
 async def execute_actions(page, actions: List[Action], action_results: Dict[str, list]) -> None:
     for action in actions:
