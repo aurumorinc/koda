@@ -44,7 +44,7 @@ class Settings(LoggingSettings, BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     # Client Configuration
-    timeout: int = 30000
+    timeout: int = 300000
     headless: bool = Field(default=True, validation_alias=AliasChoices("KODA_HEADLESS", "headless"))
     substitute_pixels: bool = Field(default=True, validation_alias=AliasChoices("KODA_SUBSTITUTE_PIXELS", "substitute_pixels"))
     browser: Optional[Literal["invisible_playwright", "cloakbrowser"]] = Field(default="invisible_playwright", validation_alias=AliasChoices("koda_browser", "browser"))
