@@ -41,6 +41,34 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
                 base_profile_url = base_profile_url[:-len(suffix)]
                 break
         
+    # Determine which tabs actually exist on the channel
+    found_slugs = {"home"}
+    try:
+        # Wait a moment for tabs to render
+        await page.wait_for_selector('yt-tab-shape, tp-yt-paper-tab', timeout=5000)
+        found_tabs = await page.evaluate('''() => {
+            const tabs = Array.from(document.querySelectorAll('yt-tab-shape, tp-yt-paper-tab'));
+            return tabs.map(tab => tab.innerText.trim().toLowerCase());
+        }''')
+        
+        tab_mapping = {
+            "videos": "videos",
+            "shorts": "shorts",
+            "live": "streams",
+            "streams": "streams",
+            "podcasts": "podcasts",
+            "playlists": "playlists",
+            "community": "community",
+            "store": "store"
+        }
+        for text in found_tabs:
+            for k, v in tab_mapping.items():
+                if k in text:
+                    found_slugs.add(v)
+    except Exception:
+        # Fallback to all if DOM parsing fails
+        found_slugs = {"home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"}
+
     tabs = ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"]
     
     # 1. Enqueue About
@@ -56,6 +84,9 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
     # 2. Enqueue Tab Handlers
     valid_handlers = ["HOME", "VIDEOS", "SHORTS", "STREAMS", "PODCASTS", "PLAYLISTS", "COMMUNITY", "STORE"]
     for tab in tabs:
+        if tab not in found_slugs:
+            continue
+            
         tab_upper = str(tab).upper()
         if tab_upper in valid_handlers:
             url = base_profile_url if tab_upper == "HOME" else f"{base_profile_url}/{tab_upper.lower()}"
