@@ -166,17 +166,27 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
     
     await page.set_viewport_size({"width": 1366, "height": 3072})
     try:
-        about_selector = "button[aria-label^=\"Description\"]:visible, button:has-text('...more'):visible, button:has-text('more links'):visible, ytd-channel-about-metadata-renderer:visible"
-        await page.locator(about_selector).click(timeout=2000)
+        # Give YouTube time to render the '...more' button
+        await page.wait_for_load_state("domcontentloaded")
+        
+        try:
+            # Prefer the exact role filter that works in recording.py
+            button = page.get_by_role("button").filter(has_text="...more").first
+            await button.click(timeout=5000)
+        except Exception:
+            # Fallback to general selectors if role filtering fails
+            about_selector = "button[aria-label^=\"Description\"]:visible, button:has-text('...more'):visible, button:has-text('more links'):visible, ytd-channel-about-metadata-renderer:visible"
+            await page.locator(about_selector).first.click(timeout=5000)
+            
         dialog = page.locator("tp-yt-paper-dialog").first
-        await dialog.wait_for(state="visible", timeout=2000)
+        await dialog.wait_for(state="visible", timeout=5000)
         await wait_for_networkidle(page)
         
         screenshot_bytes = await dialog.screenshot()
         b64_str = base64.b64encode(screenshot_bytes).decode('utf-8')
         await context.push_data({"url": page.url, "tab_name": "About", "screenshot": f"data:image/png;base64,{b64_str}"})
-    except Exception:
-        pass
+    except Exception as e:
+        context.log.error(f"Failed to capture About dialog: {e}")
     finally:
         await page.set_viewport_size({"width": 1366, "height": 768})
 
