@@ -6,7 +6,8 @@ from typing import Dict, List, Any, cast
 
 from crawlee.router import Router
 from crawlee.crawlers import PlaywrightCrawlingContext, PlaywrightCrawler
-from crawlee import Request, ConcurrencySettings, Configuration
+from crawlee import Request, ConcurrencySettings
+from crawlee.configuration import Configuration
 from playwright.async_api import Page
 
 from koda.client import KodaClient
