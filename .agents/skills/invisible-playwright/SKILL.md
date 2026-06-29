@@ -8,25 +8,30 @@ description: Provides specialized context, rules, and tools for implementing, co
 
 ```text
 invisible-playwright/
+├── assets
 ├── modules
 │   └── invisible_playwright (See AST Map below)
+├── references
+├── scripts
 └── SKILL.md
 ```
+
+> **Agent Instructions:** The AST maps below provide a high-level overview of the `modules/` directory. Note that the complete repository source code is available within the `modules/` folder. You can and should use your file reading tools to access the actual source code within `modules/` for complete details, implementation logic, and context beyond what the AST map provides.
 
 ### AST Map: `modules/invisible_playwright`
 
 ```python
-examples/basic.py:
+examples\basic.py:
 ⋮
 │def main() -> None:
 ⋮
 
-examples/with_proxy.py:
+examples\with_proxy.py:
 ⋮
 │def main() -> None:
 ⋮
 
-scripts/audit_cpt_realism.py:
+scripts\audit_cpt_realism.py:
 ⋮
 │def write_pair_table(table, fname, meta):
 ⋮
@@ -35,12 +40,12 @@ scripts/audit_cpt_realism.py:
 │def main():
 ⋮
 
-scripts/ci_drive_gate.py:
+scripts\ci_drive_gate.py:
 ⋮
 │def main(exe: str, full: bool) -> int:
 ⋮
 
-scripts/gen_release_notes.py:
+scripts\gen_release_notes.py:
 ⋮
 │def changelog_bullets(source_repo: str, prev_sha: str, current_sha: str,
 ⋮
@@ -49,12 +54,12 @@ scripts/gen_release_notes.py:
 │def main() -> int:
 ⋮
 
-scripts/run_e2e.py:
+scripts\run_e2e.py:
 ⋮
 │def main() -> int:
 ⋮
 
-src/invisible_playwright/_fpforge/_network.py:
+src\invisible_playwright\_fpforge\_network.py:
 ⋮
 │class Node:
 │    """Single Bayesian node."""
@@ -81,7 +86,7 @@ src/invisible_playwright/_fpforge/_network.py:
 │    def visit(n: Node, path: set):
 ⋮
 
-src/invisible_playwright/_fpforge/_sampler.py:
+src\invisible_playwright\_fpforge\_sampler.py:
 ⋮
 │def classify_gpu(gpu_value: Dict[str, str]) -> str:
 ⋮
@@ -102,7 +107,7 @@ src/invisible_playwright/_fpforge/_sampler.py:
 │def sample(seed: int, fixed_gpu_class: Optional[str] = None) -> Dict[str, Any]:
 ⋮
 
-src/invisible_playwright/_fpforge/profile.py:
+src\invisible_playwright\_fpforge\profile.py:
 ⋮
 │@dataclass(frozen=True)
 │class GPUProfile:
@@ -135,7 +140,7 @@ src/invisible_playwright/_fpforge/profile.py:
 │    fixed_gpu_class: Optional[str] = None,
 ⋮
 
-src/invisible_playwright/_geo.py:
+src\invisible_playwright\_geo.py:
 ⋮
 │class GeoTimezoneError(RuntimeError):
 ⋮
@@ -148,6 +153,10 @@ src/invisible_playwright/_geo.py:
 ⋮
 │def ip_to_timezone(ip: str, mmdb_path: Any) -> str:
 ⋮
+│def ip_to_locale(ip: str, mmdb_path: Any) -> str:
+⋮
+│def resolve_session_locale(egress_ip: Optional[str], proxy: Optional[Dict[str, str]]) -> str:
+⋮
 │class SessionGeo(NamedTuple):
 ⋮
 │def prepare_session_geo(
@@ -157,7 +166,7 @@ src/invisible_playwright/_geo.py:
 │    timezone: str, proxy: Optional[Dict[str, str]]
 ⋮
 
-src/invisible_playwright/_headless.py:
+src\invisible_playwright\_headless.py:
 ⋮
 │class _LinuxVirtualDisplay:
 │    """Standalone Xvfb instance owned by this InvisiblePlaywright session."""
@@ -171,8 +180,6 @@ src/invisible_playwright/_headless.py:
 ⋮
 │    def _apply_env(self, display: str) -> None:
 ⋮
-│    def stop(self) -> None:
-⋮
 │def cloak_prefs() -> dict:
 ⋮
 │def make_virtual_display():
@@ -180,7 +187,7 @@ src/invisible_playwright/_headless.py:
 │def _binary_on_path(name: str) -> bool:
 ⋮
 
-src/invisible_playwright/_proxy.py:
+src\invisible_playwright\_proxy.py:
 ⋮
 │def configure_proxy(
 │    proxy: Optional[Dict[str, str]],
@@ -191,7 +198,7 @@ src/invisible_playwright/_proxy.py:
 │def _strip_scheme(server: str) -> str:
 ⋮
 
-src/invisible_playwright/_recaptcha_seed.py:
+src\invisible_playwright\_recaptcha_seed.py:
 ⋮
 │def _sub_seed(seed: int, tag: str) -> int:
 ⋮
@@ -238,7 +245,7 @@ src/invisible_playwright/_recaptcha_seed.py:
 │def seed_recaptcha_cookies_sync(context: Any, profile: Any,
 ⋮
 
-src/invisible_playwright/_webgl_personas.py:
+src\invisible_playwright\_webgl_personas.py:
 ⋮
 │def _gpu_pool() -> List[Dict]:
 ⋮
@@ -249,7 +256,7 @@ src/invisible_playwright/_webgl_personas.py:
 │def render_noise_seed(seed: int) -> int:
 ⋮
 
-src/invisible_playwright/async_api.py:
+src\invisible_playwright\async_api.py:
 ⋮
 │class InvisiblePlaywright:
 │    """Async context manager — see invisible_playwright.InvisiblePlaywright for the sync variant.""
@@ -257,17 +264,15 @@ src/invisible_playwright/async_api.py:
 ⋮
 │    def _default_context_kwargs(self) -> Dict[str, Any]:
 ⋮
-│    async def _teardown(self) -> None:
-⋮
 
-src/invisible_playwright/cli.py:
+src\invisible_playwright\cli.py:
 ⋮
 │def build_parser() -> argparse.ArgumentParser:
 ⋮
 │def main(argv: list[str] | None = None) -> int:
 ⋮
 
-src/invisible_playwright/config.py:
+src\invisible_playwright\config.py:
 ⋮
 │def get_default_stealth_prefs(
 │    seed: Optional[int] = None,
@@ -280,38 +285,12 @@ src/invisible_playwright/config.py:
 │    virtual_display: bool = False,
 ⋮
 
-src/invisible_playwright/constants.py:
-⋮
-│BINARY_VERSION: str = "firefox-12"
-│
-⋮
-│BROKEN_VERSIONS: frozenset[str] = frozenset({"firefox-8"})
-│
-⋮
-│FIREFOX_UPSTREAM_VERSION: str = "150.0.1"
-│
-⋮
-│BINARY_BASENAME: str = f"firefox-{FIREFOX_UPSTREAM_VERSION}-stealth"
-│
+src\invisible_playwright\constants.py:
 ⋮
 │def ARCHIVE_NAME(platform_key: str, machine: str) -> str:
 ⋮
-│BINARY_ENTRY_REL = {
-│    "win32": "firefox.exe",
-│    "linux": "firefox",
-│    "darwin": "Firefox.app/Contents/MacOS/firefox",
-⋮
-│RELEASE_URL_TEMPLATE = (
-│    "https://github.com/feder-cr/invisible_playwright/releases/download/{tag}/{asset}"
-⋮
-│GEOIP_REPO: str = "daijro/geoip-all-in-one"
-│GEOIP_ASSET: str = "geoip-aio-all.mmdb.zip"
-│GEOIP_MMDB_NAME: str = "geoip-aio-all.mmdb"
-│GEOIP_RELEASE_URL_TEMPLATE: str = (
-│    "https://github.com/daijro/geoip-all-in-one/releases/download/{tag}/{asset}"
-⋮
 
-src/invisible_playwright/download.py:
+src\invisible_playwright\download.py:
 ⋮
 │def _github_token() -> str | None:
 ⋮
@@ -322,8 +301,6 @@ src/invisible_playwright/download.py:
 │def _resolve_asset_url(tag: str, asset_name: str) -> str:
 ⋮
 │def _download_file(url: str, dst: Path, chunk_size: int = 1 << 16) -> None:
-⋮
-│def _parse_checksums(text: str) -> dict[str, str]:
 ⋮
 │def _extract(archive: Path, dst: Path) -> None:
 ⋮
@@ -338,7 +315,7 @@ src/invisible_playwright/download.py:
 │def ensure_geoip_mmdb() -> Path:
 ⋮
 
-src/invisible_playwright/launcher.py:
+src\invisible_playwright\launcher.py:
 ⋮
 │class InvisiblePlaywright:
 │    """Context manager launching a patched Firefox with a deterministic profile.
@@ -356,7 +333,9 @@ src/invisible_playwright/launcher.py:
 │    def _default_context_kwargs(self) -> Dict[str, Any]:
 ⋮
 
-src/invisible_playwright/prefs.py:
+src\invisible_playwright\prefs.py:
+⋮
+│def _accept_language(locale: str) -> str:
 ⋮
 │def translate_profile_to_prefs(
 │    profile: Profile,
@@ -367,13 +346,13 @@ src/invisible_playwright/prefs.py:
 │    virtual_display: bool = False,
 ⋮
 
-tests/test_build.py:
+tests\test_build.py:
 ⋮
 │@pytest.mark.slow
 │def test_built_wheel_has_no_duplicate_entries(tmp_path):
 ⋮
 
-tests/test_detectors_e2e.py:
+tests\test_detectors_e2e.py:
 ⋮
 │class _DetectorSite:
 │    """Localhost server: `/` → BotD+FPJS+fpscanner page, `/creepjs` → CreepJS page,
@@ -381,7 +360,7 @@ tests/test_detectors_e2e.py:
 │    def close(self):
 ⋮
 
-tests/test_e2e.py:
+tests\test_e2e.py:
 ⋮
 │@pytest.mark.e2e
 │def test_e10_linux_resolve_headless_invokes_xvfb_dispatcher(monkeypatch):
@@ -393,6 +372,8 @@ tests/test_e2e.py:
 │    class _FakeDisplay:
 │        def start(self) -> None:
 ⋮
+│        def stop(self) -> None:
+⋮
 │@pytest.mark.e2e
 │def test_e11_linux_teardown_stops_virtual_display_and_is_idempotent(monkeypatch):
 │    """E11: ``_teardown`` stops the Linux virtual display, clears the
@@ -401,8 +382,10 @@ tests/test_e2e.py:
 │    class _FakeDisplay:
 │        def start(self) -> None:
 ⋮
+│        def stop(self) -> None:
+⋮
 
-tests/test_geo.py:
+tests\test_geo.py:
 ⋮
 │class _FakeResp:
 │    def __init__(self, text, status=200):
@@ -415,10 +398,8 @@ tests/test_geo.py:
 ⋮
 │    def get(self, ip):
 ⋮
-│def _install_fake_maxminddb(monkeypatch, record):
-⋮
 
-tests/test_imports.py:
+tests\test_imports.py:
 ⋮
 │def test_top_level_import():
 ⋮
@@ -444,7 +425,7 @@ tests/test_imports.py:
 │def test_dunder_all_is_complete():
 ⋮
 
-tests/test_proxy_socks_auth_e2e.py:
+tests\test_proxy_socks_auth_e2e.py:
 ⋮
 │class _Socks5AuthRecorder:
 │    """SOCKS5 that REQUIRES RFC1929 user/pass auth, records the creds it saw,
@@ -458,16 +439,14 @@ tests/test_proxy_socks_auth_e2e.py:
 │    def close(self):
 ⋮
 
-tests/test_release_e2e.py:
+tests\test_release_e2e.py:
 ⋮
 │def _venv_python(venv: Path) -> Path:
 ⋮
 
-tests/test_webrtc_realness.py:
+tests\test_webrtc_realness.py:
 ⋮
 │def parse_candidate(line):
-⋮
-│def decode_priority(prio):
 ⋮
 │def host_candidates(cands):
 ⋮
@@ -490,7 +469,7 @@ tests/test_webrtc_realness.py:
 │    def close(self):
 ⋮
 
-tests/vendor/botd-2.0.0.esm.js:
+tests\vendor\botd-2.0.0.esm.js:
 ⋮
 │class BotdError extends Error {
 │    /**
@@ -576,7 +555,7 @@ tests/vendor/botd-2.0.0.esm.js:
 │    return detector;
 ⋮
 
-tests/vendor/creepjs-10aa672.js:
+tests\vendor\creepjs-10aa672.js:
 ⋮
 │    const getUserAgentPlatform = ({ userAgent, excludeBuild = true }) => {
 │        if (!userAgent) {
@@ -744,12 +723,45 @@ tests/vendor/creepjs-10aa672.js:
 │            // @ts-ignore
 │            const utc = Date.parse(new Date(dateString));
 ⋮
+│    async function getBestWorkerScope() {
+│        try {
+│            const timer = createTimer();
+│            await queueEvent(timer);
+│            const ask = (fn) => {
+│                try {
+│                    return fn();
+│                }
+│                catch (e) {
+│                    return;
+│                }
+│            };
+│            const hasConstructor = (x, name) => x && x.__proto__.constructor.name == name;
+⋮
 │    const hashMini = (x) => {
 │        const json = `${JSON.stringify(x)}`;
 │        const hash = json.split('').reduce((hash, char, i) => {
 │            return Math.imul(31, hash) + json.charCodeAt(i) | 0;
 │        }, 0x811c9dc5);
 │        return ('0000000' + (hash >>> 0).toString(16)).substr(-8);
+⋮
+│    async function getOfflineAudioContext() {
+│        try {
+│            const timer = createTimer();
+│            await queueEvent(timer);
+│            try {
+│                // @ts-expect-error if unsupported
+│                window.OfflineAudioContext = OfflineAudioContext || webkitOfflineAudioContext;
+│            }
+│            catch (err) { }
+│            if (!window.OfflineAudioContext) {
+│                logTestResult({ test: 'audio', passed: false });
+⋮
+│            const getSnapshot = (arr, start, end) => {
+│                const collection = [];
+│                for (let i = start; i < end; i++) {
+│                    collection.push(arr[i]);
+│                }
+│                return collection;
 ⋮
 │    const paintCanvas = ({ canvas, context, strokeText = false, cssFontFamily = '', area = { width:
 │        if (!context) {
@@ -811,6 +823,49 @@ tests/vendor/creepjs-10aa672.js:
 │                    width: right - left,
 │                    height: bottom - top,
 │                    right: left + width,
+⋮
+│    const versionSort = (x) => x.sort((a, b) => /\d+/.exec(a)[0] - /\d+/.exec(b)[0]).reverse();
+│    const getVersionLie = (vReport, version, forgivenessOffset = 0) => {
+│        const stable = getStableFeatures();
+│        const { version: maxVersion } = stable[BROWSER] || {};
+│        const validMetrics = vReport && version;
+│        if (!validMetrics) {
+│            return {};
+│        }
+│        const [vStart, vEnd] = version ? version.split('-') : [];
+│        const vMax = (vEnd || vStart);
+│        const reportIsTooHigh = +vReport > (+vMax + forgivenessOffset);
+⋮
+│    function featuresHTML(fp) {
+│        if (!fp.features) {
+│            return `
+│		<div class="col-six undefined">
+│			<div>Features: ${HTMLNote.UNKNOWN}</div>
+│			<div>JS/DOM: ${HTMLNote.UNKNOWN}</div>
+│		</div>
+│		<div class="col-six undefined">
+│			<div>CSS: ${HTMLNote.UNKNOWN}</div>
+│			<div>Window: ${HTMLNote.UNKNOWN}</div>
+⋮
+│        const log = ({ features, name, diff }) => {
+│            console.groupCollapsed(`%c ${name} Features %c-${diff.removed.length} %c+${diff.added.l
+│            Object.keys(diff).forEach((key) => {
+│                console.log(`%c${key}:`, `color: ${key == 'added' ? 'MediumAquaMarine' : 'Salmon'}`
+│                return console.log(diff[key].join('\n'));
+│            });
+│            console.log(features.join(', '));
+│            return console.groupEnd();
+⋮
+│        const getModal = ({ id, engineMap, features, browser, report, userAgentVersion }) => {
+│            // capture diffs from stable release
+│            const stable = getStableFeatures();
+│            const { windowKeys, cssKeys, jsKeys, version } = stable[browser] || {};
+│            const logger = shouldLogFeatures(browser, version, userAgentVersion);
+│            let diff = null;
+│            if (id == 'css') {
+│                const { computedStyleKeys } = report;
+│                if (cssKeys) {
+│                    diff = getListDiff({
 ⋮
 │    function getPlatformEstimate() {
 │        if (!IS_BLINK)
@@ -939,6 +994,17 @@ tests/vendor/creepjs-10aa672.js:
 │            const utc = +new Date(dateStringUTC);
 │            const offset = +((now - utc) / 60000);
 │            return ~~offset;
+│        };
+│        const getTimezoneOffsetHistory = ({ year, city = null }) => {
+│            const format = {
+│                timeZone: '',
+│                year: 'numeric',
+│                month: 'numeric',
+│                day: 'numeric',
+│                hour: 'numeric',
+│                minute: 'numeric',
+│                second: 'numeric',
+│            };
 ⋮
 │        const decryptLocation = ({ year, timeZone }) => {
 │            const system = getTimezoneOffsetHistory({ year });
@@ -1033,29 +1099,11 @@ tests/vendor/creepjs-10aa672.js:
 │                    undefined);
 ⋮
 
-tests/vendor/fingerprintjs-5.2.0.umd.min.js:
+tests\vendor\fingerprintjs-5.2.0.umd.min.js:
 ⋮
 │!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof d
 
-tests/vendor/fpscanner-1.0.6.es.js:
-⋮
-│function f(t) {
-│  let e = 0;
-│  for (let n = 0, i = t.length; n < i; n++) {
-│    let a = t.charCodeAt(n);
-│    e = (e << 5) - e + a, e |= 0;
-│  }
-│  return e.toString(16).padStart(8, "0");
-⋮
-│function c(t) {
-│  try {
-│    return t();
-│  } catch {
-│    return !1;
-│  }
-⋮
-│function b(t) {
-│  return typeof t != "string" || t.length === 0 ? !0 : t === s || t === l || t === v || t === r;
+tests\vendor\fpscanner-1.0.6.es.js:
 ⋮
 │class vt {
 │  constructor() {
@@ -1074,44 +1122,5 @@ tests/vendor/fpscanner-1.0.6.es.js:
 │    } catch {
 │      return l;
 │    }
-⋮
-│  generateFingerprintScannerId() {
-│    try {
-│      const e = this.fingerprint.signals, n = this.fingerprint.fastBotDetectionDetails, i = "FS1", 
-│        n.headlessChromeScreenResolution.detected,
-│        n.hasWebdriver.detected,
-│        n.hasWebdriverWritable.detected,
-│        n.hasSeleniumProperty.detected,
-│        n.hasCDP.detected,
-│        n.hasPlaywright.detected,
-│        n.hasImpossibleDeviceMemory.detected,
-⋮
-│  async encryptFingerprint(e) {
-│    const n = "__DEFAULT_FPSCANNER_KEY__";
-│    return n.length > 20 && n.indexOf("DEFAULT") > 0 && n.indexOf("FPSCANNER") > 0 && console.warn(
-│      '[fpscanner] WARNING: Using default encryption key! Run "npx fpscanner build --key=your-secre
-│    ), await pt(JSON.stringify(e), n);
-⋮
-│  getDetectionRules() {
-│    return [
-│      { name: "headlessChromeScreenResolution", severity: h, test: $e },
-│      { name: "hasWebdriver", severity: h, test: Qe },
-│      { name: "hasWebdriverWritable", severity: h, test: st },
-│      { name: "hasSeleniumProperty", severity: h, test: qe },
-│      { name: "hasCDP", severity: h, test: Ke },
-│      { name: "hasPlaywright", severity: h, test: Je },
-│      { name: "hasImpossibleDeviceMemory", severity: h, test: Ye },
-│      { name: "hasHighCPUCount", severity: h, test: Ze },
-⋮
-│  runDetectionRules() {
-│    const e = this.getDetectionRules(), n = {
-│      headlessChromeScreenResolution: { detected: !1, severity: "high" },
-│      hasWebdriver: { detected: !1, severity: "high" },
-│      hasWebdriverWritable: { detected: !1, severity: "high" },
-│      hasSeleniumProperty: { detected: !1, severity: "high" },
-│      hasCDP: { detected: !1, severity: "high" },
-│      hasPlaywright: { detected: !1, severity: "high" },
-│      hasImpossibleDeviceMemory: { detected: !1, severity: "high" },
-│      hasHighCPUCount: { detected: !1, severity: "high" },
 ⋮
 ```

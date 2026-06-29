@@ -21,65 +21,61 @@ worldline-python/
 ### AST Map: `modules/worldline-python`
 
 ```python
-.agents/rules/architecture-application.md
+.agents\rules\architecture-application.md
 
-.agents/rules/architecture-business.md
+.agents\rules\architecture-business.md
 
-.agents/rules/architecture-data.md
+.agents\rules\architecture-data.md
 
-.agents/rules/architecture-integration.md
+.agents\rules\architecture-integration.md
 
-.agents/rules/architecture-technology.md
+.agents\rules\architecture-technology.md
 
-.agents/rules/language-python/anti-patterns.md
+.agents\rules\language-python\anti-patterns.md
 
-.agents/rules/language-python/architecture-and-structure.md
+.agents\rules\language-python\architecture-and-structure.md
 
-.agents/rules/language-python/code-style-and-formatting.md
+.agents\rules\language-python\code-style-and-formatting.md
 
-.agents/rules/language-python/configuration-and-environment.md
+.agents\rules\language-python\configuration-and-environment.md
 
-.agents/rules/language-python/dependency-management.md
+.agents\rules\language-python\dependency-management.md
 
-.agents/rules/language-python/documentation-and-comments.md
+.agents\rules\language-python\documentation-and-comments.md
 
-.agents/rules/language-python/error-handling.md
+.agents\rules\language-python\error-handling.md
 
-.agents/rules/language-python/logging-and-observability.md
+.agents\rules\language-python\logging-and-observability.md
 
-.agents/rules/language-python/naming-conventions.md
+.agents\rules\language-python\naming-conventions.md
 
-.agents/rules/language-python/performance-and-optimization.md
+.agents\rules\language-python\performance-and-optimization.md
 
-.agents/rules/language-python/security-and-validation.md
+.agents\rules\language-python\security-and-validation.md
 
-.agents/rules/language-python/testing-standards.md
+.agents\rules\language-python\testing-standards.md
 
-.agents/rules/language-python/type-safety.md
+.agents\rules\language-python\type-safety.md
 
-.agents/skills/langfuse-python/SKILL.md
+.agents\skills\langfuse-python\SKILL.md
 
-.agents/skills/posthog/SKILL.md
+.agents\skills\posthog\SKILL.md
 
-.agents/skills/sentry/SKILL.md
+.agents\skills\sentry\SKILL.md
 
-.agents/skills/structlog/SKILL.md
+.agents\skills\structlog\SKILL.md
 
-.agents/skills/windmill/SKILL.md
+.agents\skills\windmill\SKILL.md
 
-.github/pull_request_template.md
+.github\pull_request_template.md
 
-.github/workflows/release.yaml
+.github\workflows\release.yaml
 
-.gitignore
+.rune\config
 
-.rune/config
-
-.rune/index
+.rune\index
 
 .runemodules
-
-AGENTS.md
 
 CHANGELOG.md
 
@@ -91,9 +87,9 @@ pdm.lock
 
 pyproject.toml
 
-src/worldline/__init__.py
+src\worldline\__init__.py
 
-src/worldline/config.py:
+src\worldline\config.py:
 ⋮
 │def generate_traceparent() -> str:
 ⋮
@@ -116,15 +112,15 @@ src/worldline/config.py:
 │    def span_id(self) -> str:
 ⋮
 
-src/worldline/integrations/__init__.py
+src\worldline\integrations\__init__.py
 
-src/worldline/integrations/langfuse/__init__.py
+src\worldline\integrations\langfuse\__init__.py
 
-src/worldline/integrations/posthog/__init__.py
+src\worldline\integrations\posthog\__init__.py
 
-src/worldline/integrations/sentry/__init__.py
+src\worldline\integrations\sentry\__init__.py
 
-src/worldline/integrations/structlog.py:
+src\worldline\integrations\structlog.py:
 ⋮
 │def _setup(settings: Optional["LoggingSettings"] = None) -> None:
 ⋮
@@ -145,12 +141,12 @@ src/worldline/integrations/structlog.py:
 │def __dir__() -> List[str]:
 ⋮
 
-src/worldline/integrations/windmill.py:
+src\worldline\integrations\windmill.py:
 ⋮
 │def get_windmill_traceparent() -> Optional[str]:
 ⋮
 
-src/worldline/service.py:
+src\worldline\service.py:
 ⋮
 │def remove_otel_context(
 │    logger: logging.Logger, method_name: str, event_dict: Dict[str, Any]
@@ -167,7 +163,7 @@ src/worldline/service.py:
 │    settings_override: Optional[Any] = None,
 ⋮
 
-tests/conftest.py:
+tests\conftest.py:
 ⋮
 │@pytest.fixture(autouse=True)
 │def clean_structlog():
@@ -179,7 +175,7 @@ tests/conftest.py:
 │def in_memory_otel_exporters():
 ⋮
 
-tests/integration/test_telemetry_integration.py:
+tests\integration\test_telemetry_integration.py:
 ⋮
 │@mock.patch.dict(
 │    os.environ,
@@ -188,9 +184,9 @@ tests/integration/test_telemetry_integration.py:
 │        "POSTHOG_API_KEY": "ph_dummy_key",
 │        "LANGFUSE_PUBLIC_KEY": "lf_pub",
 │        "LANGFUSE_SECRET_KEY": "lf_sec",
-│        "WM_TOKEN": "windmill_dummy_token",
-│        "WM_WORKSPACE": "windmill_ws",
-│        "WM_BASE_URL": "https://app.windmill.dev",
+│        "WINDMILL_TOKEN": "windmill_dummy_token",
+│        "WINDMILL_WORKSPACE": "windmill_ws",
+│        "WINDMILL_BASE_URL": "https://app.windmill.dev",
 ⋮
 │def test_telemetry_integration(
 │    mock_langfuse, mock_posthog, mock_sentry, in_memory_otel_exporters
@@ -204,7 +200,7 @@ tests/integration/test_telemetry_integration.py:
 │    def my_generation_func():
 ⋮
 
-tests/performance/test_logging_concurrency.py:
+tests\performance\test_logging_concurrency.py:
 ⋮
 │def test_thread_safe_contextvars():
 │    """
@@ -217,7 +213,7 @@ tests/performance/test_logging_concurrency.py:
 │        def worker(thread_idx: int):
 ⋮
 
-tests/property/test_logging_properties.py:
+tests\property\test_logging_properties.py:
 ⋮
 │@given(
 │    st.dictionaries(
@@ -231,19 +227,19 @@ tests/property/test_logging_properties.py:
 │def test_add_otel_context_never_crashes(mock_settings, event_dict):
 ⋮
 
-tests/unit/worldline/integrations/test_langfuse.py:
+tests\unit\worldline\integrations\test_langfuse.py:
 │def test_langfuse_facade_re_exported() -> None:
 ⋮
 
-tests/unit/worldline/integrations/test_posthog.py:
+tests\unit\worldline\integrations\test_posthog.py:
 │def test_posthog_facade_re_exported() -> None:
 ⋮
 
-tests/unit/worldline/integrations/test_sentry.py:
+tests\unit\worldline\integrations\test_sentry.py:
 │def test_sentry_facade_re_exported() -> None:
 ⋮
 
-tests/unit/worldline/integrations/test_structlog.py:
+tests\unit\worldline\integrations\test_structlog.py:
 ⋮
 │@pytest.fixture(autouse=True)
 │def reset_structlog_state():
@@ -271,7 +267,7 @@ tests/unit/worldline/integrations/test_structlog.py:
 │def test_standard_logging_capture():
 ⋮
 
-tests/unit/worldline/integrations/test_windmill.py:
+tests\unit\worldline\integrations\test_windmill.py:
 ⋮
 │@mock.patch.dict(
 │    os.environ,
@@ -286,7 +282,7 @@ tests/unit/worldline/integrations/test_windmill.py:
 │def test_windmill_facade_re_exported() -> None:
 ⋮
 
-tests/unit/worldline/test_config.py:
+tests\unit\worldline\test_config.py:
 ⋮
 │def test_default_settings():
 ⋮
@@ -330,7 +326,7 @@ tests/unit/worldline/test_config.py:
 │def test_malformed_traceparent_fails():
 ⋮
 
-tests/unit/worldline/test_service.py:
+tests\unit\worldline\test_service.py:
 ⋮
 │def test_add_otel_context_with_active_span():
 ⋮

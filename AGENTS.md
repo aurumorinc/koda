@@ -1380,12 +1380,10 @@ apps\koda-api\f\koda\scouts\scrape_youtube_profile.py:
 ⋮
 │def main(
 │    url: str,
-│    formats: List[Union[str, Dict[str, Any]]] = ["markdown"],
+│    formats: List[Union[str, Dict[str, Any]]] = ["screenshot"],
 │    timeout: int = 300000,
-│    s3_resource: Optional[str] = "f/koda/default_s3",
 │    webhook: Optional[Webhook] = None,
 │    max_concurrency: int = 10,
-│    tabs: Optional[List[str]] = None,
 ⋮
 
 apps\koda-api\f\koda\scrape.py:
@@ -2402,13 +2400,12 @@ packages\koda\src\koda\use_cases\scrape_youtube_profile\schema.py:
 
 packages\koda\src\koda\use_cases\scrape_youtube_profile\service.py:
 ⋮
+│async def _push_screenshot_data(context: PlaywrightCrawlingContext, url: str, screenshot_bytes: byt
+⋮
 │@router.default_handler
 │async def default_handler(context: PlaywrightCrawlingContext) -> None:
 ⋮
 │async def _validate_redirect(page: Page, expected_tab: str) -> bool:
-⋮
-│@router.handler('VIDEOS')
-│async def videos_handler(context: PlaywrightCrawlingContext) -> None:
 ⋮
 │@webhook_dispatch
 │async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> ScrapeYoutubeProfileRespo
@@ -2441,20 +2438,7 @@ packages\koda\src\koda\utils\file\main.py:
 │    """
 │    def __init__(self, path: str, filename: str, mimetype: str, url: Optional[str] = None):
 ⋮
-│    def __enter__(self) -> "File":
-⋮
-│    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-⋮
 │    def cleanup(self) -> None:
-⋮
-│    @property
-│    def bytes(self) -> bytes:
-⋮
-│    @property
-│    def base64(self) -> str:
-⋮
-│    @property
-│    def presigned_url(self) -> Optional[str]:
 ⋮
 │    def to_playwright_input(self) -> dict:
 ⋮
@@ -2462,13 +2446,10 @@ packages\koda\src\koda\utils\file\main.py:
 │    def _get_temp_path(cls, filename: str) -> str:
 ⋮
 │    @classmethod
-│    def create_empty(cls, filename: str, mimetype: Optional[str] = None, touch: bool = False) -> "F
-⋮
-│    @classmethod
 │    def from_bytes(cls, data: bytes, filename: str, mimetype: Optional[str] = None) -> "File":
 ⋮
 │    @classmethod
-│    def from_base64(cls, b64_string: str, filename: str, mimetype: Optional[str] = None) -> "File":
+│    def from_base64(cls, base64_string: str, filename: str, mimetype: Optional[str] = None) -> "Fil
 ⋮
 │    @classmethod
 │    def from_url(cls, url: str, filename: Optional[str] = None, mimetype: Optional[str] = None) -> 
@@ -2497,6 +2478,8 @@ packages\koda\src\koda\utils\webhook\schema.py:
 ⋮
 
 packages\koda\src\koda\utils\webhook\service.py:
+⋮
+│def _serialize_files(obj: Any) -> Any:
 ⋮
 │async def dispatch_webhook(
 │    webhook: Optional[Webhook], event: WebhookEvent, payload: Dict[str, Any]
@@ -2594,7 +2577,7 @@ packages\koda\tests\integration\test_stagehand.py:
 
 packages\koda\tests\manual\use_cases\scrape_youtube_profile\test_scrape_youtube_profile.py:
 ⋮
-│def save_base64_image(b64_string: str, filename: str, output_dir: str = "output") -> str:
+│def save_base64_image(base64_string: str, filename: str, output_dir: str = "output") -> str:
 ⋮
 │async def main():
 ⋮

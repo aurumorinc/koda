@@ -16,10 +16,12 @@ crawlee/
 └── SKILL.md
 ```
 
+> **Agent Instructions:** The AST maps below provide a high-level overview of the `modules/` directory. Note that the complete repository source code is available within the `modules/` folder. You can and should use your file reading tools to access the actual source code within `modules/` for complete details, implementation logic, and context beyond what the AST map provides.
+
 ### AST Map: `modules/crawlee-python`
 
 ```python
-docs/guides/code_examples/http_crawlers/selectolax_context.py:
+docs\guides\code_examples\http_crawlers\selectolax_context.py:
 ⋮
 │@dataclass(frozen=True)
 │class SelectolaxLexborContext(ParsedHttpCrawlingContext[LexborHTMLParser]):
@@ -36,13 +38,13 @@ docs/guides/code_examples/http_crawlers/selectolax_context.py:
 │        cls, context: ParsedHttpCrawlingContext[LexborHTMLParser]
 ⋮
 
-src/crawlee/_autoscaling/_types.py:
+src\crawlee\_autoscaling\_types.py:
 ⋮
 │@dataclass
 │class LoadRatioInfo:
 ⋮
 
-src/crawlee/_autoscaling/autoscaled_pool.py:
+src\crawlee\_autoscaling\autoscaled_pool.py:
 ⋮
 │@docs_group('Autoscaling')
 │class AutoscaledPool:
@@ -54,7 +56,7 @@ src/crawlee/_autoscaling/autoscaled_pool.py:
 │    async def run(self) -> None:
 ⋮
 
-src/crawlee/_autoscaling/snapshotter.py:
+src\crawlee\_autoscaling\snapshotter.py:
 ⋮
 │@docs_group('Autoscaling')
 │class Snapshotter:
@@ -69,12 +71,9 @@ src/crawlee/_autoscaling/snapshotter.py:
 │    def from_config(cls, config: Configuration | None = None) -> Snapshotter:
 ⋮
 
-src/crawlee/_consts.py:
+src\crawlee\_request.py:
 ⋮
-│METADATA_FILENAME = '__metadata__.json'
-⋮
-
-src/crawlee/_request.py:
+│class CrawleeRequestData(BaseModel):
 ⋮
 │@docs_group('Storage data')
 │class Request(BaseModel):
@@ -103,7 +102,7 @@ src/crawlee/_request.py:
 │        unique_key: str | None = None,
 ⋮
 
-src/crawlee/_service_locator.py:
+src\crawlee\_service_locator.py:
 ⋮
 │@docs_group('Configuration')
 │class ServiceLocator:
@@ -118,7 +117,7 @@ src/crawlee/_service_locator.py:
 │    def get_storage_client(self) -> StorageClient:
 ⋮
 
-src/crawlee/_types.py:
+src\crawlee\_types.py:
 ⋮
 │@docs_group('Other')
 │class HttpHeaders(RootModel, Mapping[str, str]):
@@ -140,38 +139,18 @@ src/crawlee/_types.py:
 │class PageSnapshot:
 ⋮
 
-src/crawlee/_utils/byte_size.py:
+src\crawlee\_utils\byte_size.py:
 ⋮
 │@dataclass(frozen=True)
 │class ByteSize:
 ⋮
 
-src/crawlee/_utils/console.py:
-⋮
-│BORDER = {'TL': '┌', 'TR': '┐', 'BL': '└', 'BR': '┘', 'H': '─', 'V': '│', 'TM': '┬', 'BM': '┴'}
-│
-⋮
-
-src/crawlee/_utils/crypto.py:
+src\crawlee\_utils\crypto.py:
 ⋮
 │def crypto_random_object_id(length: int = 17) -> str:
 ⋮
 
-src/crawlee/_utils/docs.py:
-⋮
-│GroupName = Literal[
-│    'Autoscaling',
-│    'Browser management',
-│    'Configuration',
-│    'Crawlers',
-│    'Crawling contexts',
-│    'Errors',
-│    'Event data',
-│    'Event managers',
-│    'Functions',
-⋮
-│T = TypeVar('T', bound=Callable[..., Any])
-│
+src\crawlee\_utils\docs.py:
 ⋮
 │def docs_group(group_name: GroupName) -> Callable[[T], T]:  # noqa: ARG001
 │    """Mark a symbol for rendering and grouping in documentation.
@@ -188,7 +167,7 @@ src/crawlee/_utils/docs.py:
 │    def wrapper(func: T) -> T:
 ⋮
 
-src/crawlee/_utils/file.py:
+src\crawlee\_utils\file.py:
 ⋮
 │@overload
 │async def atomic_write(
@@ -211,17 +190,17 @@ src/crawlee/_utils/file.py:
 │    retry_count: int = 0,
 ⋮
 
-src/crawlee/_utils/raise_if_too_many_kwargs.py:
+src\crawlee\_utils\raise_if_too_many_kwargs.py:
 ⋮
 │def raise_if_too_many_kwargs(max_kwargs: int = 1, **kwargs: Any) -> None:
 ⋮
 
-src/crawlee/_utils/recoverable_state.py:
+src\crawlee\_utils\recoverable_state.py:
 ⋮
 │class RecoverableState(Generic[TStateModel]):
 ⋮
 
-src/crawlee/_utils/recurring_task.py:
+src\crawlee\_utils\recurring_task.py:
 ⋮
 │class RecurringTask:
 │    """Class for creating and managing recurring tasks.
@@ -236,7 +215,7 @@ src/crawlee/_utils/recurring_task.py:
 │    async def stop(self) -> None:
 ⋮
 
-src/crawlee/_utils/retry.py:
+src\crawlee\_utils\retry.py:
 ⋮
 │def retry_on_error(
 │    *exception_types: type[Exception],
@@ -244,7 +223,7 @@ src/crawlee/_utils/retry.py:
 │    base_delay: timedelta = timedelta(milliseconds=500),
 ⋮
 
-src/crawlee/_utils/robots.py:
+src\crawlee\_utils\robots.py:
 ⋮
 │class RobotsTxtFile:
 │    def __init__(
@@ -257,7 +236,7 @@ src/crawlee/_utils/robots.py:
 │    def get_sitemaps(self, *, enqueue_strategy: EnqueueStrategy) -> list[str]:
 ⋮
 
-src/crawlee/_utils/sitemap.py:
+src\crawlee\_utils\sitemap.py:
 ⋮
 │class SitemapSource(TypedDict):
 ⋮
@@ -273,19 +252,19 @@ src/crawlee/_utils/sitemap.py:
 │    def items(self) -> list[_SitemapItem]:
 ⋮
 
-src/crawlee/_utils/time.py:
+src\crawlee\_utils\time.py:
 ⋮
 │@dataclass
 │class TimerResult:
 ⋮
 
-src/crawlee/_utils/try_import.py:
+src\crawlee\_utils\try_import.py:
 ⋮
 │@dataclass
 │class FailedImport:
 ⋮
 
-src/crawlee/_utils/urls.py:
+src\crawlee\_utils\urls.py:
 ⋮
 │def is_url_absolute(url: str) -> bool:
 ⋮
@@ -299,8 +278,11 @@ src/crawlee/_utils/urls.py:
 │    strategy: EnqueueStrategy,
 │    origin: str | URL,
 ⋮
+│@lru_cache(maxsize=2048)
+│def _domain_under_public_suffix(host: str) -> str:
+⋮
 
-src/crawlee/_utils/wait.py:
+src\crawlee\_utils\wait.py:
 ⋮
 │async def wait_for(
 │    operation: Callable[[], Awaitable[T]],
@@ -311,7 +293,7 @@ src/crawlee/_utils/wait.py:
 │    logger: Logger,
 ⋮
 
-src/crawlee/_utils/web.py:
+src\crawlee\_utils\web.py:
 ⋮
 │def is_status_code_client_error(value: int) -> bool:
 ⋮
@@ -320,7 +302,7 @@ src/crawlee/_utils/web.py:
 │def is_status_code_successful(value: int) -> bool:
 ⋮
 
-src/crawlee/configuration.py:
+src\crawlee\configuration.py:
 ⋮
 │@docs_group('Configuration')
 │class Configuration(BaseSettings):
@@ -337,7 +319,7 @@ src/crawlee/configuration.py:
 │    def get_global_configuration(cls) -> Self:
 ⋮
 
-src/crawlee/crawlers/_adaptive_playwright/_adaptive_playwright_crawling_context.py:
+src\crawlee\crawlers\_adaptive_playwright\_adaptive_playwright_crawling_context.py:
 ⋮
 │class AdaptiveContextError(RuntimeError):
 ⋮
@@ -361,7 +343,7 @@ src/crawlee/crawlers/_adaptive_playwright/_adaptive_playwright_crawling_context.
 │        parser: AbstractHttpParser[TStaticParseResult, TStaticSelectResult],
 ⋮
 
-src/crawlee/crawlers/_basic/_basic_crawler.py:
+src\crawlee\crawlers\_basic\_basic_crawler.py:
 ⋮
 │@docs_group('Crawlers')
 │class BasicCrawler(Generic[TCrawlingContext, TStatisticsState]):
@@ -408,19 +390,19 @@ src/crawlee/crawlers/_basic/_basic_crawler.py:
 │            rq_id: str | None = None,
 ⋮
 
-src/crawlee/crawlers/_basic/_logging_utils.py:
+src\crawlee\crawlers\_basic\_logging_utils.py:
 ⋮
 │def reduce_asyncio_timeout_error_to_relevant_traceback_parts(
 │    timeout_error: asyncio.exceptions.TimeoutError | crawlee.errors.UserHandlerTimeoutError,
 ⋮
 
-src/crawlee/crawlers/_beautifulsoup/_beautifulsoup_crawler.py:
+src\crawlee\crawlers\_beautifulsoup\_beautifulsoup_crawler.py:
 ⋮
 │@docs_group('Crawlers')
 │class BeautifulSoupCrawler(AbstractHttpCrawler[BeautifulSoupCrawlingContext, BeautifulSoup, Tag]):
 ⋮
 
-src/crawlee/crawlers/_beautifulsoup/_beautifulsoup_crawling_context.py:
+src\crawlee\crawlers\_beautifulsoup\_beautifulsoup_crawling_context.py:
 ⋮
 │@dataclass(frozen=True)
 │@docs_group('Crawling contexts')
@@ -433,7 +415,7 @@ src/crawlee/crawlers/_beautifulsoup/_beautifulsoup_crawling_context.py:
 │    def from_parsed_http_crawling_context(cls, context: ParsedHttpCrawlingContext[BeautifulSoup]) -
 ⋮
 
-src/crawlee/crawlers/_beautifulsoup/_utils.py:
+src\crawlee\crawlers\_beautifulsoup\_utils.py:
 ⋮
 │def html_to_text(source: str | Tag) -> str:
 │    """Convert markup string or `BeautifulSoup` to newline separated plain text without tags using 
@@ -447,19 +429,19 @@ src/crawlee/crawlers/_beautifulsoup/_utils.py:
 │    def _page_element_to_text(page_elements: Iterable[PageElement]) -> None:
 ⋮
 
-src/crawlee/crawlers/_http/_http_crawler.py:
+src\crawlee\crawlers\_http\_http_crawler.py:
 ⋮
 │@docs_group('Crawlers')
 │class HttpCrawler(AbstractHttpCrawler[ParsedHttpCrawlingContext[bytes], bytes, bytes]):
 ⋮
 
-src/crawlee/crawlers/_parsel/_parsel_crawler.py:
+src\crawlee\crawlers\_parsel\_parsel_crawler.py:
 ⋮
 │@docs_group('Crawlers')
 │class ParselCrawler(AbstractHttpCrawler[ParselCrawlingContext, Selector, Selector]):
 ⋮
 
-src/crawlee/crawlers/_parsel/_parsel_crawling_context.py:
+src\crawlee\crawlers\_parsel\_parsel_crawling_context.py:
 ⋮
 │@dataclass(frozen=True)
 │@docs_group('Crawling contexts')
@@ -471,8 +453,10 @@ src/crawlee/crawlers/_parsel/_parsel_crawling_context.py:
 │    @classmethod
 │    def from_parsed_http_crawling_context(cls, context: ParsedHttpCrawlingContext[Selector]) -> Sel
 ⋮
+│    def html_to_text(self) -> str:
+⋮
 
-src/crawlee/crawlers/_parsel/_utils.py:
+src\crawlee\crawlers\_parsel\_utils.py:
 ⋮
 │def html_to_text(source: str | Selector) -> str:
 │    """Convert markup string or `Selector` to newline-separated plain text without tags using Parse
@@ -486,7 +470,7 @@ src/crawlee/crawlers/_parsel/_utils.py:
 │    def _extract_text(elements: list[Selector], *, compress: bool = True) -> None:
 ⋮
 
-src/crawlee/crawlers/_playwright/_playwright_crawler.py:
+src\crawlee\crawlers\_playwright\_playwright_crawler.py:
 ⋮
 │@docs_group('Crawlers')
 │class PlaywrightCrawler(
@@ -494,7 +478,7 @@ src/crawlee/crawlers/_playwright/_playwright_crawler.py:
 │    Generic[TPreNavContext, TPostNavContext, TCrawlingContext],
 ⋮
 
-src/crawlee/crawlers/_playwright/_types.py:
+src\crawlee\crawlers\_playwright\_types.py:
 ⋮
 │@dataclass(frozen=True)
 │class PlaywrightHttpResponse:
@@ -505,7 +489,7 @@ src/crawlee/crawlers/_playwright/_types.py:
 │    async def from_playwright_response(cls, response: Response | APIResponse, protocol: str) -> Sel
 ⋮
 
-src/crawlee/crawlers/_playwright/_utils.py:
+src\crawlee\crawlers\_playwright\_utils.py:
 ⋮
 │async def infinite_scroll(page: Page) -> None:
 │    """Scroll to the bottom of a page, handling loading of additional items."""
@@ -513,7 +497,7 @@ src/crawlee/crawlers/_playwright/_utils.py:
 │    async def check_finished() -> None:
 ⋮
 
-src/crawlee/crawlers/_types.py:
+src\crawlee\crawlers\_types.py:
 ⋮
 │@dataclass(frozen=True)
 │class BlockedInfo:
@@ -523,13 +507,13 @@ src/crawlee/crawlers/_types.py:
 │    def __bool__(self) -> bool:
 ⋮
 
-src/crawlee/errors.py:
+src\crawlee\errors.py:
 ⋮
 │@docs_group('Errors')
 │class ServiceConflictError(Exception):
 ⋮
 
-src/crawlee/events/_local_event_manager.py:
+src\crawlee\events\_local_event_manager.py:
 ⋮
 │@docs_group('Event managers')
 │class LocalEventManager(EventManager):
@@ -543,16 +527,13 @@ src/crawlee/events/_local_event_manager.py:
 │    def from_config(cls, config: Configuration | None = None) -> LocalEventManager:
 ⋮
 
-src/crawlee/fingerprint_suite/_types.py:
+src\crawlee\http_clients\_impit.py:
 ⋮
-│SupportedOperatingSystems = Literal['windows', 'macos', 'linux', 'android', 'ios']
-│SupportedDevices = Literal['desktop', 'mobile']
-│SupportedHttpVersion = Literal['1', '2']
-│SupportedBrowserType = Literal['chrome', 'firefox', 'safari', 'edge']
-│
+│@docs_group('HTTP clients')
+│class ImpitHttpClient(HttpClient):
 ⋮
 
-src/crawlee/proxy_configuration.py:
+src\crawlee\proxy_configuration.py:
 ⋮
 │@docs_group('Configuration')
 │class ProxyConfiguration:
@@ -570,7 +551,7 @@ src/crawlee/proxy_configuration.py:
 │        self, session_id: str | None, request: Request | None, proxy_tier: int | None
 ⋮
 
-src/crawlee/request_loaders/_request_manager.py:
+src\crawlee\request_loaders\_request_manager.py:
 ⋮
 │@docs_group('Request loaders')
 │class RequestManager(RequestLoader, ABC):
@@ -585,7 +566,7 @@ src/crawlee/request_loaders/_request_manager.py:
 │        forefront: bool = False,
 ⋮
 
-src/crawlee/request_loaders/_request_manager_tandem.py:
+src\crawlee\request_loaders\_request_manager_tandem.py:
 ⋮
 │@docs_group('Request loaders')
 │class RequestManagerTandem(RequestManager):
@@ -598,7 +579,7 @@ src/crawlee/request_loaders/_request_manager_tandem.py:
 │    async def add_request(self, request: str | Request, *, forefront: bool = False) -> ProcessedReq
 ⋮
 
-src/crawlee/request_loaders/_sitemap_request_loader.py:
+src\crawlee\request_loaders\_sitemap_request_loader.py:
 ⋮
 │@docs_group('Request loaders')
 │class SitemapRequestLoader(RequestLoader):
@@ -616,7 +597,7 @@ src/crawlee/request_loaders/_sitemap_request_loader.py:
 │    async def start(self) -> None:
 ⋮
 
-src/crawlee/request_loaders/_throttling_request_manager.py:
+src\crawlee\request_loaders\_throttling_request_manager.py:
 ⋮
 │@docs_group('Request loaders')
 │class ThrottlingRequestManager(RequestManager, Generic[TRequestManager]):
@@ -635,7 +616,7 @@ src/crawlee/request_loaders/_throttling_request_manager.py:
 │    async def add_request(self, request: str | Request, *, forefront: bool = False) -> ProcessedReq
 ⋮
 
-src/crawlee/sessions/_cookies.py:
+src\crawlee\sessions\_cookies.py:
 ⋮
 │@docs_group('Session management')
 │class CookieParam(TypedDict, total=False):
@@ -663,7 +644,7 @@ src/crawlee/sessions/_cookies.py:
 │    def store_cookie(self, cookie: Cookie) -> None:
 ⋮
 
-src/crawlee/sessions/_session.py:
+src\crawlee\sessions\_session.py:
 ⋮
 │@docs_group('Session management')
 │class Session:
@@ -683,7 +664,7 @@ src/crawlee/sessions/_session.py:
 │    def get_state(self, *, as_dict: bool = False) -> SessionModel | dict:
 ⋮
 
-src/crawlee/sessions/_session_pool.py:
+src\crawlee\sessions\_session_pool.py:
 ⋮
 │@docs_group('Session management')
 │class SessionPool:
@@ -703,12 +684,24 @@ src/crawlee/sessions/_session_pool.py:
 │    def get_state(self, *, as_dict: bool = False) -> SessionPoolModel | dict:
 ⋮
 
-src/crawlee/statistics/_error_tracker.py:
+src\crawlee\statistics\_error_snapshotter.py:
+⋮
+│class ErrorSnapshotter:
+│    MAX_ERROR_CHARACTERS = 30
+⋮
+│    async def capture_snapshot(
+│        self,
+│        error_message: str,
+│        file_and_line: str,
+│        context: BasicCrawlingContext,
+⋮
+
+src\crawlee\statistics\_error_tracker.py:
 ⋮
 │class ErrorTracker:
 ⋮
 
-src/crawlee/statistics/_statistics.py:
+src\crawlee\statistics\_statistics.py:
 ⋮
 │class RequestProcessingRecord:
 │    """Tracks information about the processing of a request."""
@@ -717,19 +710,19 @@ src/crawlee/statistics/_statistics.py:
 │    def run(self) -> int:
 ⋮
 
-src/crawlee/storage_clients/_file_system/_storage_client.py:
+src\crawlee\storage_clients\_file_system\_storage_client.py:
 ⋮
 │@docs_group('Storage clients')
 │class FileSystemStorageClient(StorageClient):
 ⋮
 
-src/crawlee/storage_clients/_memory/_storage_client.py:
+src\crawlee\storage_clients\_memory\_storage_client.py:
 ⋮
 │@docs_group('Storage clients')
 │class MemoryStorageClient(StorageClient):
 ⋮
 
-src/crawlee/storage_clients/_redis/_utils.py:
+src\crawlee\storage_clients\_redis\_utils.py:
 ⋮
 │@overload
 │async def await_redis_response(response: Awaitable[T]) -> T: ...
@@ -740,13 +733,24 @@ src/crawlee/storage_clients/_redis/_utils.py:
 │async def await_redis_response(response: Awaitable[T] | T) -> T:
 ⋮
 
-src/crawlee/storage_clients/models.py:
+src\crawlee\storage_clients\_sql\_client_mixin.py:
+⋮
+│class SqlClientMixin(ABC):
+│    """Mixin class for SQL clients.
+│
+│    This mixin provides common SQL operations and basic methods for SQL storage clients.
+⋮
+│    @asynccontextmanager
+│    async def get_session(self, *, with_simple_commit: bool = False) -> AsyncIterator[AsyncSession]
+⋮
+
+src\crawlee\storage_clients\models.py:
 ⋮
 │@docs_group('Storage data')
 │class KeyValueStoreRecordMetadata(BaseModel):
 ⋮
 
-src/crawlee/storages/_request_queue.py:
+src\crawlee\storages\_request_queue.py:
 ⋮
 │@docs_group('Storages')
 │class RequestQueue(Storage, RequestManager):
@@ -769,13 +773,12 @@ src/crawlee/storages/_request_queue.py:
 │        forefront: bool = False,
 ⋮
 
-src/crawlee/storages/_utils.py:
+src\crawlee\storages\_storage_instance_manager.py:
 ⋮
-│NAME_REGEX = re.compile(r'^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$')
-│
+│class StorageInstanceManager:
 ⋮
 
-tests/unit/_autoscaling/test_autoscaled_pool.py:
+tests\unit\_autoscaling\test_autoscaled_pool.py:
 ⋮
 │@pytest.mark.run_alone
 │async def test_runs_concurrently(system_status: SystemStatus | Mock) -> None:
@@ -830,13 +833,13 @@ tests/unit/_autoscaling/test_autoscaled_pool.py:
 │    async def run() -> None:
 ⋮
 
-tests/unit/_autoscaling/test_system_status.py:
+tests\unit\_autoscaling\test_system_status.py:
 ⋮
 │@pytest.fixture
 │def now() -> datetime:
 ⋮
 
-tests/unit/_utils/test_retry.py:
+tests\unit\_utils\test_retry.py:
 ⋮
 │async def test_success_on_first_attempt() -> None:
 │    call_mock = AsyncMock()
@@ -865,12 +868,12 @@ tests/unit/_utils/test_retry.py:
 │    async def func() -> None:
 ⋮
 
-tests/unit/_utils/test_timedelta_ms.py:
+tests\unit\_utils\test_timedelta_ms.py:
 ⋮
 │class _ModelWithTimedeltaMs(BaseModel):
 ⋮
 
-tests/unit/server.py:
+tests\unit\server.py:
 ⋮
 │def get_headers_dict(scope: dict[str, Any]) -> dict[str, str]:
 ⋮
@@ -887,17 +890,17 @@ tests/unit/server.py:
 │    def run(self, sockets: list[socket] | None = None) -> None:
 ⋮
 
-tests/unit/storage_clients/_redis/test_redis_storage_client.py:
+tests\unit\storage_clients\_redis\test_redis_storage_client.py:
 ⋮
 │def test_import_error_handled() -> None:
 ⋮
 
-tests/unit/utils.py:
+tests\unit\utils.py:
 ⋮
 │async def maybe_await(value: Awaitable[T] | T) -> T:
 ⋮
 
-website/roa-loader/index.js:
+website\roa-loader\index.js:
 ⋮
 │async function encodeAndSign(source) {
 │    if (!process.env.APIFY_SIGNING_TOKEN) {
@@ -911,35 +914,34 @@ website/roa-loader/index.js:
 │            });
 ⋮
 
-website/src/components/ApiLink.jsx:
+website\src\components\ApiLink.jsx:
 ⋮
 │const ApiLink = ({ to, children }) => {
 │    const version = useDocsVersion();
 │    const { siteConfig } = useDocusaurusContext();
 │
 │    if (siteConfig.presets[0][1].docs.disableVersioning || version.isLast) {
-│        return (
-│            <Link to={`/api/${to}`}>{children}</Link>
-│        );
+│        return <Link to={`/api/${to}`}>{children}</Link>;
 │    }
 │
+│    return <Link to={`/api/${version.version === 'current' ? 'next' : version.version}/${to}`}>{chi
 ⋮
 
-website/src/components/Button.jsx:
+website\src\components\Button.jsx:
 ⋮
 │export default function Button({ children, to, withIcon, type = 'primary', className, isBig }) {
 │    return (
 │        <Link to={to} target="_self" rel="dofollow">
-│            <span className={clsx(
-│                className,
-│                styles.button,
-│                type === 'primary' && styles.buttonPrimary,
-│                type === 'secondary' && styles.buttonSecondary,
-│                isBig && styles.big,
-│            )}>
+│            <span
+│                className={clsx(
+│                    className,
+│                    styles.button,
+│                    type === 'primary' && styles.buttonPrimary,
+│                    type === 'secondary' && styles.buttonSecondary,
+│                    isBig && styles.big,
 ⋮
 
-website/src/components/Homepage/HomepageCtaSection.jsx:
+website\src\components\Homepage\HomepageCtaSection.jsx:
 ⋮
 │export default function HomepageCtaSection() {
 │    const { colorMode } = useColorMode();
@@ -947,35 +949,45 @@ website/src/components/Homepage/HomepageCtaSection.jsx:
 │        <section className={styles.ctaSection}>
 │            <h2 className={styles.ctaTitle}>Get started now!</h2>
 │            <div className={styles.ctaDescription}>
-│                Crawlee won’t fix broken selectors for you (yet), but it makes
-│                building and maintaining reliable crawlers faster and easier—so
-│                you can focus on what matters most.
+│                Crawlee won’t fix broken selectors for you (yet), but it makes building and maintai
+│                crawlers faster and easier—so you can focus on what matters most.
 │            </div>
+│            <div className={styles.ctaButtonContainer}>
 ⋮
 
-website/src/components/Homepage/LanguageInfoWidget.jsx:
+website\src\components\Homepage\LanguageInfoWidget.jsx:
 ⋮
-│export default function LanguageInfoWidget({
-│    language,
-│    command,
-│    to,
-│    githubUrl,
+│export default function LanguageInfoWidget({ language, command, to, githubUrl }) {
+│    const { colorMode } = useColorMode();
+│    return (
+│        <div className={styles.languageGetStartedContainer}>
+│            {language === 'JavaScript' && (
+│                <ThemedImage
+│                    sources={{
+│                        light: 'img/crawlee-javascript-light.svg',
+│                        dark: 'img/crawlee-javascript-dark.svg',
+│                    }}
 ⋮
 
-website/src/components/Homepage/LanguageSwitch.jsx:
+website\src\components\Homepage\LanguageSwitch.jsx:
 ⋮
-│export default function LanguageSwitch({
-│    options = ['JavaScript', 'Python'],
-│    defaultOption = 'JavaScript',
-│    onChange,
-│}) {
+│export default function LanguageSwitch({ options = ['JavaScript', 'Python'], defaultOption = 'JavaS
+│    const [activeOption, setActiveOption] = useState(defaultOption);
+│    const [backgroundStyle, setBackgroundStyle] = useState({});
+│    const optionRefs = useRef([]);
+│
+│    const updateBackgroundStyle = useCallback(() => {
+│        const activeIndex = options.indexOf(activeOption);
+│        const activeElement = optionRefs.current[activeIndex];
+│        if (activeElement) {
+│            const { offsetLeft, offsetWidth } = activeElement;
 ⋮
 │    const handleOptionClick = (option) => {
-│        setActiveOption(option)
-│        onChange?.(option)
+│        setActiveOption(option);
+│        onChange?.(option);
 ⋮
 
-website/src/components/Homepage/RiverSection.jsx:
+website\src\components\Homepage\RiverSection.jsx:
 ⋮
 │export default function RiverSection({ title, description, content, reversed, to }) {
 │    return (
@@ -989,7 +1001,7 @@ website/src/components/Homepage/RiverSection.jsx:
 │                    </Link>
 ⋮
 
-website/src/components/Homepage/ThreeCardsWithIcon.jsx:
+website\src\components\Homepage\ThreeCardsWithIcon.jsx:
 ⋮
 │export default function ThreeCardsWithIcon({ cards }) {
 │    return (
@@ -999,11 +1011,11 @@ website/src/components/Homepage/ThreeCardsWithIcon.jsx:
 │                    <>
 │                        <div className={styles.cardIcon}>{card.icon}</div>
 │                        <h3 className={styles.cardTitle}>{card.title}</h3>
-│                        <p className={styles.cardDescription}>
-│                            {card.description}
+│                        <p className={styles.cardDescription}>{card.description}</p>
+│                        {card.actionLink && (
 ⋮
 
-website/src/components/RunnableCodeBlock.jsx:
+website\src\components\RunnableCodeBlock.jsx:
 ⋮
 │const RunnableCodeBlock = ({ children, actor, hash, ...props }) => {
 │    hash = hash ?? children.hash;
@@ -1014,18 +1026,24 @@ website/src/components/RunnableCodeBlock.jsx:
 │    }
 │
 │    if (!hash) {
-│        return (
+│        return <CodeBlock {...props}>{children.code}</CodeBlock>;
 ⋮
 
-website/src/theme/ColorModeToggle/index.js:
+website\src\theme\ColorModeToggle\index.js:
 ⋮
-│function ColorModeToggle({
-│    className,
-│    value,
-│    onChange,
+│function ColorModeToggle({ className, value, onChange }) {
+│    const isBrowser = useIsBrowser();
+│    const title = translate(
+│        {
+│            message: 'Switch between dark and light mode (currently {mode})',
+│            id: 'theme.colorToggle.ariaLabel',
+│            description: 'The ARIA label for the navbar color mode toggle',
+│        },
+│        {
+│            mode:
 ⋮
 
-website/src/theme/DocItem/Content/index.js:
+website\src\theme\DocItem\Content\index.js:
 ⋮
 │function useSyntheticTitle() {
 │    const { metadata, frontMatter, contentTitle } = useDoc();
@@ -1038,21 +1056,21 @@ website/src/theme/DocItem/Content/index.js:
 │    return metadata.title;
 ⋮
 
-website/src/theme/DocItem/Layout/index.js:
+website\src\theme\DocItem\Layout\index.js:
 ⋮
 │function useDocTOC() {
-│    const {
-│        frontMatter,
-│        toc,
-│    } = useDoc();
+│    const { frontMatter, toc } = useDoc();
 │    const windowSize = useWindowSize();
 │    const hidden = frontMatter.hide_table_of_contents;
 │    const canRender = !hidden && toc.length > 0;
-│    const mobile = canRender ? <DocItemTOCMobile/> : undefined;
-│    const desktop = canRender && (windowSize === 'desktop' || windowSize === 'ssr') ? (
+│    const mobile = canRender ? <DocItemTOCMobile /> : undefined;
+│    const desktop = canRender && (windowSize === 'desktop' || windowSize === 'ssr') ? <DocItemTOCDe
+│    return {
+│        hidden,
+│        mobile,
 ⋮
 
-website/src/theme/Footer/LinkItem/index.js:
+website\src\theme\Footer\LinkItem\index.js:
 ⋮
 │export default function FooterLinkItem({ item }) {
 │    const ExternalLinkIcon = require('../../../../static/img/external-link.svg').default;
@@ -1066,7 +1084,7 @@ website/src/theme/Footer/LinkItem/index.js:
 │            className={clsx('footer__link-item', className, styles.footerLink)}
 ⋮
 
-website/src/theme/MDXComponents/A.js:
+website\src\theme\MDXComponents\A.js:
 ⋮
 │export default function MDXA(props) {
 │    const { siteConfig } = useDocusaurusContext();
@@ -1079,41 +1097,59 @@ website/src/theme/MDXComponents/A.js:
 │    return <Link {...props} />;
 ⋮
 
-website/src/theme/Navbar/Content/index.js:
+website\src\theme\NavbarItem\apiVersionUtils.js:
+⋮
+│export function getApiPath(version) {
+│    if (version.isLast) {
+│        return API_ROUTE_BASE;
+│    }
+│    if (version.name === 'current') {
+│        return `${API_ROUTE_BASE}/next`;
+│    }
+│    return `${API_ROUTE_BASE}/${version.name}`;
+⋮
+
+website\src\theme\Navbar\Content\index.js:
 ⋮
 │function useNavbarItems() {
 │    return useThemeConfig().navbar.items;
 ⋮
 
-website/src/theme/Navbar/Logo/index.js:
+website\src\theme\Navbar\Logo\index.js:
 ⋮
-│export default function LogoWrapper(props) {
+│export default function LogoWrapper() {
 │    const ArrowsIcon = require('../../../../static/img/menu-arrows.svg').default;
 │    const CheckIcon = require('../../../../static/img/check.svg').default;
-│    const { navbar: { logo } } = useThemeConfig();
+│    const {
+│        navbar: { logo },
+│    } = useThemeConfig();
 │    const javascriptLogo = {
 │        light: useBaseUrl('img/crawlee-javascript-light.svg'),
 │        dark: useBaseUrl('img/crawlee-javascript-dark.svg'),
 │    };
-│    const languageAgnosticLogo = {
-│        light: useBaseUrl('img/crawlee-light.svg'),
 ⋮
 
-website/src/theme/Navbar/MobileSidebar/Layout/index.js:
+website\src\theme\Navbar\MobileSidebar\Layout\index.js:
 ⋮
-│export default function NavbarMobileSidebarLayout({
-│    header,
-│    primaryMenu,
-│    secondaryMenu,
+│export default function NavbarMobileSidebarLayout({ header, primaryMenu, secondaryMenu }) {
+│    const { shown: secondaryMenuShown } = useNavbarSecondaryMenu();
+│    return (
+│        <div className="navbar-sidebar">
+│            {header}
+│            <div
+│                className={clsx('navbar-sidebar__items', {
+│                    'navbar-sidebar__items--show-secondary': secondaryMenuShown,
+│                })}
+│            >
 ⋮
 
-website/src/theme/Navbar/MobileSidebar/PrimaryMenu/index.js:
+website\src\theme\Navbar\MobileSidebar\PrimaryMenu\index.js:
 ⋮
 │function useNavbarItems() {
 │    return useThemeConfig().navbar.items;
 ⋮
 
-website/src/theme/Navbar/MobileSidebar/index.js:
+website\src\theme\Navbar\MobileSidebar\index.js:
 ⋮
 │export default function NavbarMobileSidebar() {
 │    const mobileSidebar = useNavbarMobileSidebar();
@@ -1127,19 +1163,7 @@ website/src/theme/Navbar/MobileSidebar/index.js:
 │        return null;
 ⋮
 
-website/src/theme/NavbarItem/apiVersionUtils.js:
-⋮
-│export function getApiPath(version) {
-│    if (version.isLast) {
-│        return API_ROUTE_BASE;
-│    }
-│    if (version.name === 'current') {
-│        return `${API_ROUTE_BASE}/next`;
-│    }
-│    return `${API_ROUTE_BASE}/${version.name}`;
-⋮
-
-website/versioned_docs/version-1.7/guides/code_examples/http_crawlers/selectolax_context.py:
+website\versioned_docs\version-1.7\guides\code_examples\http_crawlers\selectolax_context.py:
 ⋮
 │@dataclass(frozen=True)
 │class SelectolaxLexborContext(ParsedHttpCrawlingContext[LexborHTMLParser]):
