@@ -1,14 +1,20 @@
-# Changelog v0.9.0
+# Changelog v0.10.0
 
 ## Breaking Changes
 
-*   **Refactored Import Paths for File Handling**
-    Import paths for screenshot and PDF handling have been updated to utilize the new `File` abstraction.
-    *   **Migration:** Update all import statements referencing the old screenshot or PDF handling modules to use the new `File` utility class.
-    *   **Commits:** [19213ce](https://github.com/aurumorinc/koda/commit/19213cee), [43e94e4](https://github.com/aurumorinc/koda/commit/43e94e4c), [5abc1eb](https://github.com/aurumorinc/koda/commit/5abc1eb2)
+*   **Removal of `tabs` parameter in `ScrapeYoutubeProfileRequest`**
+    The `tabs` parameter has been removed from the `ScrapeYoutubeProfileRequest` API. The system now automatically detects active tabs, rendering manual specification unnecessary.
+    *   **Migration:** Update all existing calls to `ScrapeYoutubeProfileRequest` to remove the `tabs` argument.
+    *   **Commits:** [a5e301d](https://github.com/aurumorinc/koda/commit/a5e301de), [08cfb52](https://github.com/aurumorinc/koda/commit/08cfb527)
 
-## Features
+## Improvements
 
-*   **Introduction of Unified File Utility Class**
-    Introduced a new `File` class to provide a unified interface for managing local temporary files, S3 interactions, and Playwright integration.
-    *   **Commits:** [19213ce](https://github.com/aurumorinc/koda/commit/19213cee), [43e94e4](https://github.com/aurumorinc/koda/commit/43e94e4c), [5abc1eb](https://github.com/aurumorinc/koda/commit/5abc1eb2)
+*   **Refactored File Handling Utility**
+    Refactored internal file handling logic to utilize a new `File` utility class, which now implements automatic serialization for improved consistency.
+    *   **Commits:** [f7ca9ec](https://github.com/aurumorinc/koda/commit/f7ca9ec6), [699c573](https://github.com/aurumorinc/koda/commit/699c5737), [eb2dfcd](https://github.com/aurumorinc/koda/commit/eb2dfcd8)
+
+## Fixes
+
+*   **Increased Browser Timeout**
+    Increased the default browser timeout from 30,000ms to 300,000ms to better accommodate long-running scraping and automation tasks.
+    *   **Commits:** [5876788](https://github.com/aurumorinc/koda/commit/58767884)
