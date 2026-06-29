@@ -28,8 +28,8 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
     dataset_mock = AsyncMock()
     data_mock = MagicMock()
     data_mock.items = [
-        {"tab_name": "About", "url": "https://youtube.com/@test", "screenshot": "data:image/jpeg;base64,AABB"},
-        {"tab_name": "Videos", "url": "https://youtube.com/@test/videos", "screenshot": "data:image/jpeg;base64,AACC"}
+        {"url": "https://youtube.com/@test", "screenshot_base64": "AABB", "screenshot_filename": "about.png"},
+        {"url": "https://youtube.com/@test/videos", "screenshot_base64": "AACC", "screenshot_filename": "videos.png"}
     ]
     dataset_mock.get_data.return_value = data_mock
     crawler_instance.get_dataset.return_value = dataset_mock
@@ -45,21 +45,19 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
     assert res.success is True
     assert res.data is not None
     assert len(res.data) == 2
-    assert res.data[0]["tab_name"] == "About"
-    assert res.data[0]["screenshot"] == "data:image/jpeg;base64,AABB"
-    assert res.data[1]["tab_name"] == "Videos"
-    assert res.data[1]["screenshot"] == "data:image/jpeg;base64,AACC"
+    assert res.data[0]["url"] == "https://youtube.com/@test"
+    assert res.data[1]["url"] == "https://youtube.com/@test/videos"
 
 @pytest.mark.asyncio
 async def test_default_handler_routing():
-    context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
+    context_mock = AsyncMock()
     context_mock.page = AsyncMock()
     context_mock.page.url = "https://youtube.com/@testuser"
     context_mock.request = Request.from_url("https://youtube.com/@testuser")
     
     await _handler(context_mock)
     
-    assert context_mock.add_requests.call_count == 2
+    assert context_mock.add_requests.call_count == 9
     
     dialog_call = context_mock.add_requests.call_args_list[0][0][0]
     assert dialog_call[0].label == "DIALOG"
@@ -68,7 +66,7 @@ async def test_default_handler_routing():
 @pytest.mark.asyncio
 async def test_validate_redirect():
     page_mock = AsyncMock()
-    page_mock.is_closed.return_value = False
+    page_mock.is_closed = MagicMock(return_value=False)
     
     # Valid redirect
     page_mock.url = "https://youtube.com/@test/videos"
@@ -85,9 +83,9 @@ async def test_validate_redirect():
 @patch("koda.use_cases.scrape_youtube_profile.service.scroll_to", autospec=True)
 @patch("koda.use_cases.scrape_youtube_profile.service.screenshot", autospec=True)
 async def test_tab_handler_scroll_bounds(mock_screenshot, mock_scroll_to):
-    context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
+    context_mock = AsyncMock()
     context_mock.page = AsyncMock()
-    context_mock.page.is_closed.return_value = False
+    context_mock.page.is_closed = MagicMock(return_value=False)
     context_mock.page.url = "https://youtube.com/@test/videos"
     context_mock.request = Request.from_url("https://youtube.com/@test/videos", user_data={"slug": "videos", "full_page": True})
     
@@ -104,9 +102,9 @@ async def test_tab_handler_scroll_bounds(mock_screenshot, mock_scroll_to):
 
 @pytest.mark.asyncio
 async def test_missing_tab_handling():
-    context_mock = AsyncMock(spec=PlaywrightCrawlingContext)
+    context_mock = AsyncMock()
     context_mock.page = AsyncMock()
-    context_mock.page.is_closed.return_value = False
+    context_mock.page.is_closed = MagicMock(return_value=False)
     context_mock.request = Request.from_url("https://youtube.com/@test/featured", user_data={"slug": "videos"})
     context_mock.page.url = "https://youtube.com/@test/featured" # Wrong URL for videos
     
