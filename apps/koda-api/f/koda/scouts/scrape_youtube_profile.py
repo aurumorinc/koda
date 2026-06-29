@@ -14,7 +14,7 @@ from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile
 def main(
     url: str,
     formats: List[Union[str, Dict[str, Any]]] = ["screenshot"],
-    timeout: int = 300000,
+    timeout: int = 600000,
     webhook: Optional[Webhook] = None,
     max_concurrency: int = 4,
 ) -> dict:
