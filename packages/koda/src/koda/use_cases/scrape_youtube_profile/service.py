@@ -147,10 +147,10 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
     await wait_for_networkidle(page)
     
     if full_page:
-        await scroll_to(page, y=None, wait_callback=lambda: wait_for_networkidle(page))
+        await scroll_to(page, y=MAX_SCREENSHOT_HEIGHT, wait_callback=lambda: page.wait_for_timeout(1000))
         screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
     else:
-        await scroll_to(page, y=MAX_SCROLL_Y, wait_callback=lambda: wait_for_networkidle(page))
+        await scroll_to(page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(1000))
         screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
         
     await _push_screenshot_data(context, page.url, screenshot_bytes)
