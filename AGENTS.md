@@ -2064,15 +2064,9 @@ packages\koda\src\koda\integrations\posthog.py:
 ⋮
 │async def _send_posthog_request(url: str, method: str, data: str, content_type: Optional[str] = Non
 ⋮
-│async def handle_playwright_request(url: str, method: str, data: str, content_type: Optional[str] =
-⋮
 │async def setup_playwright_transport(context: BrowserContext) -> None:
 ⋮
 │async def setup_network_capture(page: Page, posthog_api_key: str) -> None:
-│    """Intercept network requests out-of-band and relay them to posthog-js."""
-│    async def on_request_finished(request: Request):
-⋮
-│    async def on_request_failed(request: Request):
 ⋮
 │async def inject_posthog_monolith(page: Page, api_key: str, host: str) -> None:
 ⋮
@@ -2184,15 +2178,6 @@ packages\koda\src\koda\modules\cache\service.py:
 │    async def get(self, key: str) -> Optional[Any]:
 ⋮
 │    async def set(self, key: str, value: Any) -> None:
-⋮
-
-packages\koda\src\koda\modules\file\service.py:
-⋮
-│def upload(data: Union[bytes, str], object_name: str, mimetype: str) -> None:
-⋮
-│def generate_presigned_url(object_name: str, expires_in: int = 3600) -> str:
-⋮
-│def _get_client():
 ⋮
 
 packages\koda\src\koda\modules\session\repositories\email\imap.py:
@@ -2445,6 +2430,63 @@ packages\koda\src\koda\utils\__init__.py:
 │def images_are_identical(img1: Image.Image, img2: Image.Image) -> bool:
 ⋮
 │def sanitize_filename(url: str) -> str:
+⋮
+
+packages\koda\src\koda\utils\file\main.py:
+⋮
+│class File:
+│    """
+│    A wrapper around a local temporary file, with a mandatory filename and mimetype.
+│    Supports lazy uploading to S3 to generate a presigned URL.
+│    """
+│    def __init__(self, path: str, filename: str, mimetype: str, url: Optional[str] = None):
+⋮
+│    def __enter__(self) -> "File":
+⋮
+│    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+⋮
+│    def cleanup(self) -> None:
+⋮
+│    @property
+│    def bytes(self) -> bytes:
+⋮
+│    @property
+│    def base64(self) -> str:
+⋮
+│    @property
+│    def presigned_url(self) -> Optional[str]:
+⋮
+│    def to_playwright_input(self) -> dict:
+⋮
+│    @classmethod
+│    def _get_temp_path(cls, filename: str) -> str:
+⋮
+│    @classmethod
+│    def create_empty(cls, filename: str, mimetype: Optional[str] = None, touch: bool = False) -> "F
+⋮
+│    @classmethod
+│    def from_bytes(cls, data: bytes, filename: str, mimetype: Optional[str] = None) -> "File":
+⋮
+│    @classmethod
+│    def from_base64(cls, b64_string: str, filename: str, mimetype: Optional[str] = None) -> "File":
+⋮
+│    @classmethod
+│    def from_url(cls, url: str, filename: Optional[str] = None, mimetype: Optional[str] = None) -> 
+⋮
+│    @classmethod
+│    def from_path(cls, source_path: str, filename: Optional[str] = None) -> "File":
+⋮
+│    @classmethod
+│    async def from_playwright_download(cls, download: any, filename: Optional[str] = None) -> "File
+⋮
+
+packages\koda\src\koda\utils\file\service.py:
+⋮
+│def upload(data: Union[bytes, str], object_name: str, mimetype: str) -> None:
+⋮
+│def generate_presigned_url(object_name: str, expires_in: int = 3600) -> str:
+⋮
+│def _get_client():
 ⋮
 
 packages\koda\src\koda\utils\webhook\schema.py:

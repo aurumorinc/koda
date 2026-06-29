@@ -133,8 +133,10 @@ async def execute_actions(page, actions: List[Action], action_results: Dict[str,
                     clip=clip
                 )
                 if shot_bytes and "screenshots" in action_results:
-                    b64_shot = base64.b64encode(shot_bytes).decode("utf-8")
-                    action_results["screenshots"].append(f"data:image/{'jpeg' if action.quality else 'png'};base64,{b64_shot}")
+                    from koda.utils.file.main import File
+                    ext = "jpeg" if action.quality else "png"
+                    with File.from_bytes(shot_bytes, f"screenshot.{ext}", f"image/{ext}") as f:
+                        action_results["screenshots"].append(f.presigned_url or f.base64)
             
             elif action.type == "pdf":
                 pdf_bytes = await page.pdf(
@@ -143,8 +145,9 @@ async def execute_actions(page, actions: List[Action], action_results: Dict[str,
                     scale=action.scale or 1.0
                 )
                 if pdf_bytes and "pdfs" in action_results:
-                    b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
-                    action_results["pdfs"].append(f"data:application/pdf;base64,{b64_pdf}")
+                    from koda.utils.file.main import File
+                    with File.from_bytes(pdf_bytes, "document.pdf", "application/pdf") as f:
+                        action_results["pdfs"].append(f.presigned_url or f.base64)
                 
             elif action.type == "scrape":
                 html = await page.content()

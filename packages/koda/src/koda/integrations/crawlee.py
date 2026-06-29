@@ -14,7 +14,7 @@ from crawlee.crawlers import PlaywrightCrawler
 from crawlee.browsers import BrowserPool
 
 from koda.config.main import settings
-from koda.modules.file.service import upload as s3_upload
+from koda.utils.file.service import upload as s3_upload
 
 
 class KodaBrowserController(BrowserController):

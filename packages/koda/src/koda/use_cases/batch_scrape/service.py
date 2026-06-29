@@ -8,7 +8,7 @@ from crawl4ai.content_filter_strategy import PruningContentFilter
 
 from koda.client import KodaClient
 from koda.config.main import settings
-from koda.modules.file.service import upload, generate_presigned_url
+from koda.utils.file.service import upload, generate_presigned_url
 from koda.utils import sanitize_filename
 from koda.use_cases.service import execute_actions
 from koda.utils.webhook.service import webhook_dispatch

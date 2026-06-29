@@ -33,7 +33,7 @@ from koda.integrations import (
 )
 from koda.utils import images_are_identical, sanitize_filename
 from koda.modules.browser.service import BrowserSession
-from koda.modules.file.service import upload, generate_presigned_url
+from koda.utils.file.service import upload, generate_presigned_url
 from koda.utils.webhook import Webhook, WebhookEvent, dispatch_webhook, webhook_dispatch
 
 __all__ = [
