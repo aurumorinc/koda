@@ -18,10 +18,11 @@ class File:
     A wrapper around a local temporary file, with a mandatory filename and mimetype.
     Supports lazy uploading to S3 to generate a presigned URL.
     """
-    def __init__(self, path: str, filename: str, mimetype: str):
+    def __init__(self, path: str, filename: str, mimetype: str, url: Optional[str] = None):
         self.path = path
         self.filename = filename
         self.mimetype = mimetype
+        self.url = url
         self._presigned_url: Optional[str] = None
         self._is_cleaned_up = False
         self._object_name: Optional[str] = None
@@ -145,7 +146,7 @@ class File:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
                 
-        return cls(path, filename, mimetype)
+        return cls(path, filename, mimetype, url=url)
 
     @classmethod
     def from_path(cls, source_path: str, filename: Optional[str] = None) -> "File":

@@ -76,6 +76,7 @@ class TestFile:
         with File.from_url("http://example.com/file.png") as f:
             assert f.filename == "file.png"
             assert f.bytes == b"chunk1chunk2"
+            assert f.url == "http://example.com/file.png"
 
     @pytest.mark.asyncio
     async def test_from_playwright_download(self):
