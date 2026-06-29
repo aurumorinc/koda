@@ -36,68 +36,56 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
         base_profile_url = "/".join(parts[:5])
     else:
         base_profile_url = resolved_url.split("?")[0].rstrip("/")
-        for suffix in ["/featured", "/videos", "/shorts", "/streams", "/podcasts", "/playlists", "/community", "/store"]:
+        for suffix in ["/featured", "/videos", "/shorts", "/streams", "/podcasts", "/playlists", "/posts", "/store"]:
             if base_profile_url.endswith(suffix):
                 base_profile_url = base_profile_url[:-len(suffix)]
                 break
         
     # Determine which tabs actually exist on the channel
-    found_slugs = {"home"}
     try:
         # Wait a moment for tabs to render
-        await page.wait_for_selector('yt-tab-shape, tp-yt-paper-tab', timeout=5000)
+        await page.wait_for_selector('yt-tab-shape a, tp-yt-paper-tab a', timeout=5000)
         found_tabs = await page.evaluate('''() => {
-            const tabs = Array.from(document.querySelectorAll('yt-tab-shape, tp-yt-paper-tab'));
-            return tabs.map(tab => tab.innerText.trim().toLowerCase());
+            const tabs = Array.from(document.querySelectorAll('yt-tab-shape a, tp-yt-paper-tab a'));
+            return tabs.map(tab => ({
+                href: tab.href,
+                text: tab.innerText.trim().toLowerCase()
+            })).filter(tab => tab.href);
         }''')
-        
-        tab_mapping = {
-            "videos": "videos",
-            "shorts": "shorts",
-            "live": "streams",
-            "streams": "streams",
-            "podcasts": "podcasts",
-            "playlists": "playlists",
-            "community": "community",
-            "store": "store"
-        }
-        for text in found_tabs:
-            for k, v in tab_mapping.items():
-                if k in text:
-                    found_slugs.add(v)
     except Exception:
-        # Fallback to all if DOM parsing fails
-        found_slugs = {"home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"}
+        # Fallback to home if DOM parsing fails
+        found_tabs = [{"href": base_profile_url, "text": "home"}]
 
-    tabs = ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"]
+    user_data = context.request.user_data or {}
     
-    # 1. Enqueue About
+    # 1. Enqueue Dialogs (About)
     await context.add_requests([
         Request.from_url(
             url=base_profile_url,
-            unique_key=f"{base_profile_url}#ABOUT",
-            label="ABOUT",
-            user_data=context.request.user_data
+            unique_key=f"{base_profile_url}#DIALOG",
+            label="DIALOG",
+            user_data=user_data
         )
     ])
     
     # 2. Enqueue Tab Handlers
-    valid_handlers = ["HOME", "VIDEOS", "SHORTS", "STREAMS", "PODCASTS", "PLAYLISTS", "COMMUNITY", "STORE"]
-    for tab in tabs:
-        if tab not in found_slugs:
-            continue
+    for tab in found_tabs:
+        url = tab["href"]
+        
+        # Extract slug from URL for the handler logic
+        slug = "home"
+        current_url = url.split("?")[0].rstrip("/")
+        if current_url != base_profile_url:
+            slug = current_url.split("/")[-1]
             
-        tab_upper = str(tab).upper()
-        if tab_upper in valid_handlers:
-            url = base_profile_url if tab_upper == "HOME" else f"{base_profile_url}/{tab_upper.lower()}"
-            await context.add_requests([
-                Request.from_url(
-                    url=url,
-                    unique_key=f"{base_profile_url}#{tab_upper}",
-                    label=tab_upper,
-                    user_data=context.request.user_data
-                )
-            ])
+        await context.add_requests([
+            Request.from_url(
+                url=url,
+                unique_key=f"{url}#TAB",
+                label="TAB",
+                user_data={**user_data, "slug": slug}
+            )
+        ])
 
 
 async def _validate_redirect(page: Page, expected_tab: str) -> bool:
@@ -108,99 +96,35 @@ async def _validate_redirect(page: Page, expected_tab: str) -> bool:
         await page.wait_for_timeout(2000)
         
     current_url = page.url.split("?")[0].rstrip("/")
-    if expected_tab.lower() != "home" and not current_url.lower().endswith(f"/{expected_tab.lower()}"):
+    if expected_tab.lower() not in ["home", "featured"] and not current_url.lower().endswith(f"/{expected_tab.lower()}"):
         return False
     return True
 
 
-@router.handler('HOME')
-async def home_handler(context: PlaywrightCrawlingContext) -> None:
+@router.handler('TAB')
+async def tab_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=None, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=10000)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
-
-@router.handler('VIDEOS')
-async def videos_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "videos"):
+    user_data = context.request.user_data or {}
+    slug = user_data.get("slug", "home")
+    
+    if not await _validate_redirect(page, slug):
         return
+        
     await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
+    
+    if slug in ["home", "featured"]:
+        await scroll_to(page, y=None, wait_callback=lambda: wait_for_networkidle(page))
+        screenshot_bytes = await screenshot(page, max_height=10000)
+    else:
+        await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
+        screenshot_bytes = await screenshot(page, max_height=3072)
+        
     if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
     await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
-@router.handler('SHORTS')
-async def shorts_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "shorts"):
-        return
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
-@router.handler('STREAMS')
-async def streams_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "streams"):
-        return
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
-
-@router.handler('PODCASTS')
-async def podcasts_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "podcasts"):
-        return
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
-
-@router.handler('PLAYLISTS')
-async def playlists_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "playlists"):
-        return
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
-
-@router.handler('COMMUNITY')
-async def community_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "community"):
-        return
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
-
-@router.handler('STORE')
-async def store_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    if not await _validate_redirect(page, "store"):
-        return
-    await wait_for_networkidle(page)
-    await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    screenshot_bytes = await screenshot(page, max_height=3072)
-    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
-    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
-
-@router.handler('ABOUT')
-async def about_handler(context: PlaywrightCrawlingContext) -> None:
+@router.handler('DIALOG')
+async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     
     await page.set_viewport_size({"width": 1366, "height": 3072})

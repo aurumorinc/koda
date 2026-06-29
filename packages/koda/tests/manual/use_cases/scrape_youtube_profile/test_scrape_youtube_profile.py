@@ -42,7 +42,7 @@ async def main():
     logger.info("Testing YouTube Profile Scraper in Headed Mode...")
     
     req = ScrapeYoutubeProfileRequest(
-        url="https://www.youtube.com/@mkbhd",
+        url="https://www.youtube.com/@LinusTechTips",
         formats=["screenshot"],
         timeout=120000,
         maxConcurrency=2
