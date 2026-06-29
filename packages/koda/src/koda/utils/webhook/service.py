@@ -12,6 +12,19 @@ from koda.utils.webhook.schema import Webhook, WebhookEvent
 logger = structlog.get_logger(__name__)
 
 
+
+def _serialize_files(obj: Any) -> Any:
+    from koda.utils.file.main import File
+    if isinstance(obj, File):
+        return obj.presigned_url or obj.base64
+    elif isinstance(obj, dict):
+        return {k: _serialize_files(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_serialize_files(v) for v in obj]
+    elif isinstance(obj, tuple):
+        return tuple(_serialize_files(v) for v in obj)
+    return obj
+
 async def dispatch_webhook(
     webhook: Optional[Webhook], event: WebhookEvent, payload: Dict[str, Any]
 ) -> None:
@@ -22,7 +35,7 @@ async def dispatch_webhook(
     if webhook.events and event not in webhook.events:
         return
 
-    request_payload = {"event": event.value, "payload": payload}
+    request_payload = {"event": event.value, "payload": _serialize_files(payload)}
     if webhook.metadata:
         request_payload["metadata"] = webhook.metadata
 

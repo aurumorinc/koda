@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import uuid
 from typing import Dict, List, Any, cast
 
 from crawlee.router import Router
@@ -39,7 +41,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
                 base_profile_url = base_profile_url[:-len(suffix)]
                 break
         
-    tabs = cast(List[str], context.request.user_data.get("tabs", ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"]))
+    tabs = ["home", "videos", "shorts", "streams", "podcasts", "playlists", "community", "store"]
     
     # 1. Enqueue About
     await context.add_requests([
@@ -47,7 +49,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
             url=base_profile_url,
             unique_key=f"{base_profile_url}#ABOUT",
             label="ABOUT",
-            user_data={"tab_name": "About", **context.request.user_data}
+            user_data=context.request.user_data
         )
     ])
     
@@ -62,7 +64,7 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
                     url=url,
                     unique_key=f"{base_profile_url}#{tab_upper}",
                     label=tab_upper,
-                    user_data={"tab_name": str(tab).capitalize(), **context.request.user_data}
+                    user_data=context.request.user_data
                 )
             ])
 
@@ -87,9 +89,9 @@ async def home_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     await wait_for_networkidle(page)
     await scroll_to(page, y=None, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=10000)
-    with File.from_bytes(shot_bytes, "home.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Home", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=10000)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('VIDEOS')
 async def videos_handler(context: PlaywrightCrawlingContext) -> None:
@@ -98,9 +100,9 @@ async def videos_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "videos.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Videos", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('SHORTS')
 async def shorts_handler(context: PlaywrightCrawlingContext) -> None:
@@ -109,9 +111,9 @@ async def shorts_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "shorts.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Shorts", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('STREAMS')
 async def streams_handler(context: PlaywrightCrawlingContext) -> None:
@@ -120,9 +122,9 @@ async def streams_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "streams.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Streams", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('PODCASTS')
 async def podcasts_handler(context: PlaywrightCrawlingContext) -> None:
@@ -131,9 +133,9 @@ async def podcasts_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "podcasts.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Podcasts", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('PLAYLISTS')
 async def playlists_handler(context: PlaywrightCrawlingContext) -> None:
@@ -142,9 +144,9 @@ async def playlists_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "playlists.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Playlists", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('COMMUNITY')
 async def community_handler(context: PlaywrightCrawlingContext) -> None:
@@ -153,9 +155,9 @@ async def community_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "community.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Community", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('STORE')
 async def store_handler(context: PlaywrightCrawlingContext) -> None:
@@ -164,9 +166,9 @@ async def store_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    shot_bytes = await screenshot(page, max_height=3072)
-    with File.from_bytes(shot_bytes, "store.png", "image/png") as f:
-        await context.push_data({"url": page.url, "tab_name": "Store", "screenshot": f.presigned_url})
+    screenshot_bytes = await screenshot(page, max_height=3072)
+    if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+    await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
 
 @router.handler('ABOUT')
 async def about_handler(context: PlaywrightCrawlingContext) -> None:
@@ -187,8 +189,8 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
             raise Exception("Dialog bounding box is null (element hidden?)")
             
         screenshot_bytes = await page.screenshot(clip=box)
-        with File.from_bytes(screenshot_bytes, "about.png", "image/png") as f:
-            await context.push_data({"url": page.url, "tab_name": "About", "screenshot": f.presigned_url})
+        if isinstance(screenshot_bytes, str): screenshot_bytes = screenshot_bytes.encode("utf-8")
+        await context.push_data({"url": page.url, "screenshot_base64": base64.b64encode(screenshot_bytes).decode("utf-8"), "screenshot_filename": f"{uuid.uuid4().hex}.png"})
     except Exception as e:
         context.log.error(f"Failed to capture About dialog: {e}")
     finally:
@@ -233,28 +235,25 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
             # Start Crawl
             await crawler.run([
                 Request.from_url(
-                    url=request.url,
-                    user_data={
-                        "tabs": request.tabs
-                    }
+                    url=request.url
                 )
             ])
             
             # Post Crawl Formatting
             dataset = await crawler.get_dataset()
-            data_obj = await dataset.get_data()
-            items = data_obj.items
+            data = await dataset.get_data()
+            items = data.items
             
             data_list = []
             
             for item in items:
                 tab_data = {
-                    "tab_name": item.get("tab_name", "Unknown"),
                     "url": item.get("url", "")
                 }
                 
-                if "screenshot" in item:
-                    tab_data["screenshot"] = item["screenshot"]
+                if "screenshot_base64" in item and "screenshot_filename" in item:
+                    f = File.from_base64(item["screenshot_base64"], item["screenshot_filename"], "image/png")
+                    tab_data["screenshot"] = f
                 
                 data_list.append(tab_data)
                 

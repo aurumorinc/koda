@@ -156,3 +156,31 @@ async def test_webhook_dispatch_no_webhook():
         
         assert response.success is True
         mock_dispatch.assert_not_called()
+
+def test_serialize_files():
+    from koda.utils.webhook.service import _serialize_files
+    from koda.utils.file.main import File
+    import os
+
+    f1 = File.from_bytes(b"test1", "f1.png", "image/png")
+    f2 = File.from_bytes(b"test2", "f2.png", "image/png")
+    
+    # Fake URL for f1
+    f1._presigned_url = "https://example.com/f1.png"
+    
+    payload = {
+        "a": 1,
+        "nested": {
+            "file": f1,
+            "list": [f2]
+        }
+    }
+    
+    serialized = _serialize_files(payload)
+    assert serialized["a"] == 1
+    assert serialized["nested"]["file"] == "https://example.com/f1.png"
+    assert serialized["nested"]["list"][0].startswith("data:image/png;base64,")
+
+    f1.cleanup()
+    f2.cleanup()
+

@@ -115,16 +115,22 @@ class File:
             
         path = cls._get_temp_path(filename)
         with open(path, 'wb') as f:
-            f.write(data)
+            if isinstance(data, str):
+                f.write(data.encode("utf-8"))
+            else:
+                f.write(data)
         return cls(path, filename, mimetype)
 
     @classmethod
-    def from_base64(cls, b64_string: str, filename: str, mimetype: Optional[str] = None) -> "File":
+    def from_base64(cls, base64_string: str, filename: str, mimetype: Optional[str] = None) -> "File":
         """Ideal for Crawl4AI (`result.screenshot`)."""
-        if "," in b64_string:
-            b64_string = b64_string.split(",", 1)[1]
+        if isinstance(base64_string, bytes):
+            base64_string = base64_string.decode("utf-8")
             
-        data = base64.b64decode(b64_string)
+        if "," in base64_string:
+            base64_string = base64_string.split(",", 1)[1]
+            
+        data = base64.b64decode(base64_string)
         return cls.from_bytes(data, filename, mimetype)
 
     @classmethod
