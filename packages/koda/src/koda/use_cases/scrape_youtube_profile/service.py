@@ -70,16 +70,14 @@ async def default_handler(context: PlaywrightCrawlingContext) -> None:
 
 
 async def _validate_redirect(page: Page, expected_tab: str) -> bool:
-    current_url = page.url
-    if expected_tab.lower() != "home" and f"/{expected_tab.lower()}" not in current_url.lower():
-        return False
+    # Allow time for YouTube's client-side router to resolve any redirects
     try:
-        selected_tab = await page.locator('yt-tab-shape[aria-selected="true"], tp-yt-paper-tab.iron-selected').first.inner_text(timeout=1500)
-        if selected_tab:
-            selected_tab_clean = selected_tab.strip().lower()
-            if expected_tab.lower() != selected_tab_clean:
-                return False
+        await page.wait_for_load_state("networkidle", timeout=3000)
     except Exception:
+        await page.wait_for_timeout(2000)
+        
+    current_url = page.url.split("?")[0].rstrip("/")
+    if expected_tab.lower() != "home" and not current_url.lower().endswith(f"/{expected_tab.lower()}"):
         return False
     return True
 
@@ -176,12 +174,24 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
     
     await page.set_viewport_size({"width": 1366, "height": 3072})
     try:
-        await page.get_by_role("button").filter(has_text="...more").click()
-        
+        # Some channels don't have the "...more" button. Fail fast if it doesn't exist within 5 seconds.
+        more_button = page.get_by_role("button").filter(has_text="...more")
+        try:
+            await more_button.wait_for(state="visible", timeout=5000)
+            await more_button.click()
+        except Exception:
+            context.log.warning("No '...more' button found for About dialog.")
+            return
+
         # In YouTube's DOM, there are multiple tp-yt-paper-dialog elements.
         # We explicitly filter for the one that has the About channel content.
         dialog = page.locator("tp-yt-paper-dialog:has(ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-about-channel']), tp-yt-paper-dialog:visible").first
-        await dialog.wait_for(state="visible")
+        try:
+            await dialog.wait_for(state="visible", timeout=5000)
+        except Exception:
+            context.log.warning("About dialog did not appear.")
+            return
+
         await wait_for_networkidle(page)
         
         box = await dialog.bounding_box()
