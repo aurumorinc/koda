@@ -166,23 +166,19 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
     
     await page.set_viewport_size({"width": 1366, "height": 3072})
     try:
-        # Give YouTube time to render the '...more' button
-        await page.wait_for_load_state("domcontentloaded")
+        await page.get_by_role("button").filter(has_text="...more").click()
         
-        try:
-            # Prefer the exact role filter that works in recording.py
-            button = page.get_by_role("button").filter(has_text="...more").first
-            await button.click(timeout=5000)
-        except Exception:
-            # Fallback to general selectors if role filtering fails
-            about_selector = "button[aria-label^=\"Description\"]:visible, button:has-text('...more'):visible, button:has-text('more links'):visible, ytd-channel-about-metadata-renderer:visible"
-            await page.locator(about_selector).first.click(timeout=5000)
-            
-        dialog = page.locator("tp-yt-paper-dialog").first
-        await dialog.wait_for(state="visible", timeout=5000)
+        # In YouTube's DOM, there are multiple tp-yt-paper-dialog elements.
+        # We explicitly filter for the one that has the About channel content.
+        dialog = page.locator("tp-yt-paper-dialog:has(ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-about-channel']), tp-yt-paper-dialog:visible").first
+        await dialog.wait_for(state="visible")
         await wait_for_networkidle(page)
         
-        screenshot_bytes = await dialog.screenshot()
+        box = await dialog.bounding_box()
+        if not box:
+            raise Exception("Dialog bounding box is null (element hidden?)")
+            
+        screenshot_bytes = await page.screenshot(clip=box)
         b64_str = base64.b64encode(screenshot_bytes).decode('utf-8')
         await context.push_data({"url": page.url, "tab_name": "About", "screenshot": f"data:image/png;base64,{b64_str}"})
     except Exception as e:
