@@ -1,17 +1,14 @@
-# Changelog v0.10.1
+# Changelog v0.10.2
 
-### Fixes
+## Improvements
 
-* **Symlink Resolution in .runemodules**
-  Resolved an issue where symlinks were incorrectly handled within `.runemodules`, ensuring proper file resolution.
-  Commits: [ced902f](https://github.com/aurumorinc/koda/commit/ced902f0), [03e9b25](https://github.com/aurumorinc/koda/commit/03e9b25d)
+### YouTube Scraping
+*   **Centralized tab configuration:** Refactored internal tab management to improve stability during scraping operations. ([50ff1b1](https://github.com/aurumorinc/koda/commit/50ff1b17))
+*   **Improved URL resolution:** Enhanced the internal URL resolution logic to better handle dynamic YouTube link structures. ([0b48d75](https://github.com/aurumorinc/koda/commit/0b48d758))
+*   **Screenshot helper functions:** Added new utility functions to streamline the extraction and processing of screenshot data from scraped pages. ([a1144a1](https://github.com/aurumorinc/koda/commit/a1144a11))
+*   **Handler naming conventions:** Updated internal handler naming conventions across the scraping module to ensure consistency and improve maintainability. ([a1144a1](https://github.com/aurumorinc/koda/commit/a1144a11))
 
-* **Path Normalization in SKILL.md AST Maps**
-  Implemented normalization for path separators within SKILL.md AST maps to ensure cross-platform consistency.
-  Commits: [ced902f](https://github.com/aurumorinc/koda/commit/ced902f0), [03e9b25](https://github.com/aurumorinc/koda/commit/03e9b25d)
+## Performance
 
-### Docs
-
-* **Agent Instructions in SKILL.md**
-  Updated documentation to include agent instructions within SKILL.md files, providing better guidance for agent behavior.
-  Commits: [ced902f](https://github.com/aurumorinc/koda/commit/ced902f0), [03e9b25](https://github.com/aurumorinc/koda/commit/03e9b25d)
+### Concurrency
+*   **Adjusted default max concurrency:** Updated the default maximum concurrency setting to 10 to improve test suite performance and overall system reliability. ([27eb857](https://github.com/aurumorinc/koda/commit/27eb857e), [1fae610](https://github.com/aurumorinc/koda/commit/1fae6101))
