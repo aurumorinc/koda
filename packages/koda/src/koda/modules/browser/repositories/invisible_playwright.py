@@ -28,11 +28,11 @@ async def launch(user_data_dir: str, config: Dict[str, Any]) -> AsyncGenerator[A
         extra_prefs["zoom.stealth.canvas.substitute_pixels"] = False
         extra_prefs["zoom.stealth.webgl.substitute_pixels"] = False
 
-        import sys
-        if sys.platform.startswith("linux"):
-            extra_prefs["gfx.webrender.all"] = True
-            extra_prefs["gfx.webrender.force-disabled"] = False
-            extra_prefs["gfx.webrender.software"] = True
+    import sys
+    if sys.platform.startswith("linux"):
+        extra_prefs["gfx.webrender.all"] = True
+        extra_prefs["gfx.webrender.force-disabled"] = False
+        extra_prefs["gfx.webrender.software"] = True
 
     if InvisiblePlaywright is None:
         raise RuntimeError("invisible_playwright is not installed.")
