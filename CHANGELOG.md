@@ -1,14 +1,13 @@
-# Changelog v0.10.2
+# Changelog v0.10.3
 
 ## Improvements
 
-### YouTube Scraping
-*   **Centralized tab configuration:** Refactored internal tab management to improve stability during scraping operations. ([50ff1b1](https://github.com/aurumorinc/koda/commit/50ff1b17))
-*   **Improved URL resolution:** Enhanced the internal URL resolution logic to better handle dynamic YouTube link structures. ([0b48d75](https://github.com/aurumorinc/koda/commit/0b48d758))
-*   **Screenshot helper functions:** Added new utility functions to streamline the extraction and processing of screenshot data from scraped pages. ([a1144a1](https://github.com/aurumorinc/koda/commit/a1144a11))
-*   **Handler naming conventions:** Updated internal handler naming conventions across the scraping module to ensure consistency and improve maintainability. ([a1144a1](https://github.com/aurumorinc/koda/commit/a1144a11))
+* **Tab Handler: Added unit test coverage for scroll bounds**
+  Implemented new unit tests to verify scroll boundary calculations within the Tab Handler component.
+  Commits: [951e898](https://github.com/aurumorinc/koda/commit/951e898b), [bceca20](https://github.com/aurumorinc/koda/commit/bceca206), [b4387f1](https://github.com/aurumorinc/koda/commit/b4387f1a)
 
-## Performance
+## Fixes
 
-### Concurrency
-*   **Adjusted default max concurrency:** Updated the default maximum concurrency setting to 10 to improve test suite performance and overall system reliability. ([27eb857](https://github.com/aurumorinc/koda/commit/27eb857e), [1fae610](https://github.com/aurumorinc/koda/commit/1fae6101))
+* **Scroll Strategy: Replaced network idle wait with fixed timeout for YouTube profile scrolling**
+  Updated the scroll strategy to use a fixed timeout instead of waiting for network idle, ensuring more consistent behavior when scrolling through YouTube profiles.
+  Commits: [951e898](https://github.com/aurumorinc/koda/commit/951e898b), [bceca20](https://github.com/aurumorinc/koda/commit/bceca206), [b4387f1](https://github.com/aurumorinc/koda/commit/b4387f1a)
