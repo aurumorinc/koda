@@ -1,33 +1,34 @@
-# Changelog v0.7.0
+# Changelog v0.8.0
 
 ## Breaking Changes
 
-*   **Configuration schema: `maxConcurrency` renamed to `max_concurrency`**
-    The configuration key `maxConcurrency` has been renamed to `max_concurrency` to align with internal naming conventions, and the default value has been increased to 10.
-    *   **Migration:** Update all configuration files and environment variable mappings to use the new `max_concurrency` key.
-    *   Commit: [2c006d4](https://github.com/aurumorinc/koda/commit/2c006d4b)
+* **YouTube Scraper API Data Format Change**
+  The YouTube scraper API has been redesigned to return base64 screenshot data instead of markdown or HTML content.
+  * **Migration Path:** Update your integration logic to process base64 image strings. You must also review the new configuration options for headless/pixel substitution to ensure compatibility with your specific environment.
 
-*   **API parameter rename: Service function arguments**
-    Service function argument names have been updated from class-specific names to generic `request` identifiers to improve consistency across the API.
-    *   **Migration:** Update all function calls to use the `request` argument name instead of previous class-named variables.
-    *   Commit: [d862210](https://github.com/aurumorinc/koda/commit/d8622101)
+## Features
 
-## Improvements
-
-*   **Core logic refactoring**
-    Centralized core logic and refactored use case schemas into sub-packages to improve maintainability.
-    *   Commits: [5f84c52](https://github.com/aurumorinc/koda/commit/5f84c528), [dbc208d](https://github.com/aurumorinc/koda/commit/dbc208d5)
-
-*   **Standardization of S3 configuration**
-    Refactored S3 configuration handling to ensure consistency across the codebase.
-    *   Commits: [5f84c52](https://github.com/aurumorinc/koda/commit/5f84c528), [dbc208d](https://github.com/aurumorinc/koda/commit/dbc208d5)
-
-*   **Synchronous entry point conversion**
-    Converted main entry points to synchronous functions using `asyncio.run` to provide broader compatibility for non-async environments.
-    *   Commit: [f3d9f9e](https://github.com/aurumorinc/koda/commit/f3d9f9e9)
+* **YouTube Scraper Redesign**
+  The scraper has been completely overhauled to support network-aware scrolling and targeted tab screenshots, returning base64 data.
+  * **Commits:** [b4b7cda](https://github.com/aurumorinc/koda/commit/b4b7cdab), [8e7fae2](https://github.com/aurumorinc/koda/commit/8e7fae2d), [f8bf53c](https://github.com/aurumorinc/koda/commit/f8bf53cf)
 
 ## Fixes
 
-*   **Test log suppression**
-    Added a logging filter to ignore `TargetClosedError` exceptions during test execution to reduce noise.
-    *   Commit: [b45af58](https://github.com/aurumorinc/koda/commit/b45af581)
+* **WebRender Indentation Correction**
+  Fixed an issue with WebRender indentation to ensure proper configuration parsing.
+  * **Commit:** [658eab8](https://github.com/aurumorinc/koda/commit/658eab87)
+* **Configuration Alias Support**
+  Added support for multiple aliases (environment variables and field names) for configuration settings.
+  * **Commit:** [a81636e](https://github.com/aurumorinc/koda/commit/a81636e1)
+* **Linux WebRender Support**
+  Enabled WebRender support specifically for Linux environments.
+  * **Commit:** [a689319](https://github.com/aurumorinc/koda/commit/a6893194)
+* **KodaClient Pixel Substitution**
+  Disabled pixel substitution by default in KodaClient to align with the new scraper architecture.
+  * **Commit:** [a689319](https://github.com/aurumorinc/koda/commit/a6893194)
+
+## Docs
+
+* **AI Coding Standards Reference**
+  Added `AGENTS.md` to the repository, providing a comprehensive reference for Clean Architecture, Domain-Driven Design (DDD), Python standards, and infrastructure patterns.
+  * **Commit:** [95b38ed](https://github.com/aurumorinc/koda/commit/95b38ed6)
