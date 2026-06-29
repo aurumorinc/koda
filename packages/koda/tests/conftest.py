@@ -175,7 +175,7 @@ async def strict_asyncio_exceptions():
         
         # We don't fail for TargetClosedError since koda specifically ignores it,
         # but koda's own handler will intercept it first anyway.
-        if exc and "TargetClosedError" not in str(type(exc).__name__) and "TimeoutError" not in str(type(exc).__name__):
+        if exc and "TargetClosedError" not in str(type(exc).__name__):
             unhandled_exceptions.append(exc)
             
             if original_handler:

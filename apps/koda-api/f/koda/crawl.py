@@ -30,7 +30,6 @@ def main(
     webhook: Optional[Webhook] = None,
     scrapeOptions: ScrapeOptions = ScrapeOptions(),
     zeroDataRetention: bool = False,
-    **kwargs
 ) -> dict:
     """
     Execute a BFS crawl starting from the request URL using Koda infrastructure.
