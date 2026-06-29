@@ -5,7 +5,9 @@ from __future__ import annotations
 import re
 from PIL import Image, ImageChops
 
-__all__ = ["images_are_identical", "sanitize_filename"]
+__all__ = ["images_are_identical", "sanitize_filename", "File"]
+
+from koda.utils.file import File
 
 def images_are_identical(img1: Image.Image, img2: Image.Image) -> bool:
     """Compare two PIL Images to see if they are identical.
