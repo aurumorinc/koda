@@ -1,5 +1,4 @@
 import asyncio
-import base64
 from typing import Dict, List, Any, cast
 
 from crawlee.router import Router
@@ -12,6 +11,7 @@ from koda.config.main import settings
 from koda.exceptions import TimeoutError, BrowserLaunchError
 from koda.utils.webhook.service import webhook_dispatch
 from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
+from koda.utils.file.main import File
 from .schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
 
 router = Router[PlaywrightCrawlingContext]()
@@ -87,8 +87,9 @@ async def home_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     await wait_for_networkidle(page)
     await scroll_to(page, y=None, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=10000)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Home", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=10000)
+    with File.from_bytes(shot_bytes, "home.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Home", "screenshot": f.presigned_url})
 
 @router.handler('VIDEOS')
 async def videos_handler(context: PlaywrightCrawlingContext) -> None:
@@ -97,8 +98,9 @@ async def videos_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Videos", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "videos.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Videos", "screenshot": f.presigned_url})
 
 @router.handler('SHORTS')
 async def shorts_handler(context: PlaywrightCrawlingContext) -> None:
@@ -107,8 +109,9 @@ async def shorts_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Shorts", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "shorts.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Shorts", "screenshot": f.presigned_url})
 
 @router.handler('STREAMS')
 async def streams_handler(context: PlaywrightCrawlingContext) -> None:
@@ -117,8 +120,9 @@ async def streams_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Streams", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "streams.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Streams", "screenshot": f.presigned_url})
 
 @router.handler('PODCASTS')
 async def podcasts_handler(context: PlaywrightCrawlingContext) -> None:
@@ -127,8 +131,9 @@ async def podcasts_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Podcasts", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "podcasts.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Podcasts", "screenshot": f.presigned_url})
 
 @router.handler('PLAYLISTS')
 async def playlists_handler(context: PlaywrightCrawlingContext) -> None:
@@ -137,8 +142,9 @@ async def playlists_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Playlists", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "playlists.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Playlists", "screenshot": f.presigned_url})
 
 @router.handler('COMMUNITY')
 async def community_handler(context: PlaywrightCrawlingContext) -> None:
@@ -147,8 +153,9 @@ async def community_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Community", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "community.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Community", "screenshot": f.presigned_url})
 
 @router.handler('STORE')
 async def store_handler(context: PlaywrightCrawlingContext) -> None:
@@ -157,8 +164,9 @@ async def store_handler(context: PlaywrightCrawlingContext) -> None:
         return
     await wait_for_networkidle(page)
     await scroll_to(page, y=3072, wait_callback=lambda: wait_for_networkidle(page))
-    b64_str = base64.b64encode(await screenshot(page, max_height=3072)).decode('utf-8')
-    await context.push_data({"url": page.url, "tab_name": "Store", "screenshot": f"data:image/png;base64,{b64_str}"})
+    shot_bytes = await screenshot(page, max_height=3072)
+    with File.from_bytes(shot_bytes, "store.png", "image/png") as f:
+        await context.push_data({"url": page.url, "tab_name": "Store", "screenshot": f.presigned_url})
 
 @router.handler('ABOUT')
 async def about_handler(context: PlaywrightCrawlingContext) -> None:
@@ -179,8 +187,8 @@ async def about_handler(context: PlaywrightCrawlingContext) -> None:
             raise Exception("Dialog bounding box is null (element hidden?)")
             
         screenshot_bytes = await page.screenshot(clip=box)
-        b64_str = base64.b64encode(screenshot_bytes).decode('utf-8')
-        await context.push_data({"url": page.url, "tab_name": "About", "screenshot": f"data:image/png;base64,{b64_str}"})
+        with File.from_bytes(screenshot_bytes, "about.png", "image/png") as f:
+            await context.push_data({"url": page.url, "tab_name": "About", "screenshot": f.presigned_url})
     except Exception as e:
         context.log.error(f"Failed to capture About dialog: {e}")
     finally:
