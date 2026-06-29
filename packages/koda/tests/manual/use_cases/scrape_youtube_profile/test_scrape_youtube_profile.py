@@ -1,6 +1,11 @@
 import asyncio
 import base64
 import os
+
+# Force Koda to run headed before importing any Koda modules
+# so the Settings class picks it up during initialization.
+os.environ.setdefault("KODA_HEADLESS", "false")
+
 from worldline import structlog
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest
 from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile
@@ -23,8 +28,6 @@ def save_base64_image(b64_string: str, filename: str, output_dir: str = "output"
 
 async def main():
     logger.info("Testing YouTube Profile Scraper in Headed Mode...")
-    # Force Koda to run headed if not explicitly set
-    os.environ.setdefault("KODA_HEADLESS", "false")
     
     req = ScrapeYoutubeProfileRequest(
         url="https://www.youtube.com/@mkbhd",
