@@ -3,6 +3,7 @@
 import io
 import boto3
 from botocore.config import Config
+from boto3.s3.transfer import TransferConfig
 from typing import Dict, Any, Union
 from koda.config.main import settings
 
@@ -20,12 +21,16 @@ def upload(data: Union[bytes, str], object_name: str, mimetype: str) -> None:
     s3_client = _get_client()
     bucket = settings.s3.bucket_name
     
+    # Disable multipart upload up to 500MB to avoid SignatureDoesNotMatch errors with S3-compatible providers
+    transfer_config = TransferConfig(multipart_threshold=500 * 1024 * 1024)
+    
     if isinstance(data, bytes):
         s3_client.upload_fileobj(
             io.BytesIO(data),
             bucket,
             object_name,
-            ExtraArgs={'ContentType': mimetype}
+            ExtraArgs={'ContentType': mimetype},
+            Config=transfer_config
         )
     else:
         # Assume it's a file path
@@ -33,7 +38,8 @@ def upload(data: Union[bytes, str], object_name: str, mimetype: str) -> None:
             data,
             bucket,
             object_name,
-            ExtraArgs={'ContentType': mimetype}
+            ExtraArgs={'ContentType': mimetype},
+            Config=transfer_config
         )
 
 def generate_presigned_url(object_name: str, expires_in: int = 3600) -> str:
