@@ -44,7 +44,7 @@ async def main():
         url="https://www.youtube.com/@LinusTechTips",
         formats=["screenshot"],
         timeout=300000,
-        maxConcurrency=10
+        maxConcurrency=4
     )
 
     logger.info("Starting crawler...")
