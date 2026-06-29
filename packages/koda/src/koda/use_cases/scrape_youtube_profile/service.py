@@ -6,7 +6,7 @@ from typing import Dict, List, Any, cast
 
 from crawlee.router import Router
 from crawlee.crawlers import PlaywrightCrawlingContext, PlaywrightCrawler
-from crawlee import Request, ConcurrencySettings
+from crawlee import Request, ConcurrencySettings, Configuration
 from playwright.async_api import Page
 
 from koda.client import KodaClient
@@ -201,6 +201,7 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
         from datetime import timedelta
 
         async with KodaClient(s3_resource=request.s3_resource, timeout=request.timeout, substitute_pixels=False) as client:
+            config = Configuration(memory_mbytes=2048)
             crawler = PlaywrightCrawler(
                 client=client,  # type: ignore
                 request_handler=router,
@@ -209,7 +210,8 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
                 concurrency_settings=ConcurrencySettings(
                     max_concurrency=request.max_concurrency,
                     desired_concurrency=min(10, request.max_concurrency)
-                )
+                ),
+                configuration=config
             )
 
             @crawler.pre_navigation_hook
