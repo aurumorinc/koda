@@ -16,14 +16,16 @@ playwright/
 └── SKILL.md
 ```
 
+> **Agent Instructions:** The AST maps below provide a high-level overview of the `modules/` directory. Note that the complete repository source code is available within the `modules/` folder. You can and should use your file reading tools to access the actual source code within `modules/` for complete details, implementation logic, and context beyond what the AST map provides.
+
 ### AST Map: `modules/playwright`
 
 ```python
-browser_patches/webkit/embedder/Playwright/win/PlaywrightReplace.h:
+browser_patches\webkit\embedder\Playwright\win\PlaywrightReplace.h:
 ⋮
 │static void processCrashReport(const wchar_t* fileName) { ::MessageBox(0, fileName, L"Crash Report"
 
-packages/dashboard/src/imageLayout.ts:
+packages\dashboard\src\imageLayout.ts:
 ⋮
 │export type ImageLayout = {
 │  rect: DOMRect;
@@ -33,7 +35,7 @@ packages/dashboard/src/imageLayout.ts:
 │  offsetY: number;
 ⋮
 
-packages/extension/src/protocolHandlers.ts:
+packages\extension\src\protocolHandlers.ts:
 ⋮
 │export type ProtocolCommand = {
 │  id: number;
@@ -51,23 +53,23 @@ packages/extension/src/protocolHandlers.ts:
 │  notifyTabDetached(tabId: number): void;
 ⋮
 
-packages/html-reporter/src/headerView.tsx:
+packages\html-reporter\src\headerView.tsx:
 ⋮
 │          const currentParams = new URLSearchParams(url.hash.slice(1));
 ⋮
 
-packages/injected/src/layoutSelectorUtils.ts:
+packages\injected\src\layoutSelectorUtils.ts:
 ⋮
 │export type LayoutSelectorName = 'left-of' | 'right-of' | 'above' | 'below' | 'near';
 ⋮
 
-packages/injected/src/selectorEngine.ts:
+packages\injected\src\selectorEngine.ts:
 ⋮
 │export type SelectorRoot = Element | ShadowRoot | Document;
 │
 ⋮
 
-packages/injected/src/utilityScript.ts:
+packages\injected\src\utilityScript.ts:
 ⋮
 │export type Builtins = {
 │  setTimeout: Window['setTimeout'],
@@ -81,13 +83,13 @@ packages/injected/src/utilityScript.ts:
 │  performance: Window['performance'],
 ⋮
 
-packages/isomorphic/colors.ts:
+packages\isomorphic\ariaSnapshot.ts:
 ⋮
-│export type Colors = typeof webColors;
+│export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
 │
 ⋮
 
-packages/isomorphic/cssParser.ts:
+packages\isomorphic\cssParser.ts:
 ⋮
 │export class InvalidSelectorError extends Error {
 ⋮
@@ -95,18 +97,20 @@ packages/isomorphic/cssParser.ts:
 │export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combinator: ClauseCombin
 ⋮
 
-packages/isomorphic/headers.ts:
+packages\isomorphic\headers.ts:
 ⋮
 │type HeadersArray = { name: string, value: string }[];
+│type HeadersObject = { [key: string]: string };
+│
 ⋮
 
-packages/isomorphic/imageUtils.ts:
+packages\isomorphic\imageUtils.ts:
 ⋮
 │export type ImageData = { width: number, height: number, data: Buffer };
 │
 ⋮
 
-packages/isomorphic/jsonSchema.ts:
+packages\isomorphic\jsonSchema.ts:
 ⋮
 │export type JsonSchema = {
 │  type?: string;
@@ -118,9 +122,10 @@ packages/isomorphic/jsonSchema.ts:
 │  patternError?: string;
 ⋮
 
-packages/isomorphic/locatorUtils.ts:
+packages\isomorphic\locatorUtils.ts:
 ⋮
 │export type ByRoleOptions = {
+│  busy?: boolean;
 │  checked?: boolean;
 │  description?: string | RegExp;
 │  disabled?: boolean;
@@ -129,10 +134,9 @@ packages/isomorphic/locatorUtils.ts:
 │  includeHidden?: boolean;
 │  level?: number;
 │  name?: string | RegExp;
-│  pressed?: boolean;
 ⋮
 
-packages/isomorphic/manualPromise.ts:
+packages\isomorphic\manualPromise.ts:
 ⋮
 │export class ManualPromise<T = void> extends Promise<T> {
 │  private _resolve!: (t: T) => void;
@@ -146,21 +150,7 @@ packages/isomorphic/manualPromise.ts:
 │      resolve = f;
 ⋮
 
-packages/isomorphic/platform.ts:
-⋮
-│export type Platform = {
-│  name: 'node' | 'web' | 'empty';
-│
-│  boxedStackPrefixes: () => string[];
-│  calculateSha1: (text: string) => Promise<string>;
-│  colors: Colors;
-│  coreDir?: string;
-│  createGuid: () => string;
-│  defaultMaxListeners: () => number;
-│  env: Record<string, string | undefined>;
-⋮
-
-packages/isomorphic/trace/versions/traceV3.ts:
+packages\isomorphic\trace\versions\traceV3.ts:
 ⋮
 │type CallMetadata = {
 │  id: string;
@@ -179,41 +169,47 @@ packages/isomorphic/trace/versions/traceV3.ts:
 │  [ string ] |
 ⋮
 
-packages/isomorphic/trace/versions/traceV4.ts:
+packages\isomorphic\trace\versions\traceV4.ts:
 ⋮
 │type NodeSnapshot =
 ⋮
 
-packages/isomorphic/trace/versions/traceV5.ts:
+packages\isomorphic\trace\versions\traceV5.ts:
 ⋮
 │type NodeSnapshot =
 ⋮
 
-packages/isomorphic/trace/versions/traceV6.ts:
+packages\isomorphic\trace\versions\traceV6.ts:
 ⋮
 │type NodeSnapshot =
 ⋮
 
-packages/isomorphic/trace/versions/traceV7.ts:
+packages\isomorphic\trace\versions\traceV7.ts:
 ⋮
 │type NodeSnapshot =
 ⋮
 
-packages/isomorphic/trace/versions/traceV8.ts:
+packages\isomorphic\trace\versions\traceV8.ts:
 ⋮
 │type NodeSnapshot =
 ⋮
 
-packages/isomorphic/types.ts:
+packages\isomorphic\types.ts:
 ⋮
 │export type HeadersArray = NameValue[];
 
-packages/isomorphic/urlMatch.ts:
+packages\isomorphic\urlMatch.ts:
 ⋮
 │export type URLMatch = string | RegExp | ((url: URL) => boolean) | URLPattern;
 ⋮
 
-packages/playwright-client/types/types.d.ts:
+packages\playwright-client\src\nodeStubs\events.ts:
+⋮
+│export class EventEmitter {
+│  static defaultMaxListeners = 10;
+⋮
+
+packages\playwright-client\types\types.d.ts:
 ⋮
 │type DeviceDescriptor = {
 │  viewport: ViewportSize;
@@ -222,6 +218,28 @@ packages/playwright-client/types/types.d.ts:
 │  isMobile: boolean;
 │  hasTouch: boolean;
 │  defaultBrowserType: 'chromium' | 'firefox' | 'webkit';
+⋮
+│export interface APIRequestContext {
+│  /**
+│   * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) reque
+│   * response. The method will populate request cookies from the context and update context cookies
+│   * The method will automatically follow redirects.
+│   * @param url Target URL.
+│   * @param options
+│   */
+│  delete(url: string, options?: {
+│    /**
+⋮
+│export interface Download {
+│  /**
+│   * Cancels a download. Will not fail if the download is already finished or canceled. Upon succes
+│   * `download.failure()` would resolve to `'canceled'`.
+│   */
+│  cancel(): Promise<void>;
+│
+│  /**
+│   * Returns a readable stream for a successful download, or throws for a failed/canceled download.
+│   *
 ⋮
 │export interface WebSocket {
 │  /**
@@ -246,7 +264,7 @@ packages/playwright-client/types/types.d.ts:
 │   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url
 ⋮
 
-packages/playwright-core/src/client/artifact.ts:
+packages\playwright-core\src\client\artifact.ts:
 ⋮
 │export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 │  static from(channel: channels.ArtifactChannel): Artifact {
@@ -261,7 +279,7 @@ packages/playwright-core/src/client/artifact.ts:
 │
 ⋮
 
-packages/playwright-core/src/client/channelOwner.ts:
+packages\playwright-core\src\client\channelOwner.ts:
 ⋮
 │export abstract class ChannelOwner<T extends channels.Channel = channels.Channel> extends EventEmit
 │  readonly _connection: Connection;
@@ -275,7 +293,7 @@ packages/playwright-core/src/client/channelOwner.ts:
 │  _logger: Logger | undefined;
 ⋮
 
-packages/playwright-core/src/client/channels.d.ts:
+packages\playwright-core\src\client\channels.d.ts:
 ⋮
 │export type Metadata = {
 │  location?: {
@@ -287,19 +305,8 @@ packages/playwright-core/src/client/channels.d.ts:
 │  internal?: boolean,
 │  stepId?: string,
 ⋮
-│export type SerializedValue = {
-│  n?: number,
-│  b?: boolean,
-│  s?: string,
-│  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
-│  d?: string,
-│  u?: string,
-│  bi?: string,
-│  ta?: {
-│    b: Binary,
-⋮
 
-packages/playwright-core/src/client/disposable.ts:
+packages\playwright-core\src\client\disposable.ts:
 ⋮
 │export class DisposableObject<T extends channels.DisposableChannel = channels.DisposableChannel> ex
 │  static from(channel: channels.DisposableChannel): DisposableObject {
@@ -313,7 +320,7 @@ packages/playwright-core/src/client/disposable.ts:
 │  async dispose() {
 ⋮
 
-packages/playwright-core/src/client/eventEmitter.ts:
+packages\playwright-core\src\client\eventEmitter.ts:
 ⋮
 │export class EventEmitter implements EventEmitterType {
 │
@@ -322,12 +329,12 @@ packages/playwright-core/src/client/eventEmitter.ts:
 │  private _maxListeners: number | undefined = undefined;
 │  readonly _pendingHandlers = new Map<EventType, Set<Promise<void>>>();
 │  private _rejectionHandler: ((error: Error) => void) | undefined;
-│  readonly _platform: Platform;
 │
-│  constructor(platform: Platform) {
+│  constructor() {
+│    if (this._events === undefined || this._events === Object.getPrototypeOf(this)._events) {
 ⋮
 
-packages/playwright-core/src/client/network.ts:
+packages\playwright-core\src\client\network.ts:
 ⋮
 │export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implements api.WebSocket {
 │  private _page: Page;
@@ -341,7 +348,21 @@ packages/playwright-core/src/client/network.ts:
 │    super(parent, type, guid, initializer);
 ⋮
 
-packages/playwright-core/src/client/types.ts:
+packages\playwright-core\src\client\timeoutSettings.ts:
+⋮
+│export class TimeoutSettings {
+│  private _parent: TimeoutSettings | undefined;
+│  private _defaultTimeout: number | undefined;
+│  private _defaultNavigationTimeout: number | undefined;
+│
+│  constructor(parent?: TimeoutSettings) {
+│    this._parent = parent;
+│  }
+│
+│  setDefaultTimeout(timeout: number | undefined) {
+⋮
+
+packages\playwright-core\src\client\types.ts:
 ⋮
 │type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 ⋮
@@ -359,13 +380,13 @@ packages/playwright-core/src/client/types.ts:
 │export type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'botto
 ⋮
 
-packages/playwright-core/src/client/webError.ts:
+packages\playwright-core\src\client\webError.ts:
 ⋮
 │type WebErrorLocation = channels.BrowserContextPageErrorEvent['location'];
 │
 ⋮
 
-packages/playwright-core/src/protocol/validatorPrimitives.ts:
+packages\playwright-core\src\protocol\validatorPrimitives.ts:
 ⋮
 │export class ValidationError extends Error {}
 │export type Validator = (arg: any, path: string, context: ValidatorContext) => any;
@@ -375,7 +396,15 @@ packages/playwright-core/src/protocol/validatorPrimitives.ts:
 │  isUnderTest: () => boolean;
 ⋮
 
-packages/playwright-core/src/server/artifact.ts:
+packages\playwright-core\src\serverRegistry.ts:
+⋮
+│export type BrowserDescriptor = EndpointInfo & {
+│  playwrightVersion: string;
+│  playwrightLib: string;
+│  browser: BrowserInfo;
+⋮
+
+packages\playwright-core\src\server\artifact.ts:
 ⋮
 │export class Artifact extends SdkObject {
 │  private _localPath: string;
@@ -389,12 +418,12 @@ packages/playwright-core/src/server/artifact.ts:
 │
 ⋮
 
-packages/playwright-core/src/server/bidi/third_party/bidiProtocolCore.ts:
+packages\playwright-core\src\server\bidi\third_party\bidiProtocolCore.ts:
 ⋮
 │export type EmptyParams = Extensible;
 ⋮
 
-packages/playwright-core/src/server/channels.d.ts:
+packages\playwright-core\src\server\channels.d.ts:
 ⋮
 │export type Metadata = {
 │  location?: {
@@ -407,7 +436,7 @@ packages/playwright-core/src/server/channels.d.ts:
 │  stepId?: string,
 ⋮
 
-packages/playwright-core/src/server/chromium/crConnection.ts:
+packages\playwright-core\src\server\chromium\crConnection.ts:
 ⋮
 │export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap> {
 │  private readonly _connection: CRConnection;
@@ -421,7 +450,7 @@ packages/playwright-core/src/server/chromium/crConnection.ts:
 │  constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string, eventLi
 ⋮
 
-packages/playwright-core/src/server/disposable.ts:
+packages\playwright-core\src\server\disposable.ts:
 ⋮
 │export abstract class DisposableObject extends SdkObject implements Disposable {
 │  readonly parent: Page | BrowserContext;
@@ -434,7 +463,7 @@ packages/playwright-core/src/server/disposable.ts:
 │  abstract dispose(): Promise<void>;
 ⋮
 
-packages/playwright-core/src/server/instrumentation.ts:
+packages\playwright-core\src\server\instrumentation.ts:
 ⋮
 │export class SdkObject<EM extends EventMap = EventMap> extends EventEmitter<EM> {
 │  guid: string;
@@ -459,7 +488,7 @@ packages/playwright-core/src/server/instrumentation.ts:
 │  title?: string;
 ⋮
 
-packages/playwright-core/src/server/network.ts:
+packages\playwright-core\src\server\network.ts:
 ⋮
 │export class WebSocket extends SdkObject {
 │  private _url: string;
@@ -473,7 +502,7 @@ packages/playwright-core/src/server/network.ts:
 │  static Events = {
 ⋮
 
-packages/playwright-core/src/server/progress.ts:
+packages\playwright-core\src\server\progress.ts:
 ⋮
 │export interface Progress {
 │  timeout: number;
@@ -498,18 +527,18 @@ packages/playwright-core/src/server/progress.ts:
 │  constructor(metadata?: CallMetadata, onCallLog?: (message: string) => void) {
 ⋮
 
-packages/playwright-core/src/server/registry/index.ts:
+packages\playwright-core\src\server\registry\index.ts:
 ⋮
 │export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 ⋮
 
-packages/playwright-core/src/server/screencast.ts:
+packages\playwright-core\src\server\screencast.ts:
 ⋮
 │type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right
 │
 ⋮
 
-packages/playwright-core/src/server/transport.ts:
+packages\playwright-core\src\server\transport.ts:
 ⋮
 │export type ProtocolResponse = {
 │  id?: number;
@@ -522,22 +551,14 @@ packages/playwright-core/src/server/transport.ts:
 │  browserContextId?: string;
 ⋮
 
-packages/playwright-core/src/server/types.ts:
+packages\playwright-core\src\server\types.ts:
 ⋮
 │export type BrowserContextOptions = channels.BrowserNewContextOptions & {
 │  proxyOverride?: ProxySettings;
 │  internalIgnoreHTTPSErrors?: boolean;
 ⋮
 
-packages/playwright-core/src/serverRegistry.ts:
-⋮
-│export type BrowserDescriptor = EndpointInfo & {
-│  playwrightVersion: string;
-│  playwrightLib: string;
-│  browser: BrowserInfo;
-⋮
-
-packages/playwright-core/src/tools/backend/context.ts:
+packages\playwright-core\src\tools\backend\context.ts:
 ⋮
 │export type ContextConfig = {
 │  allowUnrestrictedFileAccess?: boolean;
@@ -556,25 +577,7 @@ packages/playwright-core/src/tools/backend/context.ts:
 │  cwd: string;
 ⋮
 
-packages/playwright-core/src/tools/backend/tab.ts:
-⋮
-│type Download = {
-│  download: playwright.Download;
-│  finished: boolean;
-│  outputFile: string;
-⋮
-
-packages/playwright-core/src/tools/cli-client/registry.ts:
-⋮
-│export type ClientInfo = {
-│  version: string;
-│  workspaceDirHash: string;
-│  daemonProfilesDir: string;
-│  workspaceDir: string | undefined;
-│  homeDir: string;
-⋮
-
-packages/playwright-core/src/tools/mcp/cdpRelayHandler.ts:
+packages\playwright-core\src\tools\mcp\cdpRelayHandler.ts:
 ⋮
 │export type CDPMessage = {
 │  id?: number;
@@ -588,7 +591,7 @@ packages/playwright-core/src/tools/mcp/cdpRelayHandler.ts:
 │
 ⋮
 
-packages/playwright-core/src/tools/mcp/config.ts:
+packages\playwright-core\src\tools\mcp\config.ts:
 ⋮
 │export type CLIOptions = {
 │  allowedHosts?: string[];
@@ -615,55 +618,14 @@ packages/playwright-core/src/tools/mcp/config.ts:
 │  configFile?: string;
 ⋮
 
-packages/playwright-core/src/tools/utils/mcp/server.ts:
+packages\playwright-core\src\tools\utils\mcp\server.ts:
 ⋮
 │export type ClientInfo = {
 │  cwd: string;
 │  clientName: string;
 ⋮
 
-packages/playwright-core/types/types.d.ts:
-⋮
-│export interface BrowserType<Unused = {}> {
-│  /**
-│   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Prot
-│   *
-│   * The default browser context is accessible via
-│   * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
-│   *
-│   * **NOTE** Connecting over the Chrome DevTools Protocol is only supported for Chromium-based bro
-│   *
-│   * **NOTE** This connection is significantly lower fidelity than the Playwright protocol connecti
-⋮
-│type DeviceDescriptor = {
-│  viewport: ViewportSize;
-│  userAgent: string;
-│  deviceScaleFactor: number;
-│  isMobile: boolean;
-│  hasTouch: boolean;
-│  defaultBrowserType: 'chromium' | 'firefox' | 'webkit';
-⋮
-│export type AndroidSelector = {
-│  checkable?: boolean,
-│  checked?: boolean,
-│  clazz?: string | RegExp,
-│  clickable?: boolean,
-│  depth?: number,
-│  desc?: string | RegExp,
-│  enabled?: boolean,
-│  focusable?: boolean,
-│  focused?: boolean,
-⋮
-│export interface APIRequestContext {
-│  /**
-│   * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) reque
-│   * response. The method will populate request cookies from the context and update context cookies
-│   * The method will automatically follow redirects.
-│   * @param url Target URL.
-│   * @param options
-│   */
-│  delete(url: string, options?: {
-│    /**
+packages\playwright-core\types\types.d.ts:
 ⋮
 │export interface WebSocket {
 │  /**
@@ -688,18 +650,7 @@ packages/playwright-core/types/types.d.ts:
 │   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url
 ⋮
 
-packages/playwright-ct-core/index.d.ts:
-⋮
-│export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
-│  use?: BasePlaywrightTestConfig<T, W>['use'] & {
-│    ctPort?: number;
-│    ctTemplateDir?: string;
-│    ctCacheDir?: string;
-│    ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
-│  };
-⋮
-
-packages/playwright-ct-core/src/injected/importRegistry.ts:
+packages\playwright-ct-core\src\injected\importRegistry.ts:
 ⋮
 │export class ImportRegistry {
 │  private _registry = new Map<string, () => Promise<any>>();
@@ -713,7 +664,7 @@ packages/playwright-ct-core/src/injected/importRegistry.ts:
 │    const importFunction = this._registry.get(importRef.id);
 ⋮
 
-packages/playwright-ct-core/src/tsxTransform.ts:
+packages\playwright-ct-core\src\tsxTransform.ts:
 ⋮
 │type TsxTransformOptions = {
 │  setTransformData: (key: string, value: any) => void;
@@ -725,7 +676,7 @@ packages/playwright-ct-core/src/tsxTransform.ts:
 │  remoteName: string | undefined;
 ⋮
 
-packages/playwright/src/agents/agentParser.ts:
+packages\playwright\src\agents\agentParser.ts:
 ⋮
 │type AgentSpecHeader = {
 │  name: string;
@@ -735,7 +686,7 @@ packages/playwright/src/agents/agentParser.ts:
 │  tools: string[];
 ⋮
 
-packages/playwright/src/common/config.ts:
+packages\playwright\src\common\config.ts:
 ⋮
 │export class FullConfigInternal {
 │  readonly config: FullConfig;
@@ -746,11 +697,10 @@ packages/playwright/src/common/config.ts:
 │  readonly projects: FullProjectInternal[] = [];
 │  readonly singleTSConfigPath?: string;
 │  readonly captureGitInfo: Config['captureGitInfo'];
-│  defineConfigWasUsed = false;
-│
+│  readonly retryStrategy: 'immediate' | 'deferred';
 ⋮
 
-packages/playwright/src/isomorphic/events.ts:
+packages\playwright\src\isomorphic\events.ts:
 ⋮
 │export class EventEmitter<T> {
 │  public event: Event<T>;
@@ -764,7 +714,7 @@ packages/playwright/src/isomorphic/events.ts:
 │      let disposed = false;
 ⋮
 
-packages/playwright/src/isomorphic/stringInternPool.ts:
+packages\playwright\src\isomorphic\stringInternPool.ts:
 ⋮
 │export class StringInternPool {
 │  private _stringCache = new Map<string, string>();
@@ -778,7 +728,13 @@ packages/playwright/src/isomorphic/stringInternPool.ts:
 │    return result;
 ⋮
 
-packages/playwright/src/isomorphic/types.d.ts:
+packages\playwright\src\isomorphic\testServerInterface.ts:
+⋮
+│export type ReportEntry = JsonEvent;
+│
+⋮
+
+packages\playwright\src\isomorphic\types.d.ts:
 ⋮
 │export type GitCommitInfo = {
 │  shortHash: string;
@@ -792,20 +748,20 @@ packages/playwright/src/isomorphic/types.d.ts:
 │  };
 ⋮
 
-packages/playwright/src/matchers/matchers.ts:
+packages\playwright\src\matchers\matchers.ts:
 ⋮
 │export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {
 │  utils: ExpectMatcherUtils & InternalMatcherUtils;
 ⋮
 
-packages/playwright/src/reporters/teleEmitter.ts:
+packages\playwright\src\reporters\teleEmitter.ts:
 ⋮
 │export type TeleReporterEmitterOptions = {
 │  omitOutput?: boolean;
 │  omitBuffers?: boolean;
 ⋮
 
-packages/playwright/src/runner/testGroups.ts:
+packages\playwright\src\runner\testGroups.ts:
 ⋮
 │export type TestGroup = {
 │  workerHash: string;
@@ -815,7 +771,7 @@ packages/playwright/src/runner/testGroups.ts:
 │  tests: test.TestCase[];
 ⋮
 
-packages/playwright/src/transform/portTransport.ts:
+packages\playwright\src\transform\portTransport.ts:
 ⋮
 │export class PortTransport {
 │  private _lastId = 0;
@@ -844,7 +800,7 @@ packages/playwright/src/transform/portTransport.ts:
 │    }
 ⋮
 
-packages/playwright/types/test.d.ts:
+packages\playwright\types\test.d.ts:
 ⋮
 │export type Metadata = { [key: string]: any };
 │
@@ -894,7 +850,7 @@ packages/playwright/types/test.d.ts:
 │  secondArgumentColor?: MatcherHintColor;
 ⋮
 
-packages/playwright/types/testReporter.d.ts:
+packages\playwright\types\testReporter.d.ts:
 ⋮
 │export interface TestCase {
 │  /**
@@ -908,32 +864,32 @@ packages/playwright/types/testReporter.d.ts:
 │   * - Test that is expected to fail and actually fails is `'expected'`.
 ⋮
 
-packages/trace-viewer/src/sw/progress.ts:
+packages\trace-viewer\src\sw\progress.ts:
 ⋮
 │export type Progress = (done: number, total: number) => undefined;
 │
 ⋮
 
-packages/trace-viewer/src/sw/traceLoaderBackends.ts:
+packages\trace-viewer\src\sw\traceLoaderBackends.ts:
 ⋮
 │type Progress = (done: number, total: number) => undefined;
 │
 ⋮
 
-packages/trace-viewer/src/ui/geometry.ts:
+packages\trace-viewer\src\ui\geometry.ts:
 ⋮
 │export type Boundaries = {
 │  minimum: number;
 │  maximum: number;
 ⋮
 
-packages/trace-viewer/src/ui/testUtils.ts:
+packages\trace-viewer\src\ui\testUtils.ts:
 ⋮
 │export type UITestStatus = 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped';
 │
 ⋮
 
-packages/trace/src/snapshot.ts:
+packages\trace\src\snapshot.ts:
 ⋮
 │export type ResourceSnapshot = HAREntry;
 │
@@ -943,7 +899,7 @@ packages/trace/src/snapshot.ts:
 │  SubtreeReferenceSnapshot |
 ⋮
 
-packages/utils/debugLogger.ts:
+packages\utils\debugLogger.ts:
 ⋮
 │class DebugLogger {
 │  private _debuggers = new Map<string, debug.IDebugger>();
@@ -957,7 +913,7 @@ packages/utils/debugLogger.ts:
 │      const stream = fs.createWriteStream(process.env.DEBUG_FILE);
 ⋮
 
-packages/utils/image_tools/imageChannel.ts:
+packages\utils\image_tools\imageChannel.ts:
 ⋮
 │export class ImageChannel {
 │  data: Uint8Array;
@@ -971,7 +927,7 @@ packages/utils/image_tools/imageChannel.ts:
 │      paddingColorEven = [0, 255, 0],
 ⋮
 
-packages/utils/image_tools/stats.ts:
+packages\utils\image_tools\stats.ts:
 ⋮
 │export class FastStats implements Stats {
 │  c1: ImageChannel;
@@ -985,7 +941,7 @@ packages/utils/image_tools/stats.ts:
 │
 ⋮
 
-packages/utils/linuxUtils.ts:
+packages\utils\linuxUtils.ts:
 ⋮
 │function parseOSReleaseText(osReleaseText: string): Map<string, string> {
 │  const fields = new Map();
@@ -999,12 +955,12 @@ packages/utils/linuxUtils.ts:
 │      continue;
 ⋮
 
-packages/web/src/components/codeMirrorModule.tsx:
+packages\web\src\components\codeMirrorModule.tsx:
 ⋮
 │export type CodeMirror = typeof codemirrorType;
 ⋮
 
-packages/web/src/components/xtermWrapper.tsx:
+packages\web\src\components\xtermWrapper.tsx:
 ⋮
 │export type XtermDataSource = {
 │  pending: (string | Uint8Array)[];
@@ -1013,12 +969,12 @@ packages/web/src/components/xtermWrapper.tsx:
 │  resize: (cols: number, rows: number) => void;
 ⋮
 
-packages/web/src/theme.ts:
+packages\web\src\theme.ts:
 ⋮
 │type DocumentTheme = 'dark-mode' | 'light-mode';
 ⋮
 
-tests/assets/reading-list/vue_2.6.14.js:
+tests\assets\reading-list\vue_2.6.14.js:
 ⋮
 │(function (global, factory) {
 │  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -1052,25 +1008,25 @@ tests/assets/reading-list/vue_2.6.14.js:
 │      };
 ⋮
 
-tests/assets/reading-list/vue_3.1.5.js:
+tests\assets\reading-list\vue_3.1.5.js:
 ⋮
 │  function startsWith(source, searchString) {
 │      return source.startsWith(searchString);
 ⋮
 
-tests/bidi/playwright.config.ts:
+tests\bidi\playwright.config.ts:
 ⋮
 │type BrowserName = 'chromium' | 'firefox';
 │
 ⋮
 
-tests/components/ct-react-vite/src/components/CheckChildrenProp.tsx:
+tests\components\ct-react-vite\src\components\CheckChildrenProp.tsx:
 ⋮
 │type DefaultChildrenProps = PropsWithChildren<{}>;
 │
 ⋮
 
-tests/components/ct-react-vite/src/components/ComponentAsProp.tsx:
+tests\components\ct-react-vite\src\components\ComponentAsProp.tsx:
 ⋮
 │type ComponentAsProp = {
 │  component: ReactNode[] | ReactNode;
@@ -1079,37 +1035,37 @@ tests/components/ct-react-vite/src/components/ComponentAsProp.tsx:
 │  return <div>{component}</div>
 ⋮
 
-tests/components/ct-react-vite/src/components/Counter.tsx:
-⋮
-│ type CounterProps = {
-│   count?: number;
-│   onClick?(props: string): void;
-│   children?: any;
-⋮
-
-tests/components/ct-react-vite/src/components/DefaultChildren.tsx:
+tests\components\ct-react-vite\src\components\DefaultChildren.tsx:
 │type DefaultChildrenProps = {
 ⋮
 
-tests/components/ct-react-vite/src/components/EmptyFragment.tsx:
+tests\components\ct-react-vite\src\components\EmptyFragment.tsx:
 │export default function EmptyFragment(props: unknown) {
 ⋮
 
-tests/components/ct-react-vite/src/pages/DashboardPage.tsx:
+tests\components\ct-react-vite\src\pages\DashboardPage.tsx:
 │export default function DashboardPage() {
 ⋮
 
-tests/components/ct-react-vite/src/pages/LoginPage.tsx:
+tests\components\ct-react-vite\src\pages\LoginPage.tsx:
 │export default function LoginPage() {
 ⋮
 
-tests/components/ct-react17/src/components/CheckChildrenProp.tsx:
+tests\components\ct-react17\src\components\Button.tsx:
+⋮
+│type ButtonProps = {
+│  title: string;
+│  onClick?(props: string): void;
+│  className?: string;
+⋮
+
+tests\components\ct-react17\src\components\CheckChildrenProp.tsx:
 ⋮
 │type DefaultChildrenProps = PropsWithChildren<{}>;
 │
 ⋮
 
-tests/components/ct-react17/src/components/Counter.tsx:
+tests\components\ct-react17\src\components\Counter.tsx:
 ⋮
 │ type CounterProps = {
 │   count?: number;
@@ -1117,30 +1073,30 @@ tests/components/ct-react17/src/components/Counter.tsx:
 │   children?: any;
 ⋮
 
-tests/components/ct-react17/src/components/DefaultChildren.tsx:
+tests\components\ct-react17\src\components\DefaultChildren.tsx:
 │type DefaultChildrenProps = {
 ⋮
 
-tests/components/ct-react17/src/components/EmptyFragment.tsx:
-│export default function EmptyFragment(props: unknown) {
+tests\components\ct-react17\src\components\MultipleChildren.tsx:
+│type MultipleChildrenProps = {
 ⋮
 
-tests/components/ct-react17/src/pages/DashboardPage.tsx:
+tests\components\ct-react17\src\pages\DashboardPage.tsx:
 │export default function DashboardPage() {
 ⋮
 
-tests/components/ct-react17/src/pages/LoginPage.tsx:
+tests\components\ct-react17\src\pages\LoginPage.tsx:
 │export default function LoginPage() {
 ⋮
 
-tests/components/ct-vue-vite/playwright/index.ts:
+tests\components\ct-vue-cli\playwright\index.ts:
 ⋮
 │export type HooksConfig = {
+│  route?: string;
 │  routing?: boolean;
-│  components?: Record<string, any>;
 ⋮
 
-tests/config/commonFixtures.ts:
+tests\config\commonFixtures.ts:
 ⋮
 │type TestChildParams = {
 │  command: string[],
@@ -1162,13 +1118,13 @@ tests/config/commonFixtures.ts:
 │
 ⋮
 
-tests/image_tools/unit.spec.ts:
+tests\image_tools\unit.spec.ts:
 ⋮
 │type ImageChannel = InstanceType<typeof ImageChannel>;
 │
 ⋮
 
-tests/installation/registry.ts:
+tests\installation\registry.ts:
 ⋮
 │export class Registry {
 │  private _workDir: string;
@@ -1209,7 +1165,7 @@ tests/installation/registry.ts:
 │    this._log.push(info);
 ⋮
 
-tests/library/chromium/connect-over-cdp.spec.ts:
+tests\library\chromium\connect-over-cdp.spec.ts:
 ⋮
 │test('emulate media should not be affected by second connectOverCDP with noDefaults', async ({ brow
 │  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwrig
@@ -1229,27 +1185,27 @@ tests/library/chromium/connect-over-cdp.spec.ts:
 │    expect(await isPrint(page1)).toBe(true);
 ⋮
 
-tests/library/events/utils.ts:
+tests\library\events\utils.ts:
 ⋮
 │export class EventEmitter extends (clientEventEmitter as any) {
 │  constructor() {
-│    super(nodePlatform(process.cwd()));
+│    super();
 │  }
 ⋮
 
-tests/library/playwright.config.ts:
+tests\library\playwright.config.ts:
 ⋮
 │type BrowserName = 'chromium' | 'firefox' | 'webkit';
 │
 ⋮
 
-tests/library/unit/json-schema.spec.ts:
+tests\library\unit\json-schema.spec.ts:
 ⋮
 │type JsonSchema = iso.JsonSchema;
 │
 ⋮
 
-tests/page/page-evaluate.spec.ts:
+tests\page\page-evaluate.spec.ts:
 ⋮
 │it('should work with overwritten Promise', async ({ page }) => {
 │  await page.evaluate(() => {
@@ -1266,14 +1222,14 @@ tests/page/page-evaluate.spec.ts:
 │        return wrap(originalPromise.resolve(arg));
 ⋮
 
-tests/third_party/proxy/index.ts:
+tests\third_party\proxy\index.ts:
 ⋮
 │export interface ProxyServer extends http.Server {
 │	authenticate?: (req: http.IncomingMessage) => boolean | Promise<boolean>;
 │	localAddress?: string;
 ⋮
 
-utils/generate_types/overrides-test.d.ts:
+utils\generate_types\overrides-test.d.ts:
 ⋮
 │export type Metadata = { [key: string]: any };
 │
@@ -1294,5 +1250,38 @@ utils/generate_types/overrides-test.d.ts:
 ⋮
 │export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & C
 │
+⋮
+
+utils\generate_types\overrides.d.ts:
+⋮
+│export interface BrowserType<Unused = {}> {
+│  connectOverCDP(endpointURL: string, options?: ConnectOverCDPOptions): Promise<Browser>;
+│  connectOverCDP(transport: ConnectOverCDPTransport, options?: ConnectOverCDPOptions): Promise<Brow
+│  /**
+│   * Option `wsEndpoint` is deprecated. Instead use `endpointURL`.
+│   * @deprecated
+│   */
+│  connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
+│
+│  connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
+⋮
+│type DeviceDescriptor = {
+│  viewport: ViewportSize;
+│  userAgent: string;
+│  deviceScaleFactor: number;
+│  isMobile: boolean;
+│  hasTouch: boolean;
+│  defaultBrowserType: 'chromium' | 'firefox' | 'webkit';
+⋮
+│export type AndroidSelector = {
+│  checkable?: boolean,
+│  checked?: boolean,
+│  clazz?: string | RegExp,
+│  clickable?: boolean,
+│  depth?: number,
+│  desc?: string | RegExp,
+│  enabled?: boolean,
+│  focusable?: boolean,
+│  focused?: boolean,
 ⋮
 ```

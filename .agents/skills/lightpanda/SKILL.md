@@ -21,7 +21,7 @@ lightpanda/
 ### AST Map: `modules/browser`
 
 ```python
-src/agent/SlashCommand.zig:
+src\agent\SlashCommand.zig:
 ⋮
 │//! REPL-only meta slash commands (`/help`, `/quit`, `/verbosity`, `/effort`,
 ⋮
@@ -79,7 +79,7 @@ src/agent/SlashCommand.zig:
 │    return null;
 ⋮
 
-src/agent/welcome.zig:
+src\agent\welcome.zig:
 ⋮
 │//! The agent REPL's startup banner: a pre-colored braille panda logo with the
 ⋮
@@ -164,7 +164,7 @@ src/agent/welcome.zig:
 │        row += 1;
 ⋮
 
-src/browser/js/Identity.zig:
+src\browser\js\Identity.zig:
 ⋮
 │const std = @import("std");
 │const js = @import("js.zig");
@@ -181,7 +181,7 @@ src/browser/js/Identity.zig:
 │    }
 ⋮
 
-src/browser/js/Integer.zig:
+src\browser\js\Integer.zig:
 ⋮
 │const js = @import("js.zig");
 │
@@ -199,7 +199,7 @@ src/browser/js/Integer.zig:
 │    return .{ .handle = handle };
 ⋮
 
-src/browser/js/Number.zig:
+src\browser\js\Number.zig:
 ⋮
 │const js = @import("js.zig");
 │
@@ -213,7 +213,7 @@ src/browser/js/Number.zig:
 │    return .{ .handle = handle };
 ⋮
 
-src/browser/js/Platform.zig:
+src\browser\js\Platform.zig:
 ⋮
 │const js = @import("js.zig");
 │const v8 = js.v8;
@@ -237,7 +237,7 @@ src/browser/js/Platform.zig:
 │    v8.v8__Platform__DELETE(self.handle);
 ⋮
 
-src/browser/js/PromiseRejection.zig:
+src\browser\js\PromiseRejection.zig:
 ⋮
 │const js = @import("js.zig");
 │const v8 = js.v8;
@@ -260,7 +260,7 @@ src/browser/js/PromiseRejection.zig:
 │    };
 ⋮
 
-src/browser/js/TaggedOpaque.zig:
+src\browser\js\TaggedOpaque.zig:
 ⋮
 │const js = @import("js.zig");
 │const v8 = js.v8;
@@ -303,7 +303,7 @@ src/browser/js/TaggedOpaque.zig:
 │        ptr = @intFromPtr(proto_ptr.*);
 ⋮
 
-src/browser/reflect.zig:
+src\browser\reflect.zig:
 ⋮
 │pub fn Struct(comptime T: type) type {
 │    return switch (@typeInfo(T)) {
@@ -314,7 +314,7 @@ src/browser/reflect.zig:
 │    };
 ⋮
 
-src/browser/tests/page/modules/circular-b.js:
+src\browser\tests\page\modules\circular-b.js:
 ⋮
 │export function getBValue() {
 │  return bValue;
@@ -323,38 +323,38 @@ src/browser/tests/page/modules/circular-b.js:
 │  return aValue;
 ⋮
 
-src/browser/tests/page/modules/dynamic-chain-b.js:
+src\browser\tests\page\modules\dynamic-chain-b.js:
 │export async function loadNext() {
 ⋮
 
-src/browser/tests/page/modules/dynamic-circular-x.js:
+src\browser\tests\page\modules\dynamic-circular-x.js:
 ⋮
 │export async function loadY() {
 │  const y = await import('./dynamic-circular-y.js');
 │  return y.yValue;
 ⋮
 
-src/browser/tests/page/modules/dynamic-circular-y.js:
+src\browser\tests\page\modules\dynamic-circular-y.js:
 ⋮
 │export async function loadX() {
 │  const x = await import('./dynamic-circular-x.js');
 │  return x.xValue;
 ⋮
 
-src/browser/tests/page/modules/mixed-circular-dynamic.js:
+src\browser\tests\page\modules\mixed-circular-dynamic.js:
 ⋮
 │export function getStaticValue() {
 │  return staticValue;
 ⋮
 
-src/browser/tests/page/modules/mixed-circular-static.js:
+src\browser\tests\page\modules\mixed-circular-static.js:
 ⋮
 │export async function loadDynamicSide() {
 │  const dynamic = await import('./mixed-circular-dynamic.js');
 │  return dynamic.dynamicValue;
 ⋮
 
-src/browser/tests/page/modules/shared.js:
+src\browser\tests\page\modules\shared.js:
 ⋮
 │export function increment() {
 │  return ++counter;
@@ -363,7 +363,7 @@ src/browser/tests/page/modules/shared.js:
 │  return counter;
 ⋮
 
-src/browser/tests/testing.js:
+src\browser\tests\testing.js:
 ⋮
 │  function expectTrue(actual) {
 │     expectEqual(true, actual);
@@ -468,13 +468,13 @@ src/browser/tests/testing.js:
 │    }
 ⋮
 
-src/browser/tests/worker/import-module.js:
+src\browser\tests\worker\import-module.js:
 ⋮
 │export function multiply(a, b) {
 │  return a * b;
 ⋮
 
-src/browser/tests/worker/modules/circular-b.js:
+src\browser\tests\worker\modules\circular-b.js:
 ⋮
 │export function getBValue() {
 │  return bValue;
@@ -483,7 +483,7 @@ src/browser/tests/worker/modules/circular-b.js:
 │  return aValue;
 ⋮
 
-src/browser/tests/worker/modules/shared.js:
+src\browser\tests\worker\modules\shared.js:
 ⋮
 │export function increment() {
 │  return ++counter;
@@ -492,7 +492,7 @@ src/browser/tests/worker/modules/shared.js:
 │  return counter;
 ⋮
 
-src/browser/tests/worker/timers-worker.js:
+src\browser\tests\worker\timers-worker.js:
 ⋮
 │(async function() {
 │  try {
@@ -507,7 +507,7 @@ src/browser/tests/worker/timers-worker.js:
 │        const id = setTimeout(function (a, b) {
 ⋮
 
-src/browser/webapi/cdata/CDATASection.zig:
+src\browser\webapi\cdata\CDATASection.zig:
 ⋮
 │const js = @import("../../js/js.zig");
 │
@@ -526,7 +526,7 @@ src/browser/webapi/cdata/CDATASection.zig:
 │    };
 ⋮
 
-src/browser/webapi/cdata/Comment.zig:
+src\browser\webapi\cdata\Comment.zig:
 ⋮
 │const js = @import("../../js/js.zig");
 │const Frame = @import("../../Frame.zig");
@@ -555,7 +555,7 @@ src/browser/webapi/cdata/Comment.zig:
 │const testing = @import("../../../testing.zig");
 ⋮
 
-src/browser/webapi/cdata/ProcessingInstruction.zig:
+src\browser\webapi\cdata\ProcessingInstruction.zig:
 ⋮
 │const js = @import("../../js/js.zig");
 │
@@ -582,7 +582,7 @@ src/browser/webapi/cdata/ProcessingInstruction.zig:
 │const testing = @import("../../../testing.zig");
 ⋮
 
-src/browser/webapi/collections.zig:
+src\browser\webapi\collections.zig:
 ⋮
 │pub const NodeLive = @import("collections/node_live.zig").NodeLive;
 │pub const ChildNodes = @import("collections/ChildNodes.zig");
@@ -605,9 +605,7 @@ src/browser/webapi/collections.zig:
 │        @import("collections/HTMLAllCollection.zig").Iterator,
 ⋮
 
-src/browser/webapi/element/svg/Rect.zig:
-⋮
-│const Node = @import("../../Node.zig");
+src\browser\webapi\element\svg\Rect.zig:
 ⋮
 │pub fn asElement(self: *Rect) *Element {
 │    return self._proto._proto;
@@ -625,7 +623,7 @@ src/browser/webapi/element/svg/Rect.zig:
 │    };
 ⋮
 
-src/browser/webapi/encoding/TextEncoder.zig:
+src\browser\webapi\encoding\TextEncoder.zig:
 ⋮
 │const std = @import("std");
 │const js = @import("../../js/js.zig");
@@ -665,7 +663,7 @@ src/browser/webapi/encoding/TextEncoder.zig:
 │const testing = @import("../../../testing.zig");
 ⋮
 
-src/browser/webapi/navigation/root.zig:
+src\browser\webapi\navigation\root.zig:
 ⋮
 │const std = @import("std");
 │
@@ -699,7 +697,7 @@ src/browser/webapi/navigation/root.zig:
 │    navigation_type: NavigationType,
 ⋮
 
-src/browser/xpath/ast.zig:
+src\browser\xpath\ast.zig:
 ⋮
 │//! XPath 1.0 AST.
 ⋮
@@ -780,7 +778,7 @@ src/browser/xpath/ast.zig:
 │    processing_instruction,
 ⋮
 
-src/cdp/domains/audits.zig:
+src\cdp\domains\audits.zig:
 ⋮
 │const std = @import("std");
 │const CDP = @import("../CDP.zig");
@@ -803,7 +801,7 @@ src/cdp/domains/audits.zig:
 │    return cmd.sendResult(null, .{});
 ⋮
 
-src/cdp/domains/css.zig:
+src\cdp\domains\css.zig:
 ⋮
 │const std = @import("std");
 │const CDP = @import("../CDP.zig");
@@ -818,7 +816,7 @@ src/cdp/domains/css.zig:
 │    }
 ⋮
 
-src/cdp/domains/inspector.zig:
+src\cdp\domains\inspector.zig:
 ⋮
 │const std = @import("std");
 │const CDP = @import("../CDP.zig");
@@ -835,7 +833,7 @@ src/cdp/domains/inspector.zig:
 │    }
 ⋮
 
-src/cdp/domains/log.zig:
+src\cdp\domains\log.zig:
 ⋮
 │const std = @import("std");
 │const CDP = @import("../CDP.zig");
@@ -851,7 +849,7 @@ src/cdp/domains/log.zig:
 │    }
 ⋮
 
-src/cdp/domains/performance.zig:
+src\cdp\domains\performance.zig:
 ⋮
 │const std = @import("std");
 │const CDP = @import("../CDP.zig");
@@ -868,7 +866,7 @@ src/cdp/domains/performance.zig:
 │    }
 ⋮
 
-src/cdp/domains/security.zig:
+src\cdp\domains\security.zig:
 ⋮
 │const std = @import("std");
 │const CDP = @import("../CDP.zig");
@@ -906,7 +904,7 @@ src/cdp/domains/security.zig:
 │        .params = .{ .ignore = true },
 ⋮
 
-src/data/public_suffix_list.zig:
+src\data\public_suffix_list.zig:
 │const std = @import("std");
 │const builtin = @import("builtin");
 │
@@ -927,7 +925,7 @@ src/data/public_suffix_list.zig:
 │        .{ "mil.ac", {} },
 ⋮
 
-src/data/public_suffix_list_gen.go:
+src\data\public_suffix_list_gen.go:
 │package main
 │
 ⋮
@@ -943,7 +941,7 @@ src/data/public_suffix_list_gen.go:
 │	scanner := bufio.NewScanner(resp.Body)
 ⋮
 
-src/html5ever/lib.rs:
+src\html5ever\lib.rs:
 ⋮
 │mod url;
 │
@@ -958,7 +956,7 @@ src/html5ever/lib.rs:
 │    parser: Box<dyn std::any::Any>,
 ⋮
 
-src/html5ever/sink.rs:
+src\html5ever\sink.rs:
 ⋮
 │type Arena<'arena> = &'arena typed_arena::Arena<ElementData>;
 │
@@ -1046,7 +1044,7 @@ src/html5ever/sink.rs:
 │        self.allow_declarative_shadow
 ⋮
 
-src/html5ever/types.rs:
+src\html5ever\types.rs:
 ⋮
 │pub type CreateElementCallback = unsafe extern "C" fn(
 │    ctx: Ref,
@@ -1174,7 +1172,7 @@ src/html5ever/types.rs:
 │    pub text: StringSlice,
 ⋮
 
-src/html5ever/url.rs:
+src\html5ever\url.rs:
 ⋮
 │fn str_from(ptr: *const c_uchar, len: usize) -> Option<&'static str> {
 │    // Zig hands empty slices a non-null but dangling pointer, so length must
@@ -1188,8 +1186,30 @@ src/html5ever/url.rs:
 │fn ffi_guard<F: FnOnce() -> i32>(f: F) -> i32 {
 │    std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).unwrap_or(1)
 ⋮
+│fn clean_hostname_input(url: &Url, raw: &str) -> String {
+│    let special = matches!(
+│        url.scheme(),
+│        "http" | "https" | "ws" | "wss" | "ftp" | "file"
+│    );
+│    let mut out = String::with_capacity(raw.len());
+│    let mut in_brackets = false;
+│    for c in raw.chars() {
+│        match c {
+│            '\t' | '\n' | '\r' => continue,
+⋮
+│fn encode_query_ncr(encoding: &'static Encoding, s: &str) -> Cow<'static, [u8]> {
+│    // fast path: fully mappable
+│    let (out, _, had_errors) = encoding.encode(s);
+│    if !had_errors {
+│        return Cow::Owned(out.into_owned());
+│    }
+│
+│    let mut encoder = encoding.new_encoder();
+│    let mut result = Vec::with_capacity(s.len() * 2);
+│    let mut input = s;
+⋮
 
-src/mcp.zig:
+src\mcp.zig:
 │const std = @import("std");
 │
 │pub const protocol = @import("mcp/protocol.zig");
@@ -1199,7 +1219,7 @@ src/mcp.zig:
 │
 ⋮
 
-src/storage/Blackhole.zig:
+src\storage\Blackhole.zig:
 ⋮
 │const std = @import("std");
 │const Allocator = std.mem.Allocator;
@@ -1208,7 +1228,7 @@ src/storage/Blackhole.zig:
 │
 │pub fn deinit(_: *Blackhole, _: Allocator) void {}
 
-src/storage/sqlite/migrations.zig:
+src\storage\sqlite\migrations.zig:
 ⋮
 │const lp = @import("lightpanda");
 │

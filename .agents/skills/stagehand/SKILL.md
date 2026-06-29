@@ -8,35 +8,41 @@ description: Provides specialized context, rules, and tools for implementing, co
 
 ```text
 stagehand/
+├── assets
 ├── modules
 │   └── stagehand (See AST Map below)
+├── references
+├── scripts
 └── SKILL.md
 ```
+
+> **Agent Instructions:** The AST maps below provide a high-level overview of the `modules/` directory. Note that the complete repository source code is available within the `modules/` folder. You can and should use your file reading tools to access the actual source code within `modules/` for complete details, implementation logic, and context beyond what the AST map provides.
 
 ### AST Map: `modules/stagehand`
 
 ```python
-packages/cli/src/base.ts:
+packages\cli\src\base.ts:
 ⋮
 │export abstract class BrowseCommand extends Command {
-│  protected override async catch(
-│    err: Error & { exitCode?: number },
-│  ): Promise<unknown> {
-│    if (err instanceof CommandFailure) {
-│      recordCommandError("runtime", "COMMAND_FAILURE", err.telemetry);
-│      process.stderr.write(`${err.message}\n`);
-│      this.exit(err.exitCode);
-│    }
+│  public override async init(): Promise<void> {
+│    await super.init();
+│    // Seed the CLI version from oclif's Config (the single source of truth) so
+│    // non-command contexts — remote session userMetadata and cloud API headers
+│    // — can stamp the real version without any filesystem read. This runs in
+│    // every process before run(), including the background `browse daemon` that
+│    // creates Browserbase sessions, so cli_version never regresses to "unknown".
+│    setCliVersion(this.config.version);
+│  }
 │
 ⋮
 
-packages/cli/src/commands/cloud/fetch.ts:
+packages\cli\src\commands\cloud\fetch.ts:
 ⋮
 │type FetchFormat = (typeof fetchFormats)[number];
 │
 ⋮
 
-packages/cli/src/commands/cloud/sessions/create.ts:
+packages\cli\src\commands\cloud\sessions\create.ts:
 ⋮
 │interface SessionCreateFlagInputs {
 │  proxies?: boolean;
@@ -50,43 +56,13 @@ packages/cli/src/commands/cloud/sessions/create.ts:
 │  "context-id"?: string;
 ⋮
 
-packages/cli/src/commands/cloud/sessions/downloads/get.ts:
-⋮
-│export default class SessionsDownloadsGet extends BrowseCommand {
-│  static override description =
-│    "Download Browserbase session files as a ZIP archive.";
-│  static override examples = [
-│    "browse cloud sessions downloads get <session-id>",
-│    "browse cloud sessions downloads get <session-id> --output ./downloads.zip",
-│  ];
-│
-│  static override args = {
-│    id: Args.string({ required: true, description: "Session ID." }),
-⋮
-
-packages/cli/src/commands/cloud/sessions/list.ts:
+packages\cli\src\commands\cloud\sessions\list.ts:
 ⋮
 │type SessionStatus = "RUNNING" | "ERROR" | "TIMED_OUT" | "COMPLETED";
 │
 ⋮
 
-packages/cli/src/lib/cloud/flags.ts:
-⋮
-│export interface ParsedApiCommonFlags {
-│  "api-key"?: string;
-│  "base-url"?: string;
-⋮
-
-packages/cli/src/lib/command-suggestions.ts:
-⋮
-│export interface CommandSuggestion {
-│  /** Sanitized colon-separated tokens treated as the attempted command. */
-│  attempted: string;
-│  /** Colon-separated suggested command or topic, when a decent match exists. */
-│  suggestion: string | null;
-⋮
-
-packages/cli/src/lib/driver/command-cli.ts:
+packages\cli\src\lib\driver\command-cli.ts:
 ⋮
 │export type DriverFlags = DriverModeFlags & {
 │  session?: string;
@@ -97,131 +73,17 @@ packages/cli/src/lib/driver/command-cli.ts:
 │  flags: DriverFlags,
 ⋮
 
-packages/cli/src/lib/driver/commands/types.ts:
-⋮
-│export type DriverCommandName = z.infer<typeof DriverCommandNameSchema>;
-│
-⋮
-│export type DriverCommandHandlers = Partial<
-│  Record<DriverCommandName, DriverCommandHandler>
-⋮
-
-packages/cli/src/lib/driver/daemon/protocol.ts:
-⋮
-│export type DriverRequest = z.infer<typeof RequestSchema>;
-⋮
-
-packages/cli/src/lib/driver/errors.ts:
-⋮
-│export class DriverError extends Error {
-│  readonly code: string;
-│  readonly httpStatus?: number;
-│
-│  constructor(
-│    message: string,
-│    options: { cause?: unknown; code: string; httpStatus?: number },
-│  ) {
-│    super(message, options.cause === undefined ? {} : { cause: options.cause });
-│    this.name = "DriverError";
-⋮
-
-packages/cli/src/lib/driver/flags.ts:
+packages\cli\src\lib\driver\flags.ts:
 ⋮
 │export function sessionName(value?: string): string {
 │  return value ?? process.env.BROWSE_SESSION ?? "default";
 ⋮
 
-packages/cli/src/lib/driver/network-capture.ts:
-⋮
-│type CdpSession = {
-│  off?: (event: string, listener: (...args: unknown[]) => void) => void;
-│  on: (event: string, listener: (...args: unknown[]) => void) => void;
-│  send: <T = unknown>(
-│    method: string,
-│    params?: Record<string, unknown>,
-│  ) => Promise<T>;
-⋮
-
-packages/cli/src/lib/driver/session-manager.ts:
-⋮
-│export class DriverSessionManager {
-│  readonly network: NetworkCapture;
-│
-│  private consecutiveInitFailures = 0;
-│  private context: DriverContext | null = null;
-│  private initFailure: InitFailure | null = null;
-│  private initPromise: Promise<void> | null = null;
-│  private refMaps: RefMaps = emptyRefMaps();
-│  private selectedTargetId: string | undefined;
-│  private stagehand: Stagehand | null = null;
-│
-⋮
-
-packages/cli/src/lib/driver/types.ts:
+packages\cli\src\lib\driver\types.ts:
 │export type ConnectionTarget =
 ⋮
 
-packages/cli/src/lib/errors.ts:
-│export interface CommandFailureTelemetry {
-⋮
-│export class CommandFailure extends Error {
-│  readonly exitCode: number;
-│  readonly telemetry: CommandFailureTelemetry;
-│
-│  constructor(
-│    message: string,
-│    exitCode = 1,
-│    telemetry: CommandFailureTelemetry = {},
-│  ) {
-│    super(message);
-⋮
-
-packages/cli/src/lib/functions/init.ts:
-⋮
-│export interface InitFunctionsProjectOptions {
-│  packageManager: "npm" | "pnpm";
-│  projectName: string;
-⋮
-
-packages/cli/src/lib/functions/invoke.ts:
-⋮
-│export interface InvokeFunctionOptions {
-│  apiKey?: string;
-│  baseUrl?: string;
-│  checkStatus?: string;
-│  functionId?: string;
-│  noWait: boolean;
-│  params?: string;
-⋮
-
-packages/cli/src/lib/functions/publish.ts:
-⋮
-│export interface PublishFunctionOptions {
-│  apiKey?: string;
-│  baseUrl?: string;
-│  dryRun: boolean;
-│  entrypoint: string;
-⋮
-
-packages/cli/src/lib/output.ts:
-⋮
-│export type OutputFormat = "json" | "table";
-│
-│export interface OutputFormatFlags {
-│  format?: string;
-│  json?: boolean;
-│  wide?: boolean;
-⋮
-
-packages/cli/src/lib/telemetry.ts:
-⋮
-│export function recordCommandError(
-│  type: CliTelemetryErrorType,
-│  code: string | null,
-│  telemetry: CommandFailureTelemetry = {},
-⋮
-
-packages/cli/tests/helpers/fake-browserbase-server.ts:
+packages\cli\tests\helpers\fake-browserbase-server.ts:
 ⋮
 │export interface CapturedRequest {
 │  method: string;
@@ -232,14 +94,80 @@ packages/cli/tests/helpers/fake-browserbase-server.ts:
 │  jsonBody?: unknown;
 ⋮
 
-packages/cli/tests/helpers/run-cli.ts:
+packages\cli\tests\helpers\run-cli.ts:
 ⋮
 │export interface RunCliOptions {
 │  cwd?: string;
 │  env?: NodeJS.ProcessEnv;
 ⋮
 
-packages/core/examples/cua-replay.ts:
+packages\cli\tests\identity-attribution.test.ts:
+⋮
+│describe("BrowseCommand.init() — version seeding at lifecycle boundary", () => {
+│  beforeEach(() => {
+│    // Fresh module so getCliVersion starts unseeded ("unknown") before init.
+│    vi.resetModules();
+│  });
+│
+│  it("seeds getCliVersion() from this.config.version when init() runs", async () => {
+│    const { Config } = await import("@oclif/core");
+│    const { BrowseCommand } = await import("../src/base.js");
+│    const { getCliVersion } = await import("../src/lib/identity.js");
+│
+│    // Load the package's real oclif Config (this is the same Config oclif
+│    // hands every command; its .version comes from package.json => 0.9.0).
+│    // fileURLToPath keeps this correct on Windows (no leading-slash artifact).
+│    const config = await Config.load(
+│      fileURLToPath(new URL("..", import.meta.url)),
+⋮
+│    class TestCommand extends BrowseCommand {
+│      async run(): Promise<void> {}
+⋮
+
+packages\core\examples\2048.ts:
+⋮
+│async function example() {
+│  console.log("🎮 Starting 2048 bot...");
+│  const stagehand = new Stagehand({
+│    env: "LOCAL",
+│    verbose: 1,
+│  });
+│
+│  console.log("🌟 Initializing Stagehand...");
+│  await stagehand.init();
+│  const page = stagehand.context.pages()[0];
+⋮
+
+packages\core\examples\actionable-observe-example.ts:
+⋮
+│async function example() {
+│  const stagehand = new Stagehand({
+│    env: "BROWSERBASE",
+│    verbose: 1,
+│  });
+│  await stagehand.init();
+│  const page = stagehand.context.pages()[0];
+│
+│  await page.goto("https://www.apartments.com/san-francisco-ca/");
+│
+⋮
+
+packages\core\examples\clipboard.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const page = stagehand.context.pages()[0];
+│  await page.goto("https://example.com");
+│
+│  await new Promise((resolve) => setTimeout(resolve, 3000));
+│  await page.evaluate(() => {
+│    document.body.innerHTML =
+│      "<textarea autofocus style='width:400px;height:120px'></textarea>";
+│    document.querySelector("textarea")?.focus();
+│  });
+│
+⋮
+
+packages\core\examples\cua-replay.ts:
 ⋮
 │async function runDemo(runNumber: number) {
 │  const startTime = Date.now();
@@ -253,7 +181,233 @@ packages/core/examples/cua-replay.ts:
 │  const stagehand = new Stagehand({
 ⋮
 
-packages/core/examples/return-xpath.ts:
+packages\core\examples\custom-client-aisdk.ts:
+⋮
+│async function example() {
+│  const stagehand = new Stagehand({
+│    env: "BROWSERBASE",
+│    verbose: 1,
+│    llmClient: new AISdkClient({
+│      model: openai("gpt-4.1"),
+│    }),
+│  });
+│
+│  await stagehand.init();
+⋮
+
+packages\core\examples\custom-client-openai.ts:
+⋮
+│async function example() {
+│  const stagehand = new Stagehand({
+│    env: "BROWSERBASE",
+│    verbose: 1,
+│    llmClient: new CustomOpenAIClient({
+│      modelName: "gpt-4.1-mini",
+│      client: new OpenAI({
+│        apiKey: process.env.OPENAI_API_KEY,
+│      }),
+│    }),
+⋮
+
+packages\core\examples\deep-locator.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const page = stagehand.context.pages()[0];
+│  await page.goto(
+│    "https://browserbase.github.io/stagehand-eval-sites/sites/oopif-in-closed-shadow-dom/",
+│  );
+│
+│  // crossing OOPIF & shadow root boundaries with deep locator
+│  await page
+│    .deepLocator(
+│      "/html/body/shadow-host//section/iframe/html/body/main/section[1]/form/div/div[1]/input",
+⋮
+
+packages\core\examples\dropdown.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const page = stagehand.context.pages()[0];
+│  await page.goto(
+│    "https://browserbase.github.io/stagehand-eval-sites/sites/scroll-dropdown/",
+│  );
+│
+│  const actResult = await stagehand.act(
+│    "choose 'Peach' from the favorite colour dropdown",
+│  );
+│
+⋮
+
+packages\core\examples\example.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  /**
+│   * Add your code here!
+│   */
+│  const page = stagehand.context.pages()[0];
+│  await page.goto(
+│    "https://browserbase.github.io/stagehand-eval-sites/sites/iframe-hn/",
+│  );
+│
+│  const { extraction } = await stagehand.extract(
+⋮
+
+packages\core\examples\form-filling-sensible.ts:
+⋮
+│async function formFillingSensible() {
+│  const stagehand = new Stagehand({
+│    env: "BROWSERBASE",
+│    verbose: 1,
+│  });
+│  await stagehand.init();
+│  const page = stagehand.context.pages()[0];
+│
+│  // Go to the website and wait for it to load
+│  await page.goto("https://file.1040.com/estimate/", {
+⋮
+
+packages\core\examples\google-enter.ts:
+⋮
+│async function example() {
+│  const stagehand = new Stagehand({
+│    env: "BROWSERBASE",
+│    verbose: 1,
+│  });
+│  await stagehand.init();
+│  const page = stagehand.context.pages()[0];
+│  await page.goto("https://google.com");
+│  await stagehand.act("type in 'Browserbase'");
+│  await stagehand.act("press enter");
+⋮
+
+packages\core\examples\highlight.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const page = stagehand.context.pages()[0];
+│  await page.goto(
+│    "https://browserbase.github.io/stagehand-eval-sites/sites/closed-shadow-root-in-oopif/",
+│  );
+│
+│  await page
+│    .deepLocator(
+│      "xpath=/html/body/main/section/iframe/html/body/shadow-demo//div/button",
+│    )
+⋮
+
+packages\core\examples\instructions.ts:
+⋮
+│async function example() {
+│  const stagehand = new Stagehand({
+│    env: "BROWSERBASE",
+│    verbose: 1,
+│    systemPrompt:
+│      "if the users says `secret12345`, click on the 'getting started' tab. additionally, if the us
+│  });
+│  await stagehand.init();
+│
+│  const page = stagehand.context.pages()[0];
+⋮
+
+packages\core\examples\integrations\exa.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const page = stagehand.context.pages()[0];
+│  await page.goto("https://www.google.com");
+│
+│  const agent = stagehand.agent({
+│    integrations: [
+│      `https://mcp.exa.ai/mcp?exaApiKey=${process.env.EXA_API_KEY}`,
+│    ],
+│    // Optional: Add custom instructions
+│    systemPrompt: `You are a helpful assistant that can use a browser as well as external tools suc
+⋮
+
+packages\core\examples\integrations\patchright.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const browser = await chromium.connectOverCDP({
+│    wsEndpoint: stagehand.connectURL(),
+│  });
+│
+│  const prContext = browser.contexts()[0];
+│  const prPage = prContext.pages()[0];
+│  await prPage.goto("https://github.com/microsoft/playwright/issues/30261");
+│
+│  await stagehand.act("scroll to the bottom of the page", { page: prPage });
+│
+⋮
+
+packages\core\examples\integrations\playwright.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const browser = await chromium.connectOverCDP({
+│    wsEndpoint: stagehand.connectURL(),
+│  });
+│  const pwContext = browser.contexts()[0];
+│  const pwPage1 = pwContext.pages()[0];
+│  await pwPage1.goto("https://docs.stagehand.dev/first-steps/introduction");
+│
+│  const pwPage2 = await pwContext.newPage();
+│  await pwPage2.goto("https://docs.stagehand.dev/configuration/observability");
+│
+⋮
+
+packages\core\examples\integrations\puppeteer.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const browser = await puppeteer.connect({
+│    browserWSEndpoint: stagehand.connectURL(),
+│    defaultViewport: null,
+│  });
+│  const ppPages = await browser.pages();
+│  const ppPage = ppPages[0];
+│
+│  await ppPage.goto("https://www.browserbase.com/blog");
+│
+⋮
+
+packages\core\examples\integrations\supabase.ts:
+⋮
+│async function example(stagehand: Stagehand) {
+│  const page = stagehand.context.pages()[0];
+│  await page.goto("https://www.opentable.com/");
+│
+│  const supabaseClient = await connectToMCPServer(
+│    `https://server.smithery.ai/@supabase-community/supabase-mcp/mcp?api_key=${process.env.SMITHERY
+│  );
+│
+│  const agent = stagehand.agent({
+│    model: "openai/computer-use-preview",
+⋮
+
+packages\core\examples\parameterize-api-key.ts:
+⋮
+│async function example() {
+│  const stagehand = new Stagehand({
+│    env: "LOCAL",
+│    verbose: 1,
+│    model: {
+│      modelName: "gpt-4.1-mini",
+│      apiKey: process.env.USE_OPENAI_API_KEY,
+│    },
+│  });
+│
+⋮
+
+packages\core\examples\record-video.ts:
+⋮
+│async function recordPlaywrightVideo(stagehand: Stagehand): Promise<void> {
+│  const browser = await chromium.connectOverCDP({
+│    wsEndpoint: stagehand.connectURL(),
+│  });
+│
+│  const videoDir = path.resolve(process.cwd(), "artifacts", "stagehand-videos");
+│  await mkdir(videoDir, { recursive: true });
+│
+│  const context = await browser.newContext({
+│    recordVideo: {
+⋮
+
+packages\core\examples\return-xpath.ts:
 ⋮
 │async function example(stagehand: Stagehand) {
 │  const page = stagehand.context.pages()[0];
@@ -267,7 +421,7 @@ packages/core/examples/return-xpath.ts:
 │  await page.deepLocator(xpath).fill("hellooooooooo");
 ⋮
 
-packages/core/examples/shadow-root.ts:
+packages\core\examples\shadow-root.ts:
 ⋮
 │async function example(stagehand: Stagehand) {
 │  const page = stagehand.context.pages()[0];
@@ -282,7 +436,7 @@ packages/core/examples/shadow-root.ts:
 │
 ⋮
 
-packages/core/examples/targeted-extract.ts:
+packages\core\examples\targeted-extract.ts:
 ⋮
 │async function example(stagehand: Stagehand) {
 │  const page = stagehand.context.pages()[0];
@@ -296,7 +450,7 @@ packages/core/examples/targeted-extract.ts:
 │      durationMs: 5000,
 ⋮
 
-packages/core/examples/v3-example.ts:
+packages\core\examples\v3-example.ts:
 ⋮
 │async function example(stagehand: Stagehand) {
 │  const page = stagehand.context.pages()[0];
@@ -310,7 +464,7 @@ packages/core/examples/v3-example.ts:
 │        z.object({
 ⋮
 
-packages/core/examples/webmcp.ts:
+packages\core\examples\webmcp.ts:
 ⋮
 │async function example(stagehand: Stagehand) {
 │  const page = stagehand.context.pages()[0];
@@ -324,7 +478,7 @@ packages/core/examples/webmcp.ts:
 │  for (const tool of tools) {
 ⋮
 
-packages/core/examples/wordle.ts:
+packages\core\examples\wordle.ts:
 ⋮
 │async function example() {
 │  const stagehand = new Stagehand({
@@ -338,568 +492,152 @@ packages/core/examples/wordle.ts:
 │  await stagehand.act("click 'Play'");
 ⋮
 
-packages/core/lib/logger.ts:
+packages\core\lib\v3\types\public\context.ts:
 ⋮
-│export interface LoggerOptions {
-│  pretty?: boolean;
-│  level?: pino.Level;
-│  destination?: pino.DestinationStream;
-│  usePino?: boolean; // Whether to use pino (default: true)
+│export interface ClearCookieOptions {
+│  name?: string | RegExp;
+│  domain?: string | RegExp;
+│  path?: string | RegExp;
 ⋮
 
-packages/core/lib/v3/cache/CacheStorage.ts:
+packages\core\lib\v3\understudy\context.ts:
 ⋮
-│export class CacheStorage {
+│export class V3Context {
 │  private constructor(
-│    private readonly logger: Logger,
-│    private readonly dir?: string,
-│    private readonly memoryStore?: Map<string, unknown>,
+│    readonly conn: CdpConnection,
+│    private readonly env: "LOCAL" | "BROWSERBASE" = "LOCAL",
+│    private readonly apiClient: StagehandAPIClient | null = null,
+│    private readonly localBrowserLaunchOptions: LocalBrowserLaunchOptions | null = null,
 │  ) {}
 │
-│  static create(
-│    cacheDir: string | undefined,
-│    logger: Logger,
+│  private readonly _piercerInstalled = new Set<string>();
+│  // Timestamp for most recent popup/open signal
 ⋮
 
-packages/core/lib/v3/dom/locatorScripts/xpathParser.ts:
-│export type XPathPredicate =
-⋮
-
-packages/core/lib/v3/flowlogger/EventEmitter.ts:
-⋮
-│type WildcardEventListener = (...args: unknown[]) => void;
-│
-│export class EventEmitterWithWildcardSupport extends EventEmitter {
-│  private readonly wildcardListeners = new Set<WildcardEventListener>();
-│
-│  override on(
-│    eventName: string | symbol,
-│    listener: (...args: unknown[]) => void,
-│  ): this {
-│    if (eventName === "*") {
-│      this.wildcardListeners.add(listener);
-│      return this;
-⋮
-│  override emit(eventName: string | symbol, ...args: unknown[]): boolean {
-│    const handled = super.emit(eventName, ...args);
-│
-│    for (const listener of this.wildcardListeners) {
-│      listener(...args);
-│    }
-│
-│    return handled || this.wildcardListeners.size > 0;
-⋮
-
-packages/core/lib/v3/flowlogger/FlowLogger.ts:
-⋮
-│export class FlowEvent implements FlowEventFields {
-│  // "ModuleMethodSomethingEvent" -> hashToSmallInt("Modu) -> 5. eventId = "...5"
-│  private static deriveEventIdSuffix(eventType: string): string {
-│    const prefixMatch = eventType.match(/^[A-Z][a-z0-9]*/);
-│    const prefix = prefixMatch?.[0] ?? eventType.slice(0, 4);
-│
-│    let hash = 0;
-│    for (const ch of prefix.slice(0, 4)) {
-│      hash = (hash * 31 + ch.charCodeAt(0)) % 10;
-│    }
-⋮
-│export interface FlowLoggerContext {
-│  // Mirrors `FlowEvent.sessionId`; it is currently the Stagehand session id and often matches `bro
-│  sessionId: string;
-│  eventBus: EventEmitterWithWildcardSupport; // Shared per-session bus; `emit()` writes to it and V
-│  parentEvents: FlowEvent[]; // Active parent stack for the current async chain; wrappers push/pop 
-⋮
-
-packages/core/lib/v3/llm/LLMClient.ts:
-⋮
-│export interface CreateChatCompletionOptions {
-│  options: ChatCompletionOptions;
-│  logger: (message: LogLine) => void;
-│  retries?: number;
-⋮
-│export abstract class LLMClient {
-│  public type: "openai" | "anthropic" | "cerebras" | "groq" | (string & {});
-│  public modelName: AvailableModel | (string & {});
-│  public hasVision: boolean;
-│  public clientOptions: ClientOptions;
-│  public userProvidedInstructions?: string;
-│
-│  constructor(modelName: AvailableModel, userProvidedInstructions?: string) {
-│    this.modelName = modelName;
-│    this.userProvidedInstructions = userProvidedInstructions;
-⋮
-
-packages/core/lib/v3/runtimePaths.ts:
-⋮
-│type CallSiteWithScriptName = NodeJS.CallSite & {
-│  getScriptNameOrSourceURL?: () => string | null;
-⋮
-
-packages/core/lib/v3/shutdown/cleanupLocal.ts:
-⋮
-│export async function cleanupLocalBrowser(opts: {
-│  killChrome?: () => Promise<void> | void;
-│  userDataDir?: string;
-│  createdTempProfile?: boolean;
-│  preserveUserDataDir?: boolean;
-⋮
-
-packages/core/lib/v3/types/private/locator.ts:
-⋮
-│export interface NormalizedFilePayload {
-│  name: string;
-│  mimeType: string;
-│  buffer: Buffer;
-│  lastModified: number;
-│  /** Absolute path to the source file when provided by the caller. */
-│  absolutePath?: string;
-⋮
-
-packages/core/lib/v3/types/private/network.ts:
-⋮
-│export type NetworkRequestInfo = {
-│  sessionId: string;
-│  requestId: string;
-│  requestKey: string;
-│  frameId?: string;
-│  loaderId?: string;
-│  url?: string;
-│  timestamp: number;
-│  resourceType?: Protocol.Network.ResourceType;
-│  documentRequest: boolean;
-⋮
-
-packages/core/lib/v3/types/private/shutdown.ts:
-⋮
-│export type ShutdownSupervisorConfig =
-│  | {
-│      kind: "LOCAL";
-│      pid: number;
-│      userDataDir?: string;
-│      createdTempProfile?: boolean;
-│      preserveUserDataDir?: boolean;
-│    }
-│  | {
-│      kind: "STAGEHAND_API";
-⋮
-
-packages/core/lib/v3/types/private/snapshot.ts:
-⋮
-│export type FrameParentIndex = Map<string, string | null>;
-│
-⋮
-
-packages/core/lib/v3/types/public/agent.ts:
-⋮
-│export type Variables = Record<string, VariableValue>;
-│
-⋮
-│type StreamingCallbackNotAvailable =
-⋮
-│type SafetyConfirmationCallbackNotAvailable =
-⋮
-│export interface AgentExecuteCallbacks extends AgentCallbacks {
-│  /**
-│   * Callback called when each step (LLM call) is finished.
-│   */
-│  onStepFinish?: GenerateTextOnStepFinishCallback<ToolSet>;
-│  /**
-│   * Callback for handling safety confirmation requests from CUA providers.
-│   * Only available when running an agent configured with mode: "cua".
-│   */
-│  onSafetyConfirmation?: SafetyConfirmationHandler;
-│
-⋮
-│export interface AgentStreamCallbacks extends AgentCallbacks {
-│  /**
-│   * Callback called when each step (LLM call) is finished during streaming.
-│   */
-│  onStepFinish?: StreamTextOnStepFinishCallback<ToolSet>;
-│  /**
-│   * Callback called when an error occurs during streaming.
-│   * Use this to log errors or handle error states.
-│   */
-│  onError?: StreamTextOnErrorCallback;
-⋮
-│export interface AgentExecuteOptionsBase {
-│  instruction: string;
-│  maxSteps?: number;
-│  page?: PlaywrightPage | PuppeteerPage | PatchrightPage | Page;
-│  highlightCursor?: boolean;
-│  /**
-│   * Previous conversation messages to continue from.
-│   * Pass the `messages` from a previous AgentResult to continue that conversation.
-│   * @experimental
-│   */
-⋮
-│export type SafetyConfirmationHandler = (
-│  safetyChecks: SafetyCheck[],
-⋮
-│export type AgentProviderType = AgentType;
-│
-⋮
-│export type AgentToolMode = "dom" | "hybrid" | "cua";
-│
-⋮
-
-packages/core/lib/v3/types/public/agentEvidenceEvents.ts:
-⋮
-│export type AgentEvidenceRole = "probe" | "agent";
-│
-│export type AgentEvidenceEvent =
-│  | AgentScreenshotEvidenceEvent
-│  | AgentStepFinishedEvent
-│  | AgentStepObservedEvent
-⋮
-│export interface AgentFinalObservation {
-│  /** Page URL at the time of terminal capture. */
-│  url: string;
-│  /** PNG bytes from page.screenshot(), when capture succeeds. */
-│  screenshot?: Buffer;
-│  /** Accessibility tree snapshot, when captured. */
-│  ariaTree?: string;
-⋮
-│export type AgentEvidenceCallback = (
-│  event: AgentEvidenceEvent,
-⋮
-
-packages/core/lib/v3/types/public/api.ts:
-⋮
-│export type GoogleServiceAccountCredentials = z.infer<
-│  typeof GoogleServiceAccountCredentialsSchema
-⋮
-│export type ModelAuth = z.infer<typeof ModelAuthSchema>;
-│export type VertexProviderOptions = z.infer<typeof VertexProviderOptionsSchema>;
-│export type AzureProviderOptions = z.infer<typeof AzureProviderOptionsSchema>;
-⋮
-│export type ModelProviderOptions = z.infer<typeof ModelProviderOptionsSchema>;
-⋮
-│type _BrowserbaseSessionCreateParamsCheck =
-⋮
-
-packages/core/lib/v3/types/public/logs.ts:
-│export type LogLevel = 0 | 1 | 2;
-│
-⋮
-│export type LogLine = {
-│  id?: string;
-│  category?: string;
-│  message: string;
-│  level?: LogLevel;
-│  timestamp?: string;
-│  auxiliary?: {
-│    [key: string]: {
-│      value: string;
-│      type: "object" | "string" | "html" | "integer" | "float" | "boolean";
-⋮
-
-packages/core/lib/v3/types/public/metrics.ts:
-│export interface StagehandMetrics {
-⋮
-
-packages/core/lib/v3/types/public/model.ts:
-⋮
-│export interface GoogleServiceAccountCredentials {
-│  type?: "service_account";
-│  project_id?: string;
-│  private_key_id?: string;
-│  private_key: string;
-│  client_email: string;
-│  client_id?: string;
-│  auth_uri?: string;
-│  token_uri?: string;
-│  auth_provider_x509_cert_url?: string;
-⋮
-│export type ModelAuth = GoogleServiceAccountAuth | AzureEntraIdAuth;
-│
-│export interface VertexProviderOptions {
-│  project: string;
-│  location: string;
-│  baseURL?: string;
-│  headers?: Record<string, string>;
-⋮
-│export interface AzureProviderOptions {
-│  resourceName?: string;
-│  baseURL?: string;
-│  apiVersion?: string;
-│  useDeploymentBasedUrls?: boolean;
-│  headers?: Record<string, string>;
-⋮
-│export type ModelProviderOptions =
-│  | { vertex: VertexProviderOptions; azure?: never }
-⋮
-│export type AvailableModel =
-│  | "gpt-4.1"
-│  | "gpt-4.1-mini"
-│  | "gpt-4.1-nano"
-│  | "o4-mini"
-│  | "o3"
-│  | "o3-mini"
-│  | "o1"
-│  | "o1-mini"
-│  | "gpt-4o"
-⋮
-│export type ThinkingEffort =
-│  | "none"
-│  | "low"
-│  | "medium"
-│  | "high"
-│  | "xhigh"
-⋮
-│export type ClientOptions = (OpenAIClientOptions | AnthropicClientOptions) & {
-│  apiKey?: string;
-│  provider?: AgentProviderType;
-│  auth?: ModelAuth;
-│  providerOptions?: ModelProviderOptions;
-│  baseURL?: string;
-│  /** OpenAI organization ID */
-│  organization?: string;
-│  /** Delay between agent actions in ms */
-│  waitBetweenActions?: number;
-⋮
-│export type ModelConfiguration =
-│  | AvailableModel
-│  | (ClientOptions & {
-│      modelName: AvailableModel;
-│      /**
-│       * Optional AI SDK middleware applied to every LanguageModelV2 created for this model.
-│       * Use this to intercept LLM calls for usage tracking, logging, request transforms, etc.
-│       *
-│       * Only effective when running locally (direct mode). Cannot be serialized over HTTP,
-│       */
-⋮
-
-packages/core/lib/v3/types/public/page.ts:
-⋮
-│export type WebMCPToolInvocationStatus = "Completed" | "Canceled" | "Error";
-│
-⋮
-
-packages/core/lib/v3/types/public/sdkErrors.ts:
-⋮
-│export class StagehandError extends Error {
-│  public readonly cause?: unknown;
-│
-│  constructor(message: string, cause?: unknown) {
-│    super(message);
-│    this.name = this.constructor.name;
-│    if (cause !== undefined) {
-│      this.cause = cause;
-│    }
-│  }
-⋮
-│export class StagehandInvalidArgumentError extends StagehandError {
-│  constructor(message: string) {
-│    super(`InvalidArgumentError: ${message}`);
-│  }
-⋮
-│export class ResponseBodyError extends StagehandError {
-│  constructor(message: string) {
-│    super(`Failed to retrieve response body: ${message}`);
-│  }
-⋮
-│export class ResponseParseError extends StagehandError {
-│  constructor(message: string) {
-│    super(`Failed to parse response: ${message}`);
-│  }
-⋮
-│export class TimeoutError extends StagehandError {
-│  constructor(operation: string, timeoutMs: number) {
-│    super(`${operation} timed out after ${timeoutMs}ms`);
-│  }
-⋮
-│export class PageNotFoundError extends StagehandError {
-│  constructor(identifier: string) {
-│    super(`No Page found for ${identifier}`);
-│  }
-⋮
-
-packages/core/lib/v3/understudy/a11yInvocation.ts:
-⋮
-│export function buildA11yInvocation(
-│  name: A11yScriptName,
-│  args: string[],
-⋮
-
-packages/core/lib/v3/understudy/cdp.ts:
-⋮
-│export interface CDPSessionLike {
-│  send<R = unknown>(method: string, params?: object): Promise<R>;
-│  on<P = unknown>(event: string, handler: (params: P) => void): void;
-│  off<P = unknown>(event: string, handler: (params: P) => void): void;
-│  close(): Promise<void>;
-│  readonly id: string | null;
-⋮
-│export class CdpSession implements CDPSessionLike {
-│  constructor(
-│    private readonly root: CdpConnection,
-│    public readonly id: string,
-│  ) {}
-│
-│  send<R = unknown>(method: string, params?: object): Promise<R> {
-│    return this.root._sendViaSession<R>(this.id, method, params);
-│  }
-│
-⋮
-
-packages/core/lib/v3/understudy/consoleMessage.ts:
-⋮
-│export class ConsoleMessage {
-│  constructor(
-│    private readonly event: Protocol.Runtime.ConsoleAPICalledEvent,
-│    private readonly pageRef?: Page,
-│  ) {}
-│
-│  type(): Protocol.Runtime.ConsoleAPICalledEvent["type"] {
-│    return this.event.type;
-│  }
-│
-⋮
-
-packages/core/lib/v3/understudy/locatorInvocation.ts:
-⋮
-│export function buildLocatorInvocation(
-│  name: LocatorScriptName,
-│  args: string[],
-⋮
-
-packages/core/lib/v3/understudy/response.ts:
-⋮
-│export class Response {
-│  private readonly page: Page;
-│  private readonly session: CDPSessionLike;
-│  private readonly requestId: string;
-│  private readonly frameId?: string;
-│  private readonly loaderId?: string;
-│  private readonly response: Protocol.Network.Response;
-│  private readonly fromServiceWorkerFlag: boolean;
-│  private readonly serverAddress?: ServerAddr | null;
-│
-⋮
-
-packages/core/lib/v3/v3.ts:
-⋮
-│export class V3 {
-│  private readonly opts: V3Options;
-│  private state: InitState = { kind: "UNINITIALIZED" };
-│  private actHandler: ActHandler | null = null;
-│  private extractHandler: ExtractHandler | null = null;
-│  private observeHandler: ObserveHandler | null = null;
-│  private ctx: V3Context | null = null;
-│  public llmClient!: LLMClient;
-│
-│  /**
-⋮
-
-packages/core/lib/v3/verifier/types.ts:
-⋮
-│export interface TrajectoryUsage {
-│  input_tokens: number;
-│  output_tokens: number;
-│  reasoning_tokens?: number;
-│  cached_input_tokens?: number;
-│  inference_time_ms?: number;
-⋮
-│export interface TaskSpec {
-│  /** Stable identifier (e.g., "united_13" for WebTailBench, task_id for Mind2Web). */
-│  id: string;
-│  /** Task instruction shown to the agent. */
-│  instruction: string;
-│  /** Starting URL, if any. */
-│  initUrl?: string;
-│  /** Rubric carried by the dataset or generated by a verifier backend. */
-│  precomputedRubric?: Rubric;
-│  /** Optional reference answer (set when dataset ships one). */
-⋮
-│export interface AgentEvidence {
-│  modalities: AgentEvidenceModality[];
-⋮
-│export interface ProbeEvidence {
-│  /** URL after the step's tool execution. */
-│  url?: string;
-│  /**
-│   * Bus screenshot captured after the step. Path on disk is preferred once
-│   * persisted; in-memory Buffer is used during a live run.
-│   */
-│  screenshot?: Buffer;
-│  /** Reference to the persisted screenshot file under the trajectory dir. */
-│  screenshotPath?: string;
-⋮
-│export interface ToolOutput {
-│  ok: boolean;
-│  /**
-│   * The tool's return value. Same payload that flowed into agentEvidence
-│   * modalities, but in its native shape (e.g., the extract result, the act
-│   * describe-string) rather than serialized for the LLM.
-│   */
-│  result: unknown;
-│  error?: string;
-⋮
-│export type TrajectoryStatus = "complete" | "aborted" | "stalled" | "error";
-│
-⋮
-│export interface Trajectory {
-│  task: TaskSpec;
-│  steps: TrajectoryStep[];
-│  finalAnswer?: string;
-│  /** Terminal page observation captured after the agent finishes. */
-│  finalObservation?: ProbeEvidence;
-│  status: TrajectoryStatus;
-│  usage: TrajectoryUsage;
-⋮
-│export interface FirstPointOfFailure {
-│  stepIndex: number;
-│  /** Sub-code from the error taxonomy (e.g., "2.3" for a specific hallucination type). */
-│  errorCode: string;
-│  /** Top-level category name (Selection, Hallucination, etc.). */
-│  category: string;
-│  /** Verifier's reasoning for selecting this point. */
-│  description?: string;
-⋮
-│export interface VerifierRawSteps {
-│  backend?: "legacy" | "verifier";
-│  reason?: string;
-│  primaryIntent?: string;
-│  reasoning?: string;
-│  rubricSource?: "precomputed" | "generated" | "none";
-│  approach?: "a" | "b" | "outcome-only";
-│  optionalsMode?: "folded" | "separate" | "skip";
-│  totalEarned?: number;
-│  totalMax?: number;
-⋮
-│export interface TaskValidity {
-│  /** True if the task is underspecified / has multiple valid interpretations. */
-│  isAmbiguous: boolean;
-│  /** Explanation for why the task is ambiguous, when available. */
-│  ambiguityReason?: string;
-│  /** True if the task is impossible / illegal / NSFW / otherwise infeasible. */
-│  isInvalid: boolean;
-│  /** Explanation for why the task is invalid, when available. */
-│  invalidReason?: string;
-│  /** Optional sub-codes from the task-classification taxonomy. */
-⋮
-
-packages/core/lib/v3/zodCompat.ts:
-⋮
-│export type StagehandZodSchema = Zod4TypeAny | z3.ZodTypeAny;
-│
-│export type StagehandZodObject =
-│  | Zod4Object<Zod4RawShape>
-⋮
-│export type JsonSchemaDocument = Record<string, unknown>;
-│
-⋮
-
-packages/core/scripts/gen-version.ts:
+packages\core\scripts\gen-version.ts:
 ⋮
 │type PackageJson = { version: string };
 │
 ⋮
 
-packages/core/tests/unit/helpers/mockCDPSession.ts:
+packages\core\tests\cache-variables.test.ts:
+⋮
+│function createFakeStorage<T>(entry: T): CacheStorage {
+│  return {
+│    enabled: true,
+│    readJson: vi.fn().mockResolvedValue({ value: entry }),
+│    writeJson: vi.fn().mockResolvedValue({}),
+│    directory: "/tmp/cache",
+│  } as unknown as CacheStorage;
+⋮
+
+packages\core\tests\integration\keyboard.spec.ts:
+⋮
+│function dataUrl(html: string): string {
+│  return "data:text/html;charset=utf-8," + encodeURIComponent(html);
+⋮
+
+packages\core\tests\integration\observe-element-id-format.spec.ts:
+⋮
+│type MainFrameCase = {
+│  name: string;
+│  instruction: string;
+│  targetText: string;
+│  marker: string;
+│  html: string;
+⋮
+
+packages\core\tests\integration\shadow-iframe-oopif.spec.ts:
+⋮
+│type Framework = "v3" | "puppeteer" | "playwright" | "patchright";
+│
+⋮
+
+packages\core\tests\integration\shadow-iframe-spif.spec.ts:
+⋮
+│type Framework = "v3" | "puppeteer" | "playwright" | "patchright";
+│
+⋮
+
+packages\core\tests\integration\v3.config.ts:
+⋮
+│export function getV3TestConfig(overrides: Partial<V3Options> = {}): V3Options {
+│  return getV3DynamicTestConfig(overrides);
+⋮
+
+packages\core\tests\integration\v3.dynamic.config.ts:
+⋮
+│export function getV3DynamicTestConfig(
+│  overrides: Partial<V3Options> = {},
+⋮
+
+packages\core\tests\unit\agent-temperature.test.ts:
+⋮
+│type AgentLlmOptions = {
+│  onStepFinish?: (step: unknown) => Promise<void> | void;
+│  onFinish?: (event: unknown) => void;
+│  providerOptions?: Record<string, unknown>;
+│  temperature?: number;
+⋮
+
+packages\core\tests\unit\aisdk-clients.test.ts:
+⋮
+│function createModel(modelId: string) {
+│  return {
+│    modelId,
+│    specificationVersion: "v2",
+│  } as unknown as LanguageModelV2;
+⋮
+
+packages\core\tests\unit\api-optional-model-api-key.test.ts:
+⋮
+│describe("StagehandAPIClient - optional modelApiKey", () => {
+│  const logger = vi.fn();
+│
+│  // We mock fetch to avoid real network calls; we just need to verify
+│  // that init() doesn't throw when modelApiKey is omitted and that
+│  // the header is conditionally included.
+│  let originalFetch: typeof globalThis.fetch;
+│
+│  function createSessionStartResponse(sessionId: string) {
+│    return new Response(
+│      JSON.stringify({
+│        success: true,
+│        data: { sessionId, available: true },
+│      }),
+│      {
+│        status: 200,
+│        headers: { "Content-Type": "application/json" },
+│      },
+⋮
+
+packages\core\tests\unit\cache-llm-resolution.test.ts:
+⋮
+│function createFakeStorage<T>(entry: T): CacheStorage {
+│  return {
+│    enabled: true,
+│    readJson: vi.fn().mockResolvedValue({ value: entry }),
+│    writeJson: vi.fn().mockResolvedValue({}),
+│    directory: "/tmp/cache",
+│  } as unknown as CacheStorage;
+⋮
+
+packages\core\tests\unit\google-cua-click-conversion.test.ts:
+⋮
+│function createGoogleClient(): GoogleCUAClient {
+│  return new GoogleCUAClient(
+│    "google",
+│    "google/gemini-3.5-flash",
+│    "test instructions",
+│    { apiKey: "test" },
+│  );
+⋮
+
+packages\core\tests\unit\helpers\mockCDPSession.ts:
 ⋮
 │type Handler = (params?: Record<string, unknown>) => Promise<unknown> | unknown;
-⋮
+│type EventHandler = (params?: Record<string, unknown>) => void;
+│
 │export class MockCDPSession implements CDPSessionLike {
 │  public readonly id: string;
 │  public readonly calls: Array<{
@@ -930,7 +668,75 @@ packages/core/tests/unit/helpers/mockCDPSession.ts:
 │      .map(({ params }) => ({ params }));
 ⋮
 
-packages/core/tests/unit/xpath-resolver.test.ts:
+packages\core\tests\unit\microsoft-cua-client.test.ts:
+⋮
+│function createClient() {
+│  const client = new MicrosoftCUAClient("microsoft", "fara-7b", undefined, {
+│    apiKey: "test-key",
+│    baseURL: "https://example.com",
+│  });
+│  client.setScreenshotProvider(async () => "mock-base64-screenshot");
+│  return client;
+⋮
+
+packages\core\tests\unit\public-api\export-surface.test.ts:
+⋮
+│type PublicAPI = {
+│  [K in keyof typeof publicApiShape]: StagehandExports[K];
+⋮
+
+packages\core\tests\unit\public-api\public-error-types.test.ts:
+⋮
+│describe("Stagehand public error types", () => {
+│  describe("errors", () => {
+│    it.each(errorTypes)("%s extends Error", (errorTypeName) => {
+│      const ErrorClass = Stagehand[errorTypeName];
+│      type ErrorClassType = typeof ErrorClass;
+│      expectTypeOf<InstanceType<ErrorClassType>>().toExtend<Error>();
+│      void ErrorClass; // Mark as used to satisfy ESLint
+│    });
+│  });
+⋮
+
+packages\core\tests\unit\safety-confirmation.test.ts:
+⋮
+│type LoggerMock = (message: LogLine) => void;
+│
+⋮
+
+packages\core\tests\unit\understudy-command-exception.test.ts:
+⋮
+│describe("UnderstudyCommandException", () => {
+│  it("extends StagehandError", () => {
+│    const err = new UnderstudyCommandException("test");
+│    expect(err).toBeInstanceOf(StagehandError);
+│    expect(err).toBeInstanceOf(Error);
+│  });
+│
+│  it("has the correct name", () => {
+│    const err = new UnderstudyCommandException("test");
+│    expect(err.name).toBe("UnderstudyCommandException");
+⋮
+│  it("preserves the original stack via cause for debugging", () => {
+│    function deepFunction() {
+│      throw new Error("deep error");
+│    }
+│
+│    let original: Error;
+│    try {
+│      deepFunction();
+│    } catch (e) {
+│      original = e as Error;
+⋮
+
+packages\core\tests\unit\verifier-evidence.test.ts:
+⋮
+│function makeTrajectory(
+│  steps: TrajectoryStep[],
+│  extra: Partial<Trajectory> = {},
+⋮
+
+packages\core\tests\unit\xpath-resolver.test.ts:
 ⋮
 │type DomGlobals = {
 │  window: Window & typeof globalThis;
@@ -944,7 +750,45 @@ packages/core/tests/unit/xpath-resolver.test.ts:
 │  ShadowRoot: typeof ShadowRoot;
 ⋮
 
-packages/evals/core/contracts/representation.ts:
+packages\docs\language-selector.js:
+⋮
+│(function() {
+│  // ============================================
+│  // CONFIGURATION
+│  // ============================================
+│
+│  const DROPDOWN_LANGUAGES = ['TypeScript', 'Python', 'Java', 'Go', 'Ruby'];
+│
+│  const LANGUAGE_MAP = {
+│    'TypeScript': 'Javascript',
+│    'Python': 'Python',
+⋮
+│  function init() {
+│    setupMenuClickHandler();
+│    setupDropdownMenuObserver();
+│    setupPageChangeObserver();
+│    setupCodeBlockObserver();
+│
+│    restoreLanguageSelection();
+│    updateVersionSwitcherVisibility();
+│    updateSDKReferenceVisibility();
+⋮
+
+packages\evals\cli-legacy.ts:
+⋮
+│interface Config {
+│  defaults: {
+│    env: string;
+│    trials: number;
+│    concurrency: number;
+│    provider: string | null;
+│    model: string | null;
+│    api: boolean;
+│  };
+│  benchmarks: Record<
+⋮
+
+packages\evals\core\contracts\representation.ts:
 │export interface RepresentationOpts {
 ⋮
 │export interface PageRepresentation {
@@ -959,7 +803,7 @@ packages/evals/core/contracts/representation.ts:
 │  raw?: unknown;
 ⋮
 
-packages/evals/core/contracts/results.ts:
+packages\evals\core\contracts\results.ts:
 │export type EnvironmentName = "local" | "browserbase";
 │
 │export type BrowserOwnership = "runner" | "tool";
@@ -977,7 +821,16 @@ packages/evals/core/contracts/results.ts:
 │  mimeType?: string;
 ⋮
 
-packages/evals/core/contracts/targets.ts:
+packages\evals\core\contracts\targets.ts:
+│export type TargetKind =
+⋮
+│export type FocusedTarget = { kind: "focused" };
+│
+│export type ActionTarget =
+│  | { kind: "selector"; value: string }
+│  | { kind: "coords"; x: number; y: number }
+│  | { kind: "snapshot_ref"; value: string }
+│  | { kind: "role_name"; role: string; name?: string }
 ⋮
 │export type WaitSpec =
 │  | {
@@ -991,7 +844,14 @@ packages/evals/core/contracts/targets.ts:
 │      timeoutMs: number;
 ⋮
 
-packages/evals/core/contracts/tool.ts:
+packages\evals\core\contracts\tool.ts:
+⋮
+│export type ToolSurface =
+│  | "understudy_code"
+│  | "playwright_code"
+│  | "cdp_code"
+│  | "playwright_mcp"
+│  | "chrome_devtools_mcp"
 ⋮
 │export type StartupProfile =
 │  | "runner_provided_local_cdp"
@@ -1000,22 +860,29 @@ packages/evals/core/contracts/tool.ts:
 │  | "tool_attach_local_cdp"
 │  | "tool_create_browserbase"
 ⋮
-
-packages/evals/core/tools/cdp_code.ts:
+│export interface CoreSession {
+│  listPages(): Promise<CorePageHandle[]>;
+│  activePage(): Promise<CorePageHandle>;
+│  newPage(url?: string): Promise<CorePageHandle>;
+│  selectPage(pageId: string): Promise<void>;
+│  closePage(pageId: string): Promise<void>;
+│  close(): Promise<void>;
+│  getArtifacts(): Promise<Artifact[]>;
+│  getRawMetrics(): Promise<Record<string, unknown>>;
 ⋮
-│class CdpSession implements CoreSession {
-│  private readonly pages = new Map<string, CdpPageState>();
-│  private activePageId: string | null = null;
-│  private closed = false;
-│
-│  private constructor(private readonly connection: CdpConnection) {}
-│
-│  static async connect(input: {
-│    providedEndpoint: {
-│      kind: "ws" | "http";
+│export interface ToolStartInput {
+│  logger: EvalLogger;
+│  startupProfile: StartupProfile;
+│  environment: "LOCAL" | "BROWSERBASE";
+│  providedEndpoint?: {
+│    kind: "ws" | "http";
+│    url: string;
+│    headers?: Record<string, string>;
+│  };
+│  browserbase?: {
 ⋮
 
-packages/evals/env.ts:
+packages\evals\env.ts:
 ⋮
 │export function getEnv(): "BROWSERBASE" | "LOCAL" {
 │  return process.env.EVAL_ENV?.toLowerCase() === "browserbase"
@@ -1023,11 +890,100 @@ packages/evals/env.ts:
 │    : "LOCAL";
 ⋮
 
-packages/evals/errors.ts:
+packages\evals\errors.ts:
 │export class EvalsError extends Error {
 ⋮
 
-packages/evals/framework/types.ts:
+packages\evals\framework\adHocRubric.ts:
+⋮
+│export function adHocRubric(...criteria: string[]): Rubric {
+│  if (criteria.length === 0) {
+│    throw new Error("adHocRubric requires at least one criterion");
+│  }
+│  return {
+│    items: criteria.map((c) => ({
+│      criterion: c,
+│      description: c,
+│      maxPoints: 1,
+│    })),
+⋮
+
+packages\evals\framework\harnesses\persistTrajectory.ts:
+⋮
+│export interface PersistAdapterTrajectoryOptions {
+│  trajectory: Trajectory;
+│  taskSpec: TaskSpec;
+│  /** EvaluationResult from V3Evaluator.verify(). Written to scores/result.json. */
+│  evaluationResult?: EvaluationResult;
+│  /**
+│   * Output directory root. Final layout lives at `<outputRoot>/<runId>/<task.id>/`.
+│   * Defaults to `<cwd>/.trajectories`.
+│   */
+│  outputRoot?: string;
+⋮
+
+packages\evals\framework\rubricCache.ts:
+⋮
+│export interface RubricCacheOptions {
+│  /**
+│   * Root directory for cached rubrics. Defaults to
+│   * `<packages/evals>/.rubric-cache`.
+│   */
+│  cacheRoot?: string;
+│  /**
+│   * Dataset name, used as a subdirectory under cacheRoot to keep different
+│   * datasets' rubrics separate (e.g., "onlineMind2Web").
+│   */
+⋮
+│interface CacheEntry {
+│  taskId: string;
+│  instructionHash: string;
+│  generatedAt: string;
+│  rubric: Rubric;
+⋮
+│export class RubricCache {
+│  private readonly cacheDir: string;
+│
+│  constructor(opts: RubricCacheOptions) {
+│    const root =
+│      opts.cacheRoot ??
+│      path.join(process.cwd(), "packages/evals/.rubric-cache");
+│    this.cacheDir = path.join(root, opts.dataset);
+│  }
+│
+⋮
+│  async write(taskSpec: TaskSpec, rubric: Rubric): Promise<void> {
+│    await fs.mkdir(this.cacheDir, { recursive: true });
+│    const entry: CacheEntry = {
+│      taskId: taskSpec.id,
+│      instructionHash: hashInstruction(taskSpec.instruction),
+│      generatedAt: new Date().toISOString(),
+│      rubric,
+│    };
+│    await fs.writeFile(
+│      this.entryPath(taskSpec.id),
+⋮
+
+packages\evals\framework\trajectoryRecorder.ts:
+⋮
+│export interface TrajectoryRecorderOptions {
+│  taskSpec: TaskSpec;
+│  /**
+│   * Root directory under which trajectory dirs are written. Each task run
+│   * gets a subdirectory named by runId/task.id.
+│   * Defaults to `<cwd>/.trajectories`.
+│   */
+│  outputRoot?: string;
+│  /** Run identifier (e.g., ISO timestamp + env). Defaults to a fresh timestamp. */
+│  runId?: string;
+⋮
+│export interface TrajectoryFinishOptions {
+│  status: TrajectoryStatus;
+│  finalAnswer?: string;
+│  usage?: Partial<TrajectoryUsage>;
+⋮
+
+packages\evals\framework\types.ts:
 ⋮
 │export interface TaskRegistry {
 │  /** All discovered tasks. */
@@ -1040,21 +996,7 @@ packages/evals/framework/types.ts:
 │  byCategory: Map<string, DiscoveredTask[]>;
 ⋮
 
-packages/evals/lib/braintrust-report.ts:
-⋮
-│export type FetchOptions = {
-│  /**
-│   * Braintrust API key. If omitted, pulled from:
-│   *   1. packages/evals/.env (BRAINTRUST_API_KEY)
-│   *   2. process.env.BRAINTRUST_API_KEY
-│   */
-│  apiKey?: string;
-│  /**
-│   * Max concurrent Braintrust fetches for fan-out helpers. Defaults to 1
-│   * because report commands are interactive and Braintrust rate limits are
-⋮
-
-packages/evals/logger.ts:
+packages\evals\logger.ts:
 ⋮
 │export class EvalLogger {
 │  private logs: LogLineEval[] = [];
@@ -1067,14 +1009,47 @@ packages/evals/logger.ts:
 │  }
 │
 ⋮
+│  init(stagehand?: V3) {
+│    this.stagehand = stagehand;
+⋮
 
-packages/evals/runtimePaths.ts:
+packages\evals\runtimePaths.ts:
 ⋮
 │type CallSiteWithScriptName = NodeJS.CallSite & {
 │  getScriptNameOrSourceURL?: () => string | null;
 ⋮
 
-packages/evals/tasks/bench/experimental/extract_press_releases.ts:
+packages\evals\scripts\backfill-webtailbench-rubrics.ts:
+⋮
+│interface RawRubric {
+│  items: Array<Record<string, unknown>>;
+⋮
+
+packages\evals\scripts\test-evals.ts:
+⋮
+│type Runtime = "source" | "dist-esm";
+│
+⋮
+
+packages\evals\tasks\bench\agent\onlineMind2Web.ts:
+⋮
+│function formatProcessScore(score: number | undefined): string {
+│  return typeof score === "number" ? score.toFixed(2) : "n/a";
+⋮
+
+packages\evals\tasks\bench\agent\webtailbench.ts:
+⋮
+│function formatProcessScore(score: number | undefined): string {
+│  return typeof score === "number" ? score.toFixed(2) : "n/a";
+⋮
+
+packages\evals\tasks\bench\agent\webvoyager.ts:
+⋮
+│function formatProcessScore(score: number | undefined): string {
+│  return typeof score === "number" ? score.toFixed(2) : "n/a";
+⋮
+
+packages\evals\tasks\bench\experimental\extract_press_releases.ts:
 ⋮
 │export default defineBenchTask(
 │  { name: "extract_press_releases" },
@@ -1093,7 +1068,30 @@ packages/evals/tasks/bench/experimental/extract_press_releases.ts:
 │
 ⋮
 
-packages/evals/tests/tui/doctor.test.ts:
+packages\evals\tests\framework\claudeCodeAdapterImages.test.ts:
+⋮
+│function imageBlock(data: string) {
+│  return {
+│    type: "image",
+│    source: { type: "base64", media_type: "image/png", data },
+│  };
+⋮
+
+packages\evals\tests\framework\persistTrajectory.test.ts:
+⋮
+│function makeTrajectory(task: TaskSpec): Trajectory {
+│  return {
+│    task,
+│    status: "complete",
+│    finalAnswer: "Final answer text.",
+│    usage: { input_tokens: 100, output_tokens: 50 },
+│    steps: [
+│      {
+│        actionName: "goto",
+│        actionArgs: { url: "https://example.com" },
+⋮
+
+packages\evals\tests\tui\doctor.test.ts:
 ⋮
 │type DoctorJsonReport = {
 │  verdict: string;
@@ -1101,14 +1099,28 @@ packages/evals/tests/tui/doctor.test.ts:
 │  [key: string]: unknown;
 ⋮
 
-packages/evals/tests/tui/experiments.test.ts:
+packages\evals\tests\tui\experiments.test.ts:
 ⋮
 │function makeChildProcess(args: string[]): EventEmitter & {
 │  stdout: EventEmitter;
 │  stderr: EventEmitter;
 ⋮
 
-packages/evals/tui/commands/config.ts:
+packages\evals\tui\commandTree.ts:
+⋮
+│export type CommandNode = {
+│  /** Canonical lowercase name. */
+│  name: string;
+│  aliases?: readonly string[];
+│  summary: string;
+│  /** If present, executable as a leaf with the given args. */
+│  handler?: CommandHandler;
+│  /** If present, descendable as a namespace. */
+│  children?: readonly CommandNode[];
+│  /** Per-node help printer. Receives the absolute path that was resolved. */
+⋮
+
+packages\evals\tui\commands\config.ts:
 ⋮
 │type Defaults = {
 │  env?: string | null;
@@ -1120,6 +1132,16 @@ packages/evals/tui/commands/config.ts:
 │  verbose?: boolean | null;
 │  agentModes?: AgentToolMode[] | null;
 ⋮
+│export type CoreConfigSection = {
+│  tool?: string;
+│  startup?: string;
+⋮
+│export type WelcomeMeta = {
+│  /** ISO 8601 timestamp when the first-run welcome was completed. */
+│  firstRunCompletedAt?: string;
+│  /** Schema version for the welcome marker (currently 1). */
+│  version?: number;
+⋮
 │export type ConfigFile = {
 │  defaults: Defaults;
 │  benchmarks?: Record<string, unknown>;
@@ -1127,13 +1149,26 @@ packages/evals/tui/commands/config.ts:
 │  _meta?: WelcomeMeta;
 ⋮
 
-packages/evals/tui/format.ts:
+packages\evals\tui\format.ts:
 ⋮
 │export type TaskStatus = "pending" | "running" | "passed" | "failed" | "error";
 │
 ⋮
 
-packages/evals/tui/tokenize.ts:
+packages\evals\tui\preview.ts:
+⋮
+│interface PreviewPayload {
+│  target: string | null;
+│  normalizedTarget: string | null;
+│  tasks: string[];
+│  skippedTasks: string[];
+│  envOverrides: Record<string, string>;
+│  runOptions: Record<string, unknown>;
+│  matrix: MatrixRow[];
+│  error?: string;
+⋮
+
+packages\evals\tui\tokenize.ts:
 ⋮
 │export function tokenize(input: string): string[] {
 │  const tokens: string[] = [];
@@ -1147,7 +1182,7 @@ packages/evals/tui/tokenize.ts:
 │      } else {
 ⋮
 
-packages/evals/types/evals.ts:
+packages\evals\types\evals.ts:
 ⋮
 │export interface EvalInput {
 │  name: string;
@@ -1161,53 +1196,20 @@ packages/evals/types/evals.ts:
 │  parsedAuxiliary?: string | object;
 ⋮
 
-packages/evals/utils/imageResize.ts:
+packages\evals\utils\imageResize.ts:
 ⋮
 │export async function imageResize(
 │  img: Buffer,
 │  scaleFactor: number,
 ⋮
 
-packages/server-v3/scripts/runtimePaths.ts:
+packages\server-v3\scripts\runtimePaths.ts:
 ⋮
 │type CallSiteWithScriptName = NodeJS.CallSite & {
 │  getScriptNameOrSourceURL?: () => string | null;
 ⋮
 
-packages/server-v3/src/lib/errorHandler.ts:
-⋮
-│export class AppError extends Error {
-│  statusCode: number;
-│  isInternal: boolean;
-│
-│  constructor(
-│    message: string,
-│    statusCode = StatusCodes.BAD_REQUEST,
-│    isInternal = false,
-│  ) {
-│    super(message);
-⋮
-│  getClientMessage(): string {
-│    if (this.isInternal) {
-│      return this.statusCode >= StatusCodes.INTERNAL_SERVER_ERROR
-│        ? "An internal server error occurred"
-│        : "An error occurred while processing your request";
-│    }
-│    return this.message;
-⋮
-│export function withErrorHandling<
-│  T extends RouteGenericInterface = RouteGenericInterface,
-│  R = unknown,
-⋮
-
-packages/server-v3/src/lib/listenHost.ts:
-⋮
-│export type ListenHostConfig = {
-│  host: string;
-│  warning?: string;
-⋮
-
-packages/server-v3/src/server.ts:
+packages\server-v3\src\server.ts:
 ⋮
 │const app = fastify({
 │  disableRequestLogging: true,
@@ -1228,7 +1230,7 @@ packages/server-v3/src/server.ts:
 │    ...(usePrettyLogs && {
 ⋮
 
-packages/server-v3/src/types/error.ts:
+packages\server-v3\src\types\error.ts:
 ⋮
 │export class AttemptedCloseOnNonActiveSessionError extends AppError {
 │  constructor() {
@@ -1239,7 +1241,7 @@ packages/server-v3/src/types/error.ts:
 │  }
 ⋮
 
-packages/server-v3/src/types/fastify.d.ts:
+packages\server-v3\src\types\fastify.d.ts:
 ⋮
 │declare module "fastify" {
 │  interface FastifyRequest {
@@ -1249,7 +1251,15 @@ packages/server-v3/src/types/fastify.d.ts:
 │  }
 ⋮
 
-packages/server-v3/src/types/rrweb.ts:
+packages\server-v3\src\types\rrweb.ts:
 │export interface Node {
+⋮
+
+packages\server-v3\tests\integration\utils.ts:
+⋮
+│export interface SSEEvent {
+│  event?: string;
+│  data?: string;
+│  parsed?: unknown;
 ⋮
 ```

@@ -2,19 +2,19 @@
 	url = https://github.com/browserbase/stagehand/tree/main
 	path = .agents/skills/stagehand/modules/stagehand
 [runemodule ".agents/skills/invisible-playwright/modules/invisible_playwright"]
-	url = https://github.com/feder-cr/invisible_playwrigh/tree/main
+	url = https://github.com/feder-cr/invisible_playwright/tree/main
 	path = .agents/skills/invisible-playwright/modules/invisible_playwright
 [runemodule ".agents/skills/cloakbrowser/modules/CloakBrowser"]
 	url = https://github.com/CloakHQ/CloakBrowser/tree/main
 	path = .agents/skills/cloakbrowser/modules/CloakBrowser
 [runemodule ".agents/skills/crawl4ai/modules/crawl4ai"]
-	url = https://github.com/unclecode/crawl4a/tree/main
+	url = https://github.com/unclecode/crawl4ai/tree/main
 	path = .agents/skills/crawl4ai/modules/crawl4ai
 [runemodule ".agents/skills/windmill/modules/windmill"]
 	url = https://github.com/windmill-labs/windmill/tree/main
 	path = .agents/skills/windmill/modules/windmill
 [runemodule ".agents/skills/playwright/modules/playwright"]
-	url = https://github.com/microsoft/playwrigh/tree/main
+	url = https://github.com/microsoft/playwright/tree/main
 	path = .agents/skills/playwright/modules/playwright
 [runemodule ".agents/skills/crawlee/modules/crawlee-python"]
 	url = https://github.com/apify/crawlee-python/tree/master

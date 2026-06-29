@@ -8,15 +8,38 @@ description: Provides specialized context, rules, and tools for implementing, co
 
 ```text
 crawl4ai/
+├── assets
 ├── modules
 │   └── crawl4ai (See AST Map below)
+├── references
+├── scripts
 └── SKILL.md
 ```
+
+> **Agent Instructions:** The AST maps below provide a high-level overview of the `modules/` directory. Note that the complete repository source code is available within the `modules/` folder. You can and should use your file reading tools to access the actual source code within `modules/` for complete details, implementation logic, and context beyond what the AST map provides.
 
 ### AST Map: `modules/crawl4ai`
 
 ```python
-crawl4ai/async_configs.py:
+crawl4ai\adaptive_crawler copy.py:
+⋮
+│class AdaptiveCrawler:
+│    """Main adaptive crawler that orchestrates the crawling process"""
+│    
+⋮
+│    def print_stats(self, detailed: bool = False) -> None:
+⋮
+
+crawl4ai\adaptive_crawler.py:
+⋮
+│class AdaptiveCrawler:
+│    """Main adaptive crawler that orchestrates the crawling process"""
+│    
+⋮
+│    def print_stats(self, detailed: bool = False) -> None:
+⋮
+
+crawl4ai\async_configs.py:
 ⋮
 │class UntrustedConfigError(ValueError):
 ⋮
@@ -36,8 +59,6 @@ crawl4ai/async_configs.py:
 │    @staticmethod
 │    def from_dict(geo_dict: Dict) -> "GeolocationConfig":
 ⋮
-│    def to_dict(self) -> Dict:
-⋮
 │class ProxyConfig:
 │    DIRECT = "direct"  # Sentinel: use in proxy_config list to mean "no proxy"
 │
@@ -47,8 +68,6 @@ crawl4ai/async_configs.py:
 ⋮
 │    @staticmethod
 │    def from_dict(proxy_dict: Dict) -> "ProxyConfig":
-⋮
-│    def to_dict(self) -> Dict:
 ⋮
 │@_with_defaults
 │class BrowserConfig:
@@ -72,8 +91,6 @@ crawl4ai/async_configs.py:
 │    This config enables capturing content from pages with virtualized scrolling
 │    (like Twitter, Instagram feeds) where DOM elements are recycled as user scrolls.
 ⋮
-│    def to_dict(self) -> dict:
-⋮
 │    @classmethod
 │    def from_dict(cls, data: dict) -> "VirtualScrollConfig":
 ⋮
@@ -83,8 +100,6 @@ crawl4ai/async_configs.py:
 ⋮
 │    @staticmethod
 │    def from_dict(config_dict: Dict[str, Any]) -> "LinkPreviewConfig":
-⋮
-│    def to_dict(self) -> Dict[str, Any]:
 ⋮
 │class HTTPCrawlerConfig:
 │    """HTTP-specific crawler configuration"""
@@ -110,8 +125,6 @@ crawl4ai/async_configs.py:
 │    @staticmethod
 │    def from_kwargs(kwargs: dict) -> "CrawlerRunConfig":
 ⋮
-│    def to_dict(self):
-⋮
 │class LLMConfig:
 │    def __init__(
 │        self,
@@ -127,13 +140,9 @@ crawl4ai/async_configs.py:
 │    @staticmethod
 │    def from_kwargs(kwargs: dict) -> "LLMConfig":
 ⋮
-│    def to_dict(self):
-⋮
 │class SeedingConfig:
 │    """
 │    Configuration class for URL discovery and pre-validation via AsyncUrlSeeder.
-⋮
-│    def to_dict(self) -> Dict[str, Any]:
 ⋮
 │    @staticmethod
 │    def from_kwargs(kwargs: Dict[str, Any]) -> 'SeedingConfig':
@@ -146,41 +155,97 @@ crawl4ai/async_configs.py:
 │    Wayback Machine, Certificate Transparency, path probing, robots.txt mining,
 │    RSS/Atom feeds, homepage link extraction) without deep crawling.
 ⋮
-│    def to_dict(self) -> Dict[str, Any]:
-⋮
 │    @staticmethod
 │    def from_kwargs(kwargs: Dict[str, Any]) -> 'DomainMapperConfig':
 ⋮
 
-crawl4ai/async_logger.py:
+crawl4ai\async_logger.py:
 ⋮
 │class AsyncLoggerBase(ABC):
 │    @abstractmethod
 │    def debug(self, message: str, tag: str = "DEBUG", **kwargs):
 ⋮
 │    @abstractmethod
+│    def info(self, message: str, tag: str = "INFO", **kwargs):
+⋮
+│    @abstractmethod
 │    def warning(self, message: str, tag: str = "WARNING", **kwargs):
+⋮
+│    @abstractmethod
+│    def error(self, message: str, tag: str = "ERROR", **kwargs):
 ⋮
 │class AsyncLogger(AsyncLoggerBase):
 │    """
 │    Asynchronous logger with support for colored console output and file logging.
 │    Supports templated messages with colored components.
 ⋮
+│    def _write_to_file(self, message: str):
+⋮
+│    def info(self, message: str, tag: str = "INFO", **kwargs):
+⋮
 │    def warning(self, message: str, tag: str = "WARNING", **kwargs):
+⋮
+│    def error(self, message: str, tag: str = "ERROR", **kwargs):
 ⋮
 │class AsyncFileLogger(AsyncLoggerBase):
 │    """
 │    File-only asynchronous logger that writes logs to a specified file.
 ⋮
+│    def _write_to_file(self, level: str, message: str, tag: str):
+⋮
+│    def info(self, message: str, tag: str = "INFO", **kwargs):
+⋮
 │    def warning(self, message: str, tag: str = "WARNING", **kwargs):
 ⋮
+│    def error(self, message: str, tag: str = "ERROR", **kwargs):
+⋮
 
-crawl4ai/async_url_seeder.py:
+crawl4ai\async_url_seeder.py:
 ⋮
 │class AsyncUrlSeeder:
+│    """
+│    Async version of UrlSeeder.
+│    Call pattern is await/async for / async with.
+│
+│    Public coroutines
+│    -----------------
+│    await seed.urls(...)
+│        returns List[Dict[str,Any]]  (url, status, head_data)
+│    await seed.many_urls(...)
+│        returns Dict[str, List[Dict[str,Any]]]
+⋮
+│    async def _iter_sitemap_content(self, url: str, content: bytes):
+│        """Parse sitemap from already-fetched content."""
+⋮
+│        if is_sitemap_index and sub_sitemaps:
+│            self._log("info", "Processing sitemap index with {count} sub-sitemaps",
+⋮
+│            async def process_subsitemap(sitemap_url: str):
+⋮
+│    async def _iter_sitemap(self, url: str):
+│        try:
+│            r = await self.client.get(url, timeout=15, follow_redirects=True)
+│            r.raise_for_status()
+│        except httpx.HTTPStatusError as e:
+│            self._log("warning", "Failed to fetch sitemap {url}: HTTP {status_code}",
+│                      params={"url": url, "status_code": e.response.status_code}, tag="URL_SEED")
+│            return
+│        except httpx.RequestError as e:
+│            self._log("warning", "Network error fetching sitemap {url}: {error}",
+│                      params={"url": url, "error": str(e)}, tag="URL_SEED")
+⋮
+│        if is_sitemap_index and sub_sitemaps:
+│            self._log("info", "Processing sitemap index with {count} sub-sitemaps in parallel",
+⋮
+│            async def process_subsitemap(sitemap_url: str):
+⋮
+│    def _calculate_url_relevance_score(self, query: str, url: str) -> float:
+│        """Calculate relevance score between query and URL using string matching."""
+⋮
+│        def get_ngrams(text, n=3):
 ⋮
 
-crawl4ai/async_webcrawler.py:
+crawl4ai\async_webcrawler.py:
 ⋮
 │class AsyncWebCrawler:
 │    """
@@ -195,6 +260,12 @@ crawl4ai/async_webcrawler.py:
 │        ```
 │
 ⋮
+│    async def arun(
+│        self,
+│        url: str,
+│        config: CrawlerRunConfig = None,
+│        **kwargs,
+⋮
 │    async def arun_many(
 │        self,
 │        urls: List[str],
@@ -207,7 +278,7 @@ crawl4ai/async_webcrawler.py:
 │        # content_filter: RelevantContentFilter = None,
 ⋮
 
-crawl4ai/browser_adapter.py:
+crawl4ai\browser_adapter.py:
 ⋮
 │class BrowserAdapter(ABC):
 │    """Abstract adapter for browser-specific operations"""
@@ -237,7 +308,7 @@ crawl4ai/browser_adapter.py:
 │    async def retrieve_console_messages(self, page: UndetectedPage) -> List[Dict]:
 ⋮
 
-crawl4ai/cache_context.py:
+crawl4ai\cache_context.py:
 ⋮
 │class CacheMode(Enum):
 ⋮
@@ -263,7 +334,7 @@ crawl4ai/cache_context.py:
 │    no_cache_write: bool = False,
 ⋮
 
-crawl4ai/chunking_strategy.py:
+crawl4ai\chunking_strategy.py:
 ⋮
 │class RegexChunking(ChunkingStrategy):
 ⋮
@@ -278,7 +349,34 @@ crawl4ai/chunking_strategy.py:
 │    def extract_keywords(self, text: str) -> list:
 ⋮
 
-crawl4ai/content_scraping_strategy.py:
+crawl4ai\components\crawler_monitor.py:
+⋮
+│class CrawlerMonitor:
+│    """
+│    Comprehensive monitoring and visualization system for tracking web crawler operations in real-t
+│    Provides a terminal-based dashboard that displays task statuses, memory usage, queue statistics
+│    and performance metrics.
+⋮
+│    def update_task(
+│        self, 
+│        task_id: str, 
+│        status: Optional[CrawlStatus] = None,
+│        start_time: Optional[float] = None,
+│        end_time: Optional[float] = None,
+│        memory_usage: Optional[float] = None,
+│        peak_memory: Optional[float] = None,
+│        error_message: Optional[str] = None,
+│        retry_count: Optional[int] = None,
+⋮
+
+crawl4ai\content_filter_strategy.py:
+⋮
+│class PruningContentFilter(RelevantContentFilter):
+⋮
+
+crawl4ai\content_scraping_strategy.py:
+⋮
+│def parse_dimension(dimension):
 ⋮
 │class LXMLWebScrapingStrategy(ContentScrapingStrategy):
 │    """
@@ -290,6 +388,8 @@ crawl4ai/content_scraping_strategy.py:
 │    Note: WebScrapingStrategy is now an alias for this class to maintain
 │    backward compatibility.
 ⋮
+│    def process_element(self, url, element: lhtml.HtmlElement, **kwargs) -> Dict[str, Any]:
+⋮
 │    def find_closest_parent_with_useful_text(
 │        self, element: lhtml.HtmlElement, **kwargs
 ⋮
@@ -299,26 +399,12 @@ crawl4ai/content_scraping_strategy.py:
 │        self, img: lhtml.HtmlElement, url: str, index: int, total_images: int, **kwargs
 ⋮
 
-crawl4ai/deep_crawling/base_strategy.py:
+crawl4ai\deep_crawling\bfs_strategy.py:
 ⋮
-│class DeepCrawlStrategy(ABC):
-│    """
-│    Abstract base class for deep crawling strategies.
-│    
-│    Core functions:
-│      - arun: Main entry point that returns an async generator of CrawlResults.
-│      - shutdown: Clean up resources.
-│      - can_process_url: Validate a URL and decide whether to process it.
-│      - _process_links: Extract and process links from a CrawlResult.
-⋮
-│    async def arun(
-│        self,
-│        start_url: str,
-│        crawler: AsyncWebCrawler,
-│        config: Optional[CrawlerRunConfig] = None,
+│class BFSDeepCrawlStrategy(DeepCrawlStrategy):
 ⋮
 
-crawl4ai/deep_crawling/crazy.py:
+crawl4ai\deep_crawling\crazy.py:
 ⋮
 │class BloomFilter:
 │    """Optimal Bloom filter using murmur3 hash avalanche"""
@@ -326,7 +412,7 @@ crawl4ai/deep_crawling/crazy.py:
 │    def add(self, item: str) -> None:
 ⋮
 
-crawl4ai/deep_crawling/scorers.py:
+crawl4ai\deep_crawling\scorers.py:
 ⋮
 │class ScoringStats:
 │    __slots__ = ('_urls_scored', '_total_score', '_min_score', '_max_score')
@@ -335,36 +421,46 @@ crawl4ai/deep_crawling/scorers.py:
 │    def update(self, score: float) -> None:
 ⋮
 
-crawl4ai/extraction_strategy.py:
+crawl4ai\extraction_strategy.py:
+⋮
+│class ExtractionStrategy(ABC):
+│    """
+│    Abstract base class for all extraction strategies.
+⋮
+│    async def arun(self, url: str, sections: List[str], *q, **kwargs) -> List[Dict[str, Any]]:
+⋮
+│class LLMExtractionStrategy(ExtractionStrategy):
+│    """
+│    A strategy that uses an LLM to extract meaningful content from the HTML.
+│
+│    Attributes:
+│        llm_config: The LLM configuration object.
+│        instruction: The instruction to use for the LLM model.
+│        schema: Pydantic model schema for structured data.
+│        extraction_type: "block" or "schema".
+│        chunk_token_threshold: Maximum tokens per chunk.
+│        overlap_rate: Overlap between chunks.
+⋮
+│    async def arun(self, url: str, sections: List[str]) -> List[Dict[str, Any]]:
 ⋮
 │class JsonCssExtractionStrategy(JsonElementExtractionStrategy):
 ⋮
 
-crawl4ai/html2text/__init__.py:
+crawl4ai\html2text\__init__.py:
 ⋮
 │class HTML2Text(html.parser.HTMLParser):
 ⋮
 │class CustomHTML2Text(HTML2Text):
 ⋮
 
-crawl4ai/html2text/utils.py:
+crawl4ai\html2text\utils.py:
 ⋮
 │def dumb_property_dict(style: str) -> Dict[str, str]:
 ⋮
 │def reformat_table(lines: List[str], right_margin: int) -> List[str]:
 ⋮
 
-crawl4ai/hub.py:
-⋮
-│class CrawlerHub:
-│    _crawlers: Dict[str, Type[BaseCrawler]] = {}
-│
-⋮
-│    @classmethod
-│    def get(cls, name: str) -> Union[Type[BaseCrawler], None]:
-⋮
-
-crawl4ai/legacy/cli.py:
+crawl4ai\legacy\cli.py:
 ⋮
 │@docs.command()
 │def update():
@@ -373,7 +469,7 @@ crawl4ai/legacy/cli.py:
 │def list():
 ⋮
 
-crawl4ai/legacy/docs_manager.py:
+crawl4ai\legacy\docs_manager.py:
 ⋮
 │class DocsManager:
 │    def __init__(self, logger=None):
@@ -382,10 +478,12 @@ crawl4ai/legacy/docs_manager.py:
 │        self.docs_dir.mkdir(parents=True, exist_ok=True)
 │        self.logger = logger or AsyncLogger(verbose=True)
 ⋮
+│    async def fetch_docs(self) -> bool:
+⋮
 │    def list(self) -> list[str]:
 ⋮
 
-crawl4ai/legacy/version_manager.py:
+crawl4ai\legacy\version_manager.py:
 ⋮
 │class VersionManager:
 │    def __init__(self):
@@ -394,12 +492,12 @@ crawl4ai/legacy/version_manager.py:
 │    def get_installed_version(self):
 ⋮
 
-crawl4ai/markdown_generation_strategy.py:
+crawl4ai\markdown_generation_strategy.py:
 ⋮
 │class DefaultMarkdownGenerator(MarkdownGenerationStrategy):
 ⋮
 
-crawl4ai/model_loader.py:
+crawl4ai\model_loader.py:
 ⋮
 │def set_model_device(model):
 ⋮
@@ -410,7 +508,7 @@ crawl4ai/model_loader.py:
 │def load_nltk_punkt():
 ⋮
 
-crawl4ai/models.py:
+crawl4ai\models.py:
 ⋮
 │class MarkdownGenerationResult(BaseModel):
 ⋮
@@ -422,7 +520,7 @@ crawl4ai/models.py:
 │class StringCompatibleMarkdown(str):
 ⋮
 
-crawl4ai/proxy_strategy.py:
+crawl4ai\proxy_strategy.py:
 ⋮
 │class ProxyConfig:
 │    def __init__(
@@ -461,7 +559,7 @@ crawl4ai/proxy_strategy.py:
 │    async def get_next_proxy(self) -> Optional[ProxyConfig]:
 ⋮
 
-crawl4ai/script/c4a_compile.py:
+crawl4ai\script\c4a_compile.py:
 ⋮
 │class C4ACompiler:
 │    """Main compiler with result-based API"""
@@ -478,7 +576,7 @@ crawl4ai/script/c4a_compile.py:
 │def compile_file(path: Union[str, pathlib.Path]) -> CompilationResult:
 ⋮
 
-crawl4ai/script/c4a_result.py:
+crawl4ai\script\c4a_result.py:
 ⋮
 │@dataclass
 │class Suggestion:
@@ -511,7 +609,7 @@ crawl4ai/script/c4a_result.py:
 │    def to_dict(self) -> dict:
 ⋮
 
-crawl4ai/script/c4ai_script.py:
+crawl4ai\script\c4ai_script.py:
 ⋮
 │class Compiler:
 │    def __init__(self, root: pathlib.Path|None=None):
@@ -529,42 +627,12 @@ crawl4ai/script/c4ai_script.py:
 │def compile_file(path: pathlib.Path) -> List[str]:
 ⋮
 
-crawl4ai/table_extraction.py:
+crawl4ai\table_extraction.py:
 ⋮
 │class DefaultTableExtraction(TableExtractionStrategy):
 ⋮
 
-crawl4ai/types.py:
-⋮
-│AsyncLogger = Union['AsyncLoggerType']
-│
-⋮
-│AsyncWebCrawler = Union['AsyncWebCrawlerType']
-⋮
-│AsyncUrlSeeder = Union['AsyncUrlSeederType']
-│
-⋮
-│BrowserConfig = Union['BrowserConfigType']
-│CrawlerRunConfig = Union['CrawlerRunConfigType']
-│HTTPCrawlerConfig = Union['HTTPCrawlerConfigType']
-│LLMConfig = Union['LLMConfigType']
-│# NEW: Add SeedingConfigType
-│SeedingConfig = Union['SeedingConfigType']
-│
-⋮
-│LXMLWebScrapingStrategy = Union['LXMLWebScrapingStrategyType']
-⋮
-│JsonCssExtractionStrategy = Union['JsonCssExtractionStrategyType']
-⋮
-│RegexChunking = Union['RegexChunkingType']
-│
-⋮
-│DefaultMarkdownGenerator = Union['DefaultMarkdownGeneratorType']
-│MarkdownGenerationResult = Union['MarkdownGenerationResultType']
-│
-⋮
-
-crawl4ai/user_agent_generator.py:
+crawl4ai\user_agent_generator.py:
 ⋮
 │class UAGen(ABC):
 │   @abstractmethod
@@ -581,8 +649,6 @@ crawl4ai/user_agent_generator.py:
 ⋮
 │class ValidUAGenerator(UAGen):
 ⋮
-│class OnlineUAGenerator(UAGen):
-⋮
 │class UserAgentGenerator():
 │    """
 │    Generate random user agents with specified constraints.
@@ -595,22 +661,23 @@ crawl4ai/user_agent_generator.py:
 │        chrome_versions (list): A list of possible Chrome browser versions.
 │        firefox_versions (list): A list of possible Firefox browser versions.
 ⋮
-│    def get_browser_stack(self, num_browsers: int = 1) -> List[str]:
-⋮
-│    def get_random_platform(self, device_type, os_type, device_brand):
-⋮
-│    def parse_user_agent(self, user_agent: str) -> Dict[str, str]:
-⋮
 │    def generate_client_hints(self, user_agent: str) -> str:
 ⋮
 
-crawl4ai/utils.py:
+crawl4ai\utils.py:
 ⋮
 │class VersionManager:
 │    def __init__(self):
 │        self.home_dir = Path(os.getenv("CRAWL4_AI_BASE_DIRECTORY", Path.home())) / ".crawl4ai"
 ⋮
 │    def get_installed_version(self):
+⋮
+│class RobotsParser:
+│    # Default 7 days cache TTL
+│    CACHE_TTL = 7 * 24 * 60 * 60
+│
+⋮
+│    async def can_fetch(self, url: str, user_agent: str = "*") -> bool:
 ⋮
 │class InvalidCSSSelectorError(Exception):
 ⋮
@@ -622,6 +689,8 @@ crawl4ai/utils.py:
 │    double_line: bool = False,
 ⋮
 │def get_home_folder():
+⋮
+│def split_and_parse_json_objects(json_string):
 ⋮
 │def sanitize_html(html):
 ⋮
@@ -645,6 +714,10 @@ crawl4ai/utils.py:
 ⋮
 │    try:
 │        if not html:
+⋮
+│        def remove_empty_and_low_word_count_elements(node, word_count_threshold):
+⋮
+│        def is_empty_or_whitespace(tag: Tag):
 ⋮
 │        def flatten_nested_elements(node):
 ⋮
@@ -670,8 +743,40 @@ crawl4ai/utils.py:
 │    def find_closest_parent_with_useful_text(tag):
 ⋮
 │    def process_image(img, url, index, total_images):
+│        # Check if an image has valid display and inside undesired html elements
+│        """
+│        Processes an HTML image element to determine its relevance and extract metadata.
+│        
+│        Evaluates an image's visibility, context, and usefulness based on its attributes and parent
+│        
+│        Args:
+│            img: The BeautifulSoup image tag to process.
+│            url: The base URL of the page containing the image.
+│            index: The index of the image in the list of images on the page.
+│            total_images: The total number of images on the page.
+│        
+⋮
+│        def score_image_for_usefulness(img, base_url, index, images_count):
+│            # Function to parse image height/width value and units
+│            """
+│            Scores an HTML image element for usefulness based on size, format, attributes, and posi
+│            
+│            The function evaluates an image's dimensions, file format, alt text, and its position a
+│            
+│            Args:
+│                img: The HTML image element to score.
+│                base_url: The base URL used to resolve relative image sources.
+│                index: The position of the image in the list of images on the page (zero-based).
+│                images_count: The total number of images on the page.
+│            
+⋮
+│            def parse_dimension(dimension):
+⋮
+│    def process_element(element: element.PageElement) -> bool:
 ⋮
 │    def flatten_nested_elements(node):
+⋮
+│def extract_metadata(html, soup=None):
 ⋮
 │def extract_xml_data(tags, string):
 ⋮
@@ -698,17 +803,21 @@ crawl4ai/utils.py:
 │    model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
 │    batch_size: int = 32
 ⋮
+│def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
+⋮
 │def get_true_available_memory_gb() -> float:
 ⋮
+│def get_true_memory_usage_percent() -> float:
+⋮
 
-deploy/docker/auth.py:
+deploy\docker\auth.py:
 ⋮
 │def resolve_secret_key(*, required: bool) -> str:
 ⋮
 │def get_principal(request: Request) -> Optional[Dict]:
 ⋮
 
-deploy/docker/egress_broker.py:
+deploy\docker\egress_broker.py:
 ⋮
 │class EgressBlocked(Exception):
 ⋮
@@ -718,7 +827,7 @@ deploy/docker/egress_broker.py:
 │def resolve_and_pin(url: str) -> PinnedTarget:
 ⋮
 
-deploy/docker/tests/conftest.py:
+deploy\docker\tests\conftest.py:
 ⋮
 │class _FakeResolver:
 │    """Drop-in for socket.getaddrinfo with a controllable host->IP map.
@@ -729,12 +838,12 @@ deploy/docker/tests/conftest.py:
 │    def set(self, host, ip):
 ⋮
 
-deploy/docker/utils.py:
+deploy\docker\utils.py:
 ⋮
 │def validate_webhook_url(url: str) -> None:
 ⋮
 
-deploy/docker/webhook.py:
+deploy\docker\webhook.py:
 ⋮
 │class _PinnedResolver(AbstractResolver):
 │    """aiohttp resolver that returns a single pre-pinned IP for the target host.
@@ -748,25 +857,31 @@ deploy/docker/webhook.py:
 │def sanitize_webhook_headers(headers: Optional[Dict[str, str]]) -> Dict[str, str]:
 ⋮
 
-docs/examples/website-to-api/web_scraper_lib.py:
-⋮
-│class ModelConfig:
-│    """Configuration for LLM models."""
-│    
-⋮
-│    def to_dict(self) -> Dict[str, Any]:
-⋮
-│    @classmethod
-│    def from_dict(cls, data: Dict[str, Any]) -> 'ModelConfig':
-⋮
-
-docs/md_v2/apps/c4a-script/assets/c4a-generator.js:
+docs\examples\c4a_script\tutorial\assets\c4a-generator.js:
 ⋮
 │c4aGenerator.getFieldValue = function(block, fieldName) {
 │    return block.getFieldValue(fieldName);
 ⋮
 
-docs/md_v2/apps/crawl4ai-assistant/libs/marked.min.js:
+docs\examples\scraping_strategies_performance.py:
+⋮
+│class TimingStats:
+│    def __init__(self):
+⋮
+│    def add(self, strategy_name, func_name, elapsed):
+⋮
+
+docs\examples\website-to-api\web_scraper_lib.py:
+⋮
+│class ModelConfig:
+│    """Configuration for LLM models."""
+│    
+⋮
+│    @classmethod
+│    def from_dict(cls, data: Dict[str, Any]) -> 'ModelConfig':
+⋮
+
+docs\md_v2\apps\crawl4ai-assistant\libs\marked.min.js:
 ⋮
 │(function(g,f){if(typeof exports=="object"&&typeof module<"u"){module.exports=f()}else if("function
 │"use strict";var H=Object.defineProperty;var be=Object.getOwnPropertyDescriptor;var Te=Object.getOw
@@ -803,12 +918,12 @@ docs/md_v2/apps/crawl4ai-assistant/libs/marked.min.js:
 │
 ⋮
 
-docs/md_v2/assets/gtag.js:
+docs\md_v2\assets\gtag.js:
 ⋮
 │  function gtag(){dataLayer.push(arguments);}
 ⋮
 
-docs/md_v2/assets/highlight.min.js:
+docs\md_v2\assets\highlight.min.js:
 ⋮
 │  var hljs=function(){"use strict";function e(n){
 │    return n instanceof Map?n.clear=n.delete=n.set=()=>{
@@ -860,35 +975,17 @@ docs/md_v2/assets/highlight.min.js:
 ⋮
 │    ;return n.splice(0,t),Object.assign(n,a)}}class i{constructor(){
 │    this.rules=[],this.multiRegexes=[],
-│    this.count=0,this.lastIndex=0,this.regexIndex=0}getMatcher(e){
-│    if(this.multiRegexes[e])return this.multiRegexes[e];const n=new t
-│    ;return this.rules.slice(e).forEach((([e,t])=>n.addRule(e,t))),
+⋮
 │    n.compile(),this.multiRegexes[e]=n,n}resumingScanAtSamePosition(){
 │    return 0!==this.regexIndex}considerAll(){this.regexIndex=0}addRule(e,n){
 ⋮
 
-docs/md_v2/marketplace/frontend/marketplace.js:
+docs\md_v2\marketplace\backend\config.py:
 ⋮
-│class MarketplaceCache {
-│    constructor() {
-│        this.prefix = 'c4ai_market_';
-│    }
-│
-│    get(key) {
-│        const item = localStorage.getItem(this.prefix + key);
-│        if (!item) return null;
-│
-│        const data = JSON.parse(item);
-⋮
-│    set(key, value, ttl = CACHE_TTL) {
-│        const data = {
-│            value: value,
-│            expires: Date.now() + ttl
-│        };
-│        localStorage.setItem(this.prefix + key, JSON.stringify(data));
+│class Config:
 ⋮
 
-docs/md_v2/marketplace/marketplace.js:
+docs\md_v2\marketplace\frontend\marketplace.js:
 ⋮
 │class MarketplaceCache {
 │    constructor() {
@@ -900,6 +997,11 @@ docs/md_v2/marketplace/marketplace.js:
 │        if (!item) return null;
 │
 │        const data = JSON.parse(item);
+│        if (Date.now() > data.expires) {
+│            localStorage.removeItem(this.prefix + key);
+│            return null;
+│        }
+│        return data.value;
 ⋮
 │    set(key, value, ttl = CACHE_TTL) {
 │        const data = {
@@ -936,7 +1038,28 @@ docs/md_v2/marketplace/marketplace.js:
 │        window.location.href = `app-detail.html?app=${slug}`;
 ⋮
 
-docs/releases_review/v0_4_3b2_features_demo.py:
+docs\md_v2\marketplace\marketplace.js:
+⋮
+│class MarketplaceCache {
+│    constructor() {
+│        this.prefix = 'c4ai_market_';
+│    }
+│
+│    get(key) {
+│        const item = localStorage.getItem(this.prefix + key);
+│        if (!item) return null;
+│
+│        const data = JSON.parse(item);
+⋮
+│    set(key, value, ttl = CACHE_TTL) {
+│        const data = {
+│            value: value,
+│            expires: Date.now() + ttl
+│        };
+│        localStorage.setItem(this.prefix + key, JSON.stringify(data));
+⋮
+
+docs\releases_review\v0_4_3b2_features_demo.py:
 ⋮
 │async def demo_proxy_rotation():
 │    """
@@ -947,12 +1070,12 @@ docs/releases_review/v0_4_3b2_features_demo.py:
 │    async def get_next_proxy(proxy_file: str = "proxies.txt") -> Optional[Dict]:
 ⋮
 
-tests/adaptive/compare_performance.py:
+tests\adaptive\compare_performance.py:
 ⋮
 │def read_baseline():
 ⋮
 
-tests/deep_crawling/test_deep_crawl_contextvar.py:
+tests\deep_crawling\test_deep_crawl_contextvar.py:
 ⋮
 │class TestContextVarCrossContext:
 │    """Tests that deep_crawl_active ContextVar works across task boundaries."""
@@ -1025,7 +1148,7 @@ tests/deep_crawling/test_deep_crawl_contextvar.py:
 │        async def original_arun(url, config=None, **kwargs):
 ⋮
 
-tests/docker/test_pool_release.py:
+tests\docker\test_pool_release.py:
 ⋮
 │class TestReleaseCrawler:
 │    """Tests for the release_crawler function."""
@@ -1038,7 +1161,7 @@ tests/docker/test_pool_release.py:
 │        async def release_n_times(n):
 ⋮
 
-tests/docker/test_serialization.py:
+tests\docker\test_serialization.py:
 ⋮
 │def to_serializable_dict(obj: Any) -> Dict:
 ⋮
@@ -1047,7 +1170,7 @@ tests/docker/test_serialization.py:
 │def is_empty_value(value: Any) -> bool:
 ⋮
 
-tests/loggers/test_logger.py:
+tests\loggers\test_logger.py:
 ⋮
 │class AsyncFileLogger(AsyncLoggerBase):
 │    """
@@ -1055,40 +1178,15 @@ tests/loggers/test_logger.py:
 ⋮
 │    def _write_to_file(self, level: str, message: str, tag: str):
 ⋮
-│    def info(self, message: str, tag: str = "INFO", **kwargs):
-⋮
 │    def warning(self, message: str, tag: str = "WARNING", **kwargs):
 ⋮
-│    def error(self, message: str, tag: str = "ERROR", **kwargs):
-⋮
 
-tests/memory/test_docker_config_gen.py:
-⋮
-│BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:11235"
-⋮
-│CASES = [
-│    # --- CrawlRunConfig variants ---
-│    "CrawlerRunConfig()",
-│    "CrawlerRunConfig(stream=True, cache_mode=CacheMode.BYPASS)",
-│    "CrawlerRunConfig(js_only=True, wait_until='networkidle')",
-│
-│    # --- BrowserConfig variants ---
-│    "BrowserConfig()",
-│    "BrowserConfig(headless=False, extra_args=['--disable-gpu'])",
-│    "BrowserConfig(browser_mode='builtin', proxy_config={'server': 'http://1.2.3.4:8080'})",
-⋮
-
-tests/memory/test_stress_docker_api.py:
+tests\memory\test_stress_docker_api.py:
 ⋮
 │def parse_args() -> argparse.Namespace:
 ⋮
 
-tests/test_async_logger_stderr.py:
-⋮
-│AsyncLogger = _mod.AsyncLogger
-⋮
-
-tests/unit/test_sitemap_namespace_parsing.py:
+tests\unit\test_sitemap_namespace_parsing.py:
 ⋮
 │class _FakeBM25:
 │    def __init__(self, corpus):
