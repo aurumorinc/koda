@@ -1,13 +1,7 @@
-# Changelog v0.10.7
+# Changelog v0.10.8
 
-## Fixes
+### Fixes
 
-* **YouTube Scraping Timeout**
-  Increased the default request timeout for YouTube scraping operations to 600,000ms to prevent premature connection termination during long-running requests.
-  (Commit: [c06eb30](https://github.com/aurumorinc/koda/commit/c06eb30a))
-
-## Performance
-
-* **S3 Multipart Upload Threshold**
-  Increased the multipart upload threshold to 500MB to resolve `SignatureDoesNotMatch` errors occurring during large file transfers.
-  (Commits: [284121e](https://github.com/aurumorinc/koda/commit/284121ea), [309cb51](https://github.com/aurumorinc/koda/commit/309cb516))
+* **YouTube Scraping Concurrency Adjustment**
+  Decreased the default maximum concurrency for YouTube scraping from 4 to 1 to mitigate rate-limiting issues and prevent resource exhaustion on the host environment.
+  * Commits: [d0c78e6](https://github.com/aurumorinc/koda/commit/d0c78e69), [1cd7ec1](https://github.com/aurumorinc/koda/commit/1cd7ec13)
