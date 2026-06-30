@@ -24,7 +24,8 @@ TABS = [
     {"name": "podcasts", "slug": "podcasts", "full_page": False},
     {"name": "playlists", "slug": "playlists", "full_page": False},
     {"name": "posts", "slug": "posts", "full_page": False},
-    {"name": "store", "slug": "store", "full_page": False}
+    {"name": "store", "slug": "store", "full_page": False},
+    {"name": "courses", "slug": "courses", "full_page": False}
 ]
 
 VIEWPORT = {"width": 1366, "height": 768}
@@ -106,7 +107,7 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
         if slug not in found_slugs:
             continue
             
-        url = f"{base_profile_url}/{slug}" if slug != "featured" else base_profile_url
+        url = f"{base_profile_url}/{slug}"
         await context.add_requests([
             Request.from_url(
                 url=url,
@@ -152,7 +153,7 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
         await scroll_to(page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(1000))
         screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
         
-    await _push_screenshot_data(context, page.url, screenshot_bytes)
+    await _push_screenshot_data(context, context.request.url, screenshot_bytes)
 
 
 @router.handler('DIALOG')
@@ -186,10 +187,7 @@ async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
             raise Exception("Dialog bounding box is null (element hidden?)")
             
         screenshot_bytes = await page.screenshot(clip=box)
-        
-        url = page.url.split("#")[0]
-        url = f"{url}#about"
-        await _push_screenshot_data(context, url, screenshot_bytes)
+        await _push_screenshot_data(context, f"{context.request.url}#about", screenshot_bytes)
     except Exception as e:
         context.log.error(f"Failed to capture About dialog: {e}")
     finally:
