@@ -2,12 +2,10 @@ import asyncio
 import base64
 import uuid
 from contextlib import suppress
-from typing import Dict, List, Any, cast
 
 from crawlee.router import Router
 from crawlee.crawlers import PlaywrightCrawlingContext, PlaywrightCrawler
 from crawlee import Request, ConcurrencySettings
-from crawlee.configuration import Configuration
 from playwright.async_api import Page
 
 from koda.client import KodaClient
@@ -69,10 +67,10 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
     found_slugs = set()
     try:
         # Wait a moment for tabs to render
-        await page.wait_for_selector('yt-tab-shape, tp-yt-paper-tab', timeout=5000)
+        await page.wait_for_selector('yt-tab-shape, tp-yt-paper-tab, [role="tab"]', timeout=5000)
         tab_texts = await page.evaluate('''() => {
-            const tabs = Array.from(document.querySelectorAll('yt-tab-shape, tp-yt-paper-tab'));
-            return tabs.map(tab => tab.innerText.trim().toLowerCase());
+            const tabs = Array.from(document.querySelectorAll('yt-tab-shape, tp-yt-paper-tab, [role="tab"]'));
+            return tabs.map(tab => (tab.innerText || tab.textContent || '').trim().toLowerCase());
         }''')
         
         for text in tab_texts:
@@ -188,7 +186,10 @@ async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
             raise Exception("Dialog bounding box is null (element hidden?)")
             
         screenshot_bytes = await page.screenshot(clip=box)
-        await _push_screenshot_data(context, page.url, screenshot_bytes)
+        
+        url = page.url.split("#")[0]
+        url = f"{url}#about"
+        await _push_screenshot_data(context, url, screenshot_bytes)
     except Exception as e:
         context.log.error(f"Failed to capture About dialog: {e}")
     finally:
@@ -202,7 +203,6 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
         from datetime import timedelta
 
         async with KodaClient(s3_resource=request.s3_resource, timeout=request.timeout, substitute_pixels=False) as client:
-            config = Configuration(memory_mbytes=2048)
             crawler = PlaywrightCrawler(
                 client=client,  # type: ignore
                 request_handler=router,
@@ -211,8 +211,7 @@ async def scrape_youtube_profile(request: ScrapeYoutubeProfileRequest) -> Scrape
                 concurrency_settings=ConcurrencySettings(
                     max_concurrency=request.max_concurrency,
                     desired_concurrency=min(10, request.max_concurrency)
-                ),
-                configuration=config
+                )
             )
 
             @crawler.pre_navigation_hook
