@@ -12,7 +12,7 @@ from koda.utils.file.service import upload, generate_presigned_url
 from koda.utils import sanitize_filename
 from koda.utils.webhook.service import webhook_dispatch
 from koda.use_cases.service import execute_actions
-from .schema import ScrapeRequest, ScrapeResponse, ScrapeResult
+from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse, ScrapeResult
 
 
 class ScrapeJob:

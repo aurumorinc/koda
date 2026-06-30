@@ -13,7 +13,7 @@ from koda.exceptions import TimeoutError, BrowserLaunchError
 from koda.utils.webhook.service import webhook_dispatch
 from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
 from koda.utils.file.main import File
-from .schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
+from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
 
 CHANNEL_PATH_PREFIXES = {"c", "user", "channel"}
 TABS = [
@@ -130,7 +130,7 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
         )
 
 
-async def _validate_redirect(page: Page, expected_slug: str) -> bool:
+async def _validate_redirect(page: Page, expected_slug: str | None) -> bool:
     # Allow time for YouTube's client-side router to resolve any redirects
     with suppress(Exception):
         await page.wait_for_load_state("networkidle", timeout=3000)

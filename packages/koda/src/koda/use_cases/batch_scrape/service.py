@@ -13,7 +13,7 @@ from koda.utils import sanitize_filename
 from koda.use_cases.service import execute_actions
 from koda.utils.webhook.service import webhook_dispatch
 from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse
-from .schema import BatchScrapeRequest, BatchScrapeResponse
+from koda.use_cases.batch_scrape.schema import BatchScrapeRequest, BatchScrapeResponse
 
 
 class BatchScrapeJob:

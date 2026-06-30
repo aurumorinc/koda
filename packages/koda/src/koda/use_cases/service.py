@@ -1,7 +1,7 @@
 import asyncio
 from typing import Dict, List, Callable, Optional, Awaitable
 from playwright.async_api import Page
-from .schema import Action
+from koda.use_cases.schema import Action
 
 
 async def wait_for_networkidle(
