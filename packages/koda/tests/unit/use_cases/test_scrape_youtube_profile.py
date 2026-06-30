@@ -55,13 +55,37 @@ async def test_default_handler_routing():
     context_mock.page.url = "https://youtube.com/@testuser"
     context_mock.request = Request.from_url("https://youtube.com/@testuser")
     
+    # Mocking page.evaluate to simulate tabs found
+    context_mock.page.evaluate.return_value = ["home", "videos"]
+    
     await _handler(context_mock)
     
-    assert context_mock.add_requests.call_count == 9
+    # DIALOG (1) + home (1) + videos (1) = 3
+    assert context_mock.add_requests.call_count == 3
     
     dialog_call = context_mock.add_requests.call_args_list[0][0][0]
     assert dialog_call[0].label == "DIALOG"
     assert dialog_call[0].url == "https://youtube.com/@testuser"
+
+@pytest.mark.asyncio
+async def test_default_handler_no_home_tab():
+    context_mock = AsyncMock()
+    context_mock.page = AsyncMock()
+    context_mock.page.url = "https://youtube.com/@testuser"
+    context_mock.request = Request.from_url("https://youtube.com/@testuser")
+    
+    # Mocking page.evaluate to simulate no 'home' tab
+    context_mock.page.evaluate.return_value = ["videos", "shorts"]
+    
+    await _handler(context_mock)
+    
+    # DIALOG (1) + videos (1) + shorts (1) = 3 requests
+    assert context_mock.add_requests.call_count == 3
+    
+    # Ensure none of the enqueued tabs have slug 'featured'
+    for i in range(1, 3):
+        tab_call = context_mock.add_requests.call_args_list[i][0][0]
+        assert "featured" not in tab_call[0].url
 
 @pytest.mark.asyncio
 async def test_validate_redirect():
@@ -77,6 +101,16 @@ async def test_validate_redirect():
     # Invalid URL pattern
     page_mock.url = "https://youtube.com/@test/featured"
     res = await _validate_redirect(page_mock, "videos")
+    assert res is False
+    
+    # Test featured slug valid redirect
+    page_mock.url = "https://youtube.com/@test/featured"
+    res = await _validate_redirect(page_mock, "featured")
+    assert res is True
+
+    # Test featured slug invalid redirect (e.g. redirected to videos because home doesn't exist)
+    page_mock.url = "https://youtube.com/@test/videos"
+    res = await _validate_redirect(page_mock, "featured")
     assert res is False
     
 @pytest.mark.asyncio
