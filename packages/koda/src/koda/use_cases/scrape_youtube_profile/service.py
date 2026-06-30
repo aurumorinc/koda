@@ -85,10 +85,6 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
         # Fallback to all if DOM parsing fails
         found_slugs = {tab["slug"] for tab in TABS}
 
-    # "home" should be treated like any other tab, but YouTube always has a home page (root URL)
-    # The home tab's slug is "featured". If it's missing, ensure it's scraped.
-    found_slugs.add("featured")
-
     user_data = context.request.user_data or {}
     
     # 1. Enqueue Dialogs (About)
@@ -128,8 +124,7 @@ async def _validate_redirect(page: Page, expected_slug: str) -> bool:
             await page.wait_for_timeout(2000)
         
     current_url = page.url.split("?")[0].rstrip("/")
-    # "featured" is typically at the root url, so it won't end with /featured in some cases
-    if expected_slug and expected_slug != "featured" and not current_url.lower().endswith(f"/{expected_slug.lower()}"):
+    if expected_slug and not current_url.lower().endswith(f"/{expected_slug.lower()}"):
         return False
     return True
 
@@ -138,7 +133,7 @@ async def _validate_redirect(page: Page, expected_slug: str) -> bool:
 async def tab_handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
     user_data = context.request.user_data or {}
-    slug = user_data.get("slug", "featured")
+    slug = user_data.get("slug")
     full_page = user_data.get("full_page", False)
     
     if not await _validate_redirect(page, slug):
