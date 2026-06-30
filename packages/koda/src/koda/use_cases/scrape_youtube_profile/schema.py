@@ -9,7 +9,7 @@ class ScrapeYoutubeProfileRequest(BaseModel):
     timeout: int = 300000
     s3_resource: Optional[Dict[str, Any]] = None
     webhook: Optional[Webhook] = None
-    max_concurrency: int = Field(default=4, alias="maxConcurrency")
+    max_concurrency: int = Field(default=1, alias="maxConcurrency")
 
 class ScrapeYoutubeProfileResponse(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
