@@ -1,13 +1,11 @@
-# Changelog v0.12.1
+# Changelog v0.12.2
 
 ## Improvements
 
-* **Refactored File Utilities Import Paths**
-  Updated internal import paths to utilize absolute paths rather than relative paths to improve codebase consistency and clarity.
-  Commits: [1655df0](https://github.com/aurumorinc/koda/commit/1655df0d), [397515a](https://github.com/aurumorinc/koda/commit/397515a3)
+* **Module Encapsulation**
+  Added `__all__` declarations to module files to explicitly define public exports and improve internal package structure.
+  Commits: [b09c04a](https://github.com/aurumorinc/koda/commit/b09c04a8), [18ccb03](https://github.com/aurumorinc/koda/commit/18ccb03a)
 
-## Other
-
-* **Removed Obsolete Memory Limit Assertion**
-  Cleaned up `PlaywrightCrawler` tests by removing an assertion for a memory limit configuration that was previously deprecated and removed from the codebase.
-  Commit: [ae945b6](https://github.com/aurumorinc/koda/commit/ae945b64)
+* **Script Execution Safety**
+  Implemented conditional execution blocks (`if __name__ == "__main__":`) within the recording script to prevent unintended execution when the module is imported.
+  Commits: [b09c04a](https://github.com/aurumorinc/koda/commit/b09c04a8), [18ccb03](https://github.com/aurumorinc/koda/commit/18ccb03a)
