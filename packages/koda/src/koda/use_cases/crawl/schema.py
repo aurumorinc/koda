@@ -3,8 +3,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from koda.utils.webhook.schema import Webhook
 from koda.use_cases.schema import Action
 
+
 class ScrapeOptions(BaseModel):
-    formats: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"]))
+    formats: List[Union[str, Dict[str, Any]]] = Field(
+        default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"])
+    )
     onlyMainContent: bool = True
     onlyCleanContent: bool = False
     includeTags: Optional[List[str]] = None
@@ -16,7 +19,9 @@ class ScrapeOptions(BaseModel):
     mobile: bool = False
     skipTlsVerification: bool = True
     timeout: int = Field(default=60000, ge=1000, le=300000)
-    parsers: List[Union[str, Dict[str, Any]]] = Field(default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["pdf"]))
+    parsers: List[Union[str, Dict[str, Any]]] = Field(
+        default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["pdf"])
+    )
     actions: Optional[List[Action]] = None
     location: Optional[Dict[str, Any]] = None
     removeBase64Images: bool = True
@@ -25,6 +30,7 @@ class ScrapeOptions(BaseModel):
     storeInCache: bool = True
     lockdown: bool = False
     profile: Optional[Dict[str, Any]] = None
+
 
 class CrawlRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -48,6 +54,7 @@ class CrawlRequest(BaseModel):
     webhook: Optional[Webhook] = None
     scrapeOptions: ScrapeOptions = Field(default_factory=ScrapeOptions)
     zeroDataRetention: bool = False
+
 
 class CrawlResponse(BaseModel):
     success: bool

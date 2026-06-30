@@ -12,7 +12,8 @@ from koda.utils.file.service import upload, generate_presigned_url
 from koda.utils import sanitize_filename
 from koda.utils.webhook.service import webhook_dispatch
 from koda.use_cases.service import execute_actions
-from .schema import ScrapeRequest, ScrapeResponse, ScrapeResult
+from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse, ScrapeResult
+
 
 class ScrapeJob:
     def __init__(self, request: ScrapeRequest):
@@ -22,7 +23,7 @@ class ScrapeJob:
             "scrapes": [],
             "javascriptReturns": [],
             "pdfs": [],
-            "errors": []
+            "errors": [],
         }
 
     async def execute_actions_hook(self, page, context, **kwargs):
@@ -33,66 +34,85 @@ class ScrapeJob:
 
     async def run(self) -> ScrapeResponse:
         response = ScrapeResponse(url=self.request.url)
-        
+
         browser_kwargs = {
             "headless": True,
             "viewport_width": 1366,
-            "viewport_height": 768
+            "viewport_height": 768,
         }
         browser_config = BrowserConfig(**browser_kwargs)  # type: ignore
-        
+
         has_screenshot = any(
             f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot")
             for f in self.request.formats
         )
         run_kwargs = {
             "page_timeout": self.request.timeout,
-            "screenshot": has_screenshot
+            "screenshot": has_screenshot,
         }
         run_config = CrawlerRunConfig(**run_kwargs)  # type: ignore
-        
+
         if self.request.only_main_content:
             run_config.content_filter = PruningContentFilter()
-            
+
         async with KodaClient(s3_resource=self.request.s3_resource) as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.actions:
-                    crawler.crawler_strategy.set_hook("before_retrieve_html", self.execute_actions_hook)  # type: ignore
-                
+                    crawler.crawler_strategy.set_hook(
+                        "before_retrieve_html", self.execute_actions_hook
+                    )  # type: ignore
+
                 result = await crawler.arun(url=self.request.url, config=run_config)
-                
+
                 if not result.success:
                     response.error = result.error_message
                     return response
-                    
+
                 if "metadata" in self.request.formats:
                     response.metadata = result.metadata
-                    
+
                 if "markdown" in self.request.formats:
                     md_obj = result.markdown
-                    response.markdown = getattr(md_obj, "fit_markdown", "") or getattr(md_obj, "raw_markdown", "") or str(md_obj) if md_obj else None
-                    
+                    response.markdown = (
+                        getattr(md_obj, "fit_markdown", "")
+                        or getattr(md_obj, "raw_markdown", "")
+                        or str(md_obj)
+                        if md_obj
+                        else None
+                    )
+
                 if "html" in self.request.formats or "rawHtml" in self.request.formats:
                     response.html = result.html
-                    
+
                 if "links" in self.request.formats:
                     response.links = result.links
-                    
+
                 if "images" in self.request.formats:
-                    response.images = result.media.get("images", []) if result.media else []
-                    
+                    response.images = (
+                        result.media.get("images", []) if result.media else []
+                    )
+
                 if "_format_screenshot_bytes" in self.action_results:
-                    setattr(response, "_screenshot_bytes", self.action_results["_format_screenshot_bytes"])
+                    setattr(
+                        response,
+                        "_screenshot_bytes",
+                        self.action_results["_format_screenshot_bytes"],
+                    )
                 else:
-                    has_screenshot_format = any(f == "screenshot" or (isinstance(f, dict) and f.get("type") == "screenshot") for f in self.request.formats)
+                    has_screenshot_format = any(
+                        f == "screenshot"
+                        or (isinstance(f, dict) and f.get("type") == "screenshot")
+                        for f in self.request.formats
+                    )
                     if has_screenshot_format and result.screenshot:
                         screenshot_bytes = base64.b64decode(result.screenshot)
                         setattr(response, "_screenshot_bytes", screenshot_bytes)
-                    
+
                 if any(self.action_results.values()):
                     response.action_results = self.action_results
-                    
+
         return response
+
 
 @webhook_dispatch
 async def scrape(request: ScrapeRequest) -> ScrapeResult:
@@ -100,26 +120,26 @@ async def scrape(request: ScrapeRequest) -> ScrapeResult:
     try:
         response = await asyncio.wait_for(
             job.run(),
-            timeout=request.timeout / 1000.0 if request.timeout else settings.timeout / 1000.0
+            timeout=request.timeout / 1000.0
+            if request.timeout
+            else settings.timeout / 1000.0,
         )
         if response.error:
             return ScrapeResult(success=False, error=response.error)
-            
+
         if getattr(response, "_screenshot_bytes", None) and settings.s3:
             screenshot_bytes = response._screenshot_bytes
             object_name = f"{sanitize_filename(request.url)}_{uuid.uuid4().hex[:8]}.jpg"
-            
+
             await asyncio.to_thread(
                 upload,
                 data=screenshot_bytes,
                 object_name=object_name,
-                mimetype="image/jpeg"
+                mimetype="image/jpeg",
             )
-            
-            response.screenshot = generate_presigned_url(
-                object_name=object_name
-            )
-            
+
+            response.screenshot = generate_presigned_url(object_name=object_name)
+
         data: Dict[str, Any] = {}
         if response.markdown is not None:
             data["markdown"] = response.markdown
@@ -135,7 +155,7 @@ async def scrape(request: ScrapeRequest) -> ScrapeResult:
             data["screenshot"] = response.screenshot
         if response.action_results is not None:
             data["actions"] = response.action_results
-            
+
         return ScrapeResult(success=True, data=data)
     except asyncio.TimeoutError:
         error_msg = "Scrape operation timed out"

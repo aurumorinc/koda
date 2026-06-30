@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
+
 class Action(BaseModel):
     type: str
     selector: Optional[str] = None

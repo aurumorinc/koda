@@ -1,5 +1,5 @@
-import re
-from playwright.sync_api import Playwright, sync_playwright, expect
+from playwright.sync_api import Playwright, sync_playwright
+
 
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
@@ -26,6 +26,7 @@ def run(playwright: Playwright) -> None:
 
     context.close()
     browser.close()
+
 
 with sync_playwright() as playwright:
     run(playwright)
