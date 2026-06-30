@@ -1,17 +1,17 @@
-# Changelog v0.11.0
+# Changelog v0.12.0
 
-### Features
+## Breaking Changes
 
-* **Navigation: Added Courses tab**
-  The navigation list for scraping now includes the `courses` tab, allowing for automated data collection from this new endpoint.
-  Commits: [93b9168](https://github.com/aurumorinc/koda/commit/93b9168e), [071234a](https://github.com/aurumorinc/koda/commit/071234a9)
+* **Removal of default "featured" slug in YouTube profile scraper**
+  The YouTube profile scraper no longer defaults to the "featured" slug. This change requires all existing implementations to explicitly define the target slug.
+  * **Migration:** Update your scraping requests to include the specific slug parameter, as the implicit fallback has been removed.
+  * **Commits:** [878bdf7](https://github.com/aurumorinc/koda/commit/878bdf7c), [55caa38](https://github.com/aurumorinc/koda/commit/55caa38b), [cfe4ae0](https://github.com/aurumorinc/koda/commit/cfe4ae0e)
 
-### Improvements
+## Improvements
 
-* **URL Handling: Standardized URL construction**
-  Refactored internal URL construction logic to remove conditional handling for featured slugs, ensuring more predictable behavior.
-  Commits: [93b9168](https://github.com/aurumorinc/koda/commit/93b9168e), [071234a](https://github.com/aurumorinc/koda/commit/071234a9)
-
-* **Screenshot Metadata: Consistent request URLs**
-  Updated the screenshot metadata service to utilize the standardized URL construction, ensuring consistent request formatting across the platform.
-  Commits: [93b9168](https://github.com/aurumorinc/koda/commit/93b9168e), [071234a](https://github.com/aurumorinc/koda/commit/071234a9)
+* **Standardization of internal module imports**
+  Refactored internal module imports to ensure consistency across the codebase.
+  * **Commits:** [104ae01](https://github.com/aurumorinc/koda/commit/104ae01c)
+* **Application of consistent code formatting**
+  Applied uniform formatting rules across the project to improve maintainability.
+  * **Commits:** [cfdd7aa](https://github.com/aurumorinc/koda/commit/cfdd7aa8)
