@@ -395,3 +395,4 @@ storage/
 .agents/skills/crawlee/modules/crawlee-python
 .agents/skills/worldline-python/modules/worldline-python
 .agents/skills/lightpanda/modules/browser
+.agents/skills/oort-python/modules/oort-python
