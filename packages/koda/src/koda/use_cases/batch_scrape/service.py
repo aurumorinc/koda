@@ -1,17 +1,17 @@
 import asyncio
 import base64
 import uuid
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from crawl4ai.content_filter_strategy import PruningContentFilter
 
 from koda.client import KodaClient
 from koda.config.main import settings
-from koda.utils.file.service import upload, generate_presigned_url
 from koda.utils import sanitize_filename
 from koda.use_cases.service import execute_actions
-from koda.utils.webhook.service import webhook_dispatch
+from oort.webhook.service import webhook_dispatch
+from oort.file.main import File
 from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse
 from koda.use_cases.batch_scrape.schema import BatchScrapeRequest, BatchScrapeResponse
 
@@ -202,8 +202,8 @@ class BatchScrapeJob:
         return response
 
 
-@webhook_dispatch
-async def batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
+@webhook_dispatch(event_prefix="batch_scrape")
+async def _batch_scrape_dispatched(request: BatchScrapeRequest, webhook: Optional[dict] = None) -> BatchScrapeResponse:
     job = BatchScrapeJob(request)
 
     try:
@@ -214,7 +214,7 @@ async def batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
             else settings.timeout / 1000.0,
         )
 
-        if settings.s3 and response.data:
+        if response.data:
             for s_resp in response.data:
                 if getattr(s_resp, "_screenshot_bytes", None):
                     screenshot_bytes = s_resp._screenshot_bytes
@@ -222,14 +222,8 @@ async def batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
                         f"{sanitize_filename(s_resp.url)}_{uuid.uuid4().hex[:8]}.jpg"
                     )
 
-                    await asyncio.to_thread(
-                        upload,
-                        data=screenshot_bytes,
-                        object_name=object_name,
-                        mimetype="image/jpeg",
-                    )
-
-                    s_resp.screenshot = generate_presigned_url(object_name=object_name)
+                    f = File.from_bytes(screenshot_bytes, object_name, "image/jpeg")
+                    s_resp.screenshot = await f.get_presigned_url_async()
 
         return response
 
@@ -242,3 +236,7 @@ async def batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
     except Exception as e:
         error_msg = str(e)
         raise Exception(error_msg)
+
+async def batch_scrape(request: BatchScrapeRequest) -> BatchScrapeResponse:
+    webhook_dict = request.webhook.model_dump() if request.webhook else None
+    return await _batch_scrape_dispatched(request, webhook=webhook_dict)
