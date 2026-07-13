@@ -8,11 +8,12 @@ from crawl4ai.content_filter_strategy import PruningContentFilter
 
 from koda.client import KodaClient
 from koda.config.main import settings
-from koda.utils.file.service import upload, generate_presigned_url
+from oort.file.main import File
 from koda.utils import sanitize_filename
-from koda.utils.webhook.service import webhook_dispatch
+from oort.webhook.service import webhook_dispatch
 from koda.use_cases.service import execute_actions
 from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse, ScrapeResult
+from typing import Optional
 
 
 class ScrapeJob:
@@ -114,8 +115,8 @@ class ScrapeJob:
         return response
 
 
-@webhook_dispatch
-async def scrape(request: ScrapeRequest) -> ScrapeResult:
+@webhook_dispatch(event_prefix="scrape")
+async def _scrape_dispatched(request: ScrapeRequest, webhook: Optional[dict] = None) -> ScrapeResult:
     job = ScrapeJob(request)
     try:
         response = await asyncio.wait_for(
@@ -127,18 +128,12 @@ async def scrape(request: ScrapeRequest) -> ScrapeResult:
         if response.error:
             return ScrapeResult(success=False, error=response.error)
 
-        if getattr(response, "_screenshot_bytes", None) and settings.s3:
+        if getattr(response, "_screenshot_bytes", None):
             screenshot_bytes = response._screenshot_bytes
             object_name = f"{sanitize_filename(request.url)}_{uuid.uuid4().hex[:8]}.jpg"
 
-            await asyncio.to_thread(
-                upload,
-                data=screenshot_bytes,
-                object_name=object_name,
-                mimetype="image/jpeg",
-            )
-
-            response.screenshot = generate_presigned_url(object_name=object_name)
+            f = File.from_bytes(screenshot_bytes, object_name, "image/jpeg")
+            response.screenshot = await f.get_presigned_url_async()
 
         data: Dict[str, Any] = {}
         if response.markdown is not None:
@@ -163,3 +158,7 @@ async def scrape(request: ScrapeRequest) -> ScrapeResult:
     except Exception as e:
         error_msg = str(e)
         return ScrapeResult(success=False, error=error_msg)
+
+async def scrape(request: ScrapeRequest) -> ScrapeResult:
+    webhook_dict = request.webhook.model_dump() if request.webhook else None
+    return await _scrape_dispatched(request, webhook=webhook_dict)
