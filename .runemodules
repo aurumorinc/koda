@@ -25,3 +25,6 @@
 [runemodule ".agents/skills/lightpanda/modules/browser"]
 	url = https://github.com/lightpanda-io/browser/tree/main
 	path = .agents/skills/lightpanda/modules/browser
+[runemodule ".agents/skills/oort-python/modules/oort-python"]
+	url = https://github.com/aurumorinc/oort-python/tree/main
+	path = .agents/skills/oort-python/modules/oort-python

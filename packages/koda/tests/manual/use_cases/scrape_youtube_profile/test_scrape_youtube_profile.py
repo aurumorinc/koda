@@ -6,7 +6,7 @@ import os
 # so the Settings class picks it up during initialization.
 os.environ["KODA_HEADLESS"] = "true"
 
-from worldline import structlog
+import structlog
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest
 from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile
 
@@ -57,7 +57,7 @@ async def main():
     logger.info("Success! Saving screenshots to tests/manual/output/ ...")
     
     if response.data:
-        from koda.utils.file.main import File
+        from oort.file.main import File
         import uuid
         for tab_data in response.data:
             if "screenshot" in tab_data and isinstance(tab_data["screenshot"], File):

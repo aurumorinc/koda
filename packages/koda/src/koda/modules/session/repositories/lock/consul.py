@@ -1,5 +1,5 @@
 import asyncio
-from worldline import structlog
+import structlog
 from typing import Optional
 
 import httpx

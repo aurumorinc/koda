@@ -10,10 +10,11 @@ from playwright.async_api import Page
 
 from koda.client import KodaClient
 from koda.exceptions import TimeoutError, BrowserLaunchError
-from koda.utils.webhook.service import webhook_dispatch
+from oort.webhook.service import webhook_dispatch
 from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
-from koda.utils.file.main import File
+from oort.file.main import File
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
+from typing import Optional
 
 __all__ = [
     "CHANNEL_PATH_PREFIXES",
@@ -228,9 +229,9 @@ async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
             await page.set_viewport_size(VIEWPORT)
 
 
-@webhook_dispatch
-async def scrape_youtube_profile(
-    request: ScrapeYoutubeProfileRequest,
+@webhook_dispatch(event_prefix="scrape_youtube_profile")
+async def _scrape_youtube_profile_dispatched(
+    request: ScrapeYoutubeProfileRequest, webhook: Optional[dict] = None
 ) -> ScrapeYoutubeProfileResponse:
     try:
         from datetime import timedelta
@@ -304,3 +305,9 @@ async def scrape_youtube_profile(
         return ScrapeYoutubeProfileResponse(success=False, error=f"Browser crash: {e}")
     except Exception as e:
         return ScrapeYoutubeProfileResponse(success=False, error=str(e))
+
+async def scrape_youtube_profile(
+    request: ScrapeYoutubeProfileRequest,
+) -> ScrapeYoutubeProfileResponse:
+    webhook_dict = request.webhook.model_dump() if request.webhook else None
+    return await _scrape_youtube_profile_dispatched(request, webhook=webhook_dict)

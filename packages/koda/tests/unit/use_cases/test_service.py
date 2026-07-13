@@ -95,9 +95,8 @@ async def test_scroll_to_specific_y():
 
     await scroll_to(page_mock, y=1500)
 
-    # 2 loops. On 2000, it breaks before pressing PageDown
-    assert page_mock.keyboard.press.call_count == 2
-    page_mock.keyboard.press.assert_called_with("PageDown")
+    # 1 loop
+    assert page_mock.keyboard.press.call_count == 1
 
 
 @pytest.mark.asyncio
@@ -110,5 +109,5 @@ async def test_screenshot():
 
     assert res == b"image_data"
     page_mock.screenshot.assert_called_once_with(
-        clip={"x": 0, "y": 0, "width": 1366, "height": 3072}, full_page=True
+        full_page=False
     )

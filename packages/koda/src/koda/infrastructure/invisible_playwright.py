@@ -1,4 +1,4 @@
-from worldline import structlog # type: ignore[import-untyped]
+import structlog # type: ignore[import-untyped]
 from typing import Any, Optional
 from playwright.async_api import BrowserContext
 

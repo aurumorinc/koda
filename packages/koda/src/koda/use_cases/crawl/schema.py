@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, Field
-from koda.utils.webhook.schema import Webhook
+from oort.webhook.schema import WebhookRequest
 from koda.use_cases.schema import Action
 
 
@@ -51,7 +51,7 @@ class CrawlRequest(BaseModel):
     robotsUserAgent: Optional[str] = None
     delay: Optional[float] = None
     maxConcurrency: int = 10
-    webhook: Optional[Webhook] = None
+    webhook: Optional[WebhookRequest] = None
     scrapeOptions: ScrapeOptions = Field(default_factory=ScrapeOptions)
     zeroDataRetention: bool = False
 

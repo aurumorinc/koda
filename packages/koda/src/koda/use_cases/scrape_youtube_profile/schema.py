@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, Field
-from koda.utils.webhook.schema import Webhook
+from oort.webhook.schema import WebhookRequest
 
 __all__ = ["ScrapeYoutubeProfileRequest", "ScrapeYoutubeProfileResponse"]
 class ScrapeYoutubeProfileRequest(BaseModel):
@@ -11,7 +11,7 @@ class ScrapeYoutubeProfileRequest(BaseModel):
     )
     timeout: int = 300000
     s3_resource: Optional[Dict[str, Any]] = None
-    webhook: Optional[Webhook] = None
+    webhook: Optional[WebhookRequest] = None
     max_concurrency: int = Field(default=1, alias="maxConcurrency")
 
 

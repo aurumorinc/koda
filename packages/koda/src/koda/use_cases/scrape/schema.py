@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, Field
-from koda.utils.webhook.schema import Webhook
+from oort.webhook.schema import WebhookRequest
 from koda.use_cases.schema import Action
 
 
@@ -17,7 +17,7 @@ class ScrapeRequest(BaseModel):
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
     s3_resource: Optional[Dict[str, Any]] = None
-    webhook: Optional[Webhook] = None
+    webhook: Optional[WebhookRequest] = None
 
 
 class ScrapeResponse(BaseModel):

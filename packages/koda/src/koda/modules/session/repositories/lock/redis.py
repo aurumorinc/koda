@@ -1,5 +1,5 @@
 import asyncio
-from worldline import structlog
+import structlog
 import uuid
 from typing import Optional
 
