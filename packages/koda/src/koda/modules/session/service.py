@@ -1,4 +1,4 @@
-from worldline import structlog
+import structlog
 import os
 import re
 import shutil
