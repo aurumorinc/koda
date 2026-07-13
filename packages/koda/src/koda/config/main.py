@@ -8,34 +8,11 @@ if "pytest" in sys.argv[0]:
 from typing import Optional, Literal, Any
 from pydantic import BaseModel, Field, model_validator, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from worldline import LoggingSettings
+from worldline.config import WorldlineSettings
+from oort.config import OortSettings
 
 
-class S3(BaseModel):
-    endpoint_url: Optional[str] = Field(default=None, validation_alias=AliasChoices("endpoint_url", "endPoint"))
-    region_name: str = Field(default="us-east-1", validation_alias=AliasChoices("region_name", "region"))
-    access_key_id: Optional[str] = Field(default=None, validation_alias=AliasChoices("access_key_id", "accessKey", "access_key"))
-    secret_access_key: Optional[str] = Field(default=None, validation_alias=AliasChoices("secret_access_key", "secretKey", "secret_key"))
-    bucket_name: Optional[str] = Field(default=None, validation_alias=AliasChoices("bucket_name", "bucket"))
-    addressing_style: Literal["auto", "virtual", "path"] = Field(default="auto", validation_alias=AliasChoices("addressing_style", "pathStyle", "path_style"))
-
-    @classmethod
-    def from_dict(cls, data: dict) -> Optional["S3"]:
-        if not data:
-            return None
-            
-        # Handle the Windmill specific boolean to literal cast for pathStyle
-        if "pathStyle" in data or "path_style" in data:
-            val = data.get("pathStyle", data.get("path_style"))
-            data["addressing_style"] = "path" if val is True else "auto"
-            
-        try:
-            return cls(**data)
-        except Exception:
-            return None
-
-
-class Settings(LoggingSettings, BaseSettings):
+class Settings(OortSettings, WorldlineSettings, BaseSettings):
     """
     Centralized configuration for Koda.
     Loads values from environment variables with sensible defaults.
@@ -102,9 +79,6 @@ class Settings(LoggingSettings, BaseSettings):
     # Redis Configuration (Upstash)
     upstash_redis_rest_url: Optional[str] = None
     upstash_redis_rest_token: Optional[str] = None
-
-    # S3 Configuration
-    s3: Optional[S3] = None
 
     # Security Configuration
     encryption_key: Optional[str] = Field(default=None, validation_alias="KODA_ENCRYPTION_KEY")
