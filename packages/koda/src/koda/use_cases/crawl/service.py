@@ -8,9 +8,10 @@ from crawl4ai.async_configs import SeedingConfig
 from crawl4ai.async_url_seeder import AsyncUrlSeeder
 
 from koda.client import KodaClient
-from koda.utils.webhook.service import webhook_dispatch
+from oort.webhook.service import webhook_dispatch
 from koda.use_cases.service import execute_actions
 from koda.use_cases.crawl.schema import CrawlRequest, CrawlResponse
+from typing import Optional
 
 
 class CrawlJob:
@@ -149,7 +150,11 @@ class CrawlJob:
         )
 
 
-@webhook_dispatch
-async def crawl(request: CrawlRequest) -> CrawlResponse:
+@webhook_dispatch(event_prefix="crawl")
+async def _crawl_dispatched(request: CrawlRequest, webhook: Optional[dict] = None) -> CrawlResponse:
     job = CrawlJob(request)
     return await job.run()
+
+async def crawl(request: CrawlRequest) -> CrawlResponse:
+    webhook_dict = request.webhook.model_dump() if request.webhook else None
+    return await _crawl_dispatched(request, webhook=webhook_dict)
