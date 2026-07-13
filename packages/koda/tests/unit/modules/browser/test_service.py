@@ -53,7 +53,8 @@ async def test_strip_csp_headers_document():
     
     mock_route.fetch.assert_awaited_once()
     mock_route.fulfill.assert_awaited_once_with(
-        response=mock_response,
+        status=mock_response.status,
+        body=await mock_response.body(),
         headers={"Content-Type": "text/html"}
     )
 
@@ -74,6 +75,7 @@ async def test_launch_browser_yields_browser(mock_launchers):
     mock_launcher = MagicMock()
     mock_browser = AsyncMock()
     mock_context = AsyncMock()
+    mock_context.on = MagicMock()
     
     mock_browser.new_context.return_value = mock_context
     mock_launcher.return_value.__aenter__.return_value = mock_browser
@@ -87,7 +89,7 @@ async def test_launch_browser_yields_browser(mock_launchers):
             
         # Assert
         mock_launchers.get.assert_called_once_with("default")
-        mock_launcher.assert_called_once_with("", {"key": "value"})
+        mock_launcher.assert_called_once_with("", {"key": "value", "substitute_pixels": True})
         mock_browser.new_context.assert_awaited_once_with(
             permissions=["geolocation", "notifications"],
             bypass_csp=True
@@ -101,6 +103,7 @@ async def test_launch_browser_yields_context(mock_launchers):
     # Arrange
     mock_launcher = MagicMock()
     mock_context = AsyncMock()
+    mock_context.on = MagicMock()
     # Ensure it doesn't have new_context attribute
     del mock_context.new_context
     
@@ -114,6 +117,7 @@ async def test_launch_browser_yields_context(mock_launchers):
             assert ctx == mock_context
             
         # Assert
+        mock_launcher.assert_called_once_with("", {"key": "value", "substitute_pixels": True})
         mock_context.grant_permissions.assert_awaited_once_with(
             ["geolocation", "notifications"]
         )

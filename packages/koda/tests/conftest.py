@@ -1,5 +1,5 @@
 import pytest
-from worldline import structlog
+import structlog
 import psutil
 import os
 import logging

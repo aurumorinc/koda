@@ -2,11 +2,11 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 
-from worldline import structlog
+import structlog
 from koda.integrations.posthog import inject_posthog_monolith
 
 @pytest.mark.asyncio
-async def test_unified_session_linking(capsys):
+async def test_unified_session_linking(caplog):
     """
     End-to-end integration test that simulates a Windmill worker execution
     and verifies the bi-directional linking between OTel and PostHog.
@@ -32,8 +32,7 @@ async def test_unified_session_linking(capsys):
         logger = structlog.get_logger("test_unified_session")
         logger.info("test_unified_log")
         
-        captured = capsys.readouterr()
-        assert "test_unified_log" in captured.out
+        assert any("test_unified_log" in record.message for record in caplog.records)
         
         # 3. PostHog: Call inject_posthog_monolith and verify the script contains the trace_id
         from unittest.mock import AsyncMock
