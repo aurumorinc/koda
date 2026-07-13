@@ -1,13 +1,13 @@
 import os
 import time
-import logging
+import structlog
 from typing import Optional
 import httpx
 from opentelemetry import trace
 from playwright.async_api import Page, Request, BrowserContext
 from koda.config.main import settings
 
-logger = logging.getLogger("koda.posthog")
+logger = structlog.get_logger(__name__)
 
 def _get_otel_trace_id() -> str:
     """Extracts the current OTel trace ID."""
