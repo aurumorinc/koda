@@ -237,7 +237,6 @@ async def _scrape_youtube_profile_dispatched(
         from datetime import timedelta
 
         async with KodaClient(
-            s3_resource=request.s3_resource,
             timeout=request.timeout,
             substitute_pixels=False,
         ) as client:

@@ -16,7 +16,6 @@ class ScrapeRequest(BaseModel):
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
-    s3_resource: Optional[Dict[str, Any]] = None
     webhook: Optional[WebhookRequest] = None
 
 

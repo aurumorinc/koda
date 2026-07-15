@@ -10,7 +10,6 @@ class ScrapeYoutubeProfileRequest(BaseModel):
         default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"])
     )
     timeout: int = 300000
-    s3_resource: Optional[Dict[str, Any]] = None
     webhook: Optional[WebhookRequest] = None
     max_concurrency: int = Field(default=1, alias="maxConcurrency")
 
