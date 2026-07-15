@@ -3,11 +3,24 @@
 #   "koda @ git+https://github.com/aurumorinc/koda.git@0.13.0#subdirectory=packages/koda",
 # ]
 # ///
-import asyncio
+import os
 import wmill  # type: ignore
+
+try:
+    _s3 = wmill.get_resource("f/koda/default_s3")
+    if _s3:
+        os.environ["S3_BUCKET"] = _s3.get("bucket", "")
+        os.environ["S3_ENDPOINT_URL"] = _s3.get("endPoint", "")
+        os.environ["S3_REGION"] = _s3.get("region", "")
+        os.environ["S3_ACCESS_KEY"] = _s3.get("accessKey", "")
+        os.environ["S3_SECRET_KEY"] = _s3.get("secretKey", "")
+except Exception:
+    pass
+
+import asyncio
 from typing import Optional, List, Dict, Any, Union
 
-from koda import Webhook
+from oort.webhook.schema import WebhookRequest as Webhook
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest
 from koda.use_cases.scrape_youtube_profile.service import scrape_youtube_profile
 
@@ -20,21 +33,13 @@ def main(
 ) -> dict:
     """
     Scrape a YouTube profile URL. Extracts the channel handle and performs a multi-tab scrape behind the scenes.
-    Uses Crawlee for orchestration and Playwright automation, passing S3/Webhook to global settings.
+    Uses Crawlee for orchestration and Playwright automation, passing Webhook to global settings.
     """
     
-    s3_resource = None
-
-    try:
-        s3_resource = wmill.get_resource("f/koda/default_s3")
-    except Exception:
-        pass
-
     kwargs_request = {
         "url": url,
         "formats": formats,
         "timeout": timeout,
-        "s3_resource": s3_resource,
         "webhook": webhook,
         "max_concurrency": max_concurrency,
     }
@@ -43,7 +48,7 @@ def main(
     try:
         response = asyncio.run(scrape_youtube_profile(request))
         if response.data:
-            from koda.utils.file.main import File
+            from oort.file.main import File
             for item in response.data:
                 if "screenshot" in item and isinstance(item["screenshot"], File):
                     f = item["screenshot"]
