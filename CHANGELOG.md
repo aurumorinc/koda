@@ -1,21 +1,14 @@
-# Changelog v0.13.0
+# Changelog v0.14.0
 
 ## Breaking Changes
 
-* **Migration to oort-python library**
-  We have replaced internal S3, file utilities, and webhook services with the `oort-python` library. This update requires refactoring core scraping functions and updating public API schemas.
-  * **Migration Path:**
-    * Update all imports from `koda.utils.file` and `koda.utils.webhook` to `oort.file` and `oort.webhook`.
-    * Update any code referencing `WebhookRequest` schemas to match the new `oort-python` implementation.
-    * Refactor `scrape_youtube_profile`, `crawl`, and `batch_scrape` to utilize the new `webhook_dispatch` decorator pattern.
-  * **Commits:** [f20808d](https://github.com/aurumorinc/koda/commit/f20808d7), [db70ce7](https://github.com/aurumorinc/koda/commit/db70ce73), [03726c8](https://github.com/aurumorinc/koda/commit/03726c88)
+* **Removal of `s3_resource` parameter from `KodaClient` and request schemas**
+  The `s3_resource` parameter has been removed from the `KodaClient` constructor and the `BatchScrapeRequest`, `ScrapeRequest`, and `ScrapeYoutubeProfileRequest` schemas. S3 configuration must now be managed via environment variables.
+  * **Migration Guide:** Remove any `s3_resource` arguments from your `KodaClient` instantiations and request object initializations. Ensure your environment is configured with the necessary S3 credentials and settings as required by the updated module-level initialization.
+  * **Commits:** [971f007](https://github.com/aurumorinc/koda/commit/971f007d), [c6914f4](https://github.com/aurumorinc/koda/commit/c6914f4c), [dcf33e8](https://github.com/aurumorinc/koda/commit/dcf33e8f)
 
-## Infrastructure
+## Other
 
-* **Standardized logging implementation**
-  Refactored the logging stack to utilize `structlog` directly for improved observability and structured log output.
-  * **Commits:** [0736f21](https://github.com/aurumorinc/koda/commit/0736f216)
-
-* **Simplified configuration management**
-  Streamlined configuration by inheriting from shared `OortSettings` and `WorldlineSettings` classes, reducing boilerplate in service initialization.
-  * **Commits:** [3911b3e](https://github.com/aurumorinc/koda/commit/3911b3e5), [bcfddc1](https://github.com/aurumorinc/koda/commit/bcfddc1a)
+* **Removal of S3 integration tests**
+  Integration tests that relied on live credentials and external infrastructure have been removed to streamline the test suite.
+  * **Commits:** [28a8fb4](https://github.com/aurumorinc/koda/commit/28a8fb46)
