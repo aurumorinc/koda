@@ -1,14 +1,23 @@
-# Changelog v0.14.0
+# Changelog v0.14.1
 
-## Breaking Changes
+### Fixes
 
-* **Removal of `s3_resource` parameter from `KodaClient` and request schemas**
-  The `s3_resource` parameter has been removed from the `KodaClient` constructor and the `BatchScrapeRequest`, `ScrapeRequest`, and `ScrapeYoutubeProfileRequest` schemas. S3 configuration must now be managed via environment variables.
-  * **Migration Guide:** Remove any `s3_resource` arguments from your `KodaClient` instantiations and request object initializations. Ensure your environment is configured with the necessary S3 credentials and settings as required by the updated module-level initialization.
-  * **Commits:** [971f007](https://github.com/aurumorinc/koda/commit/971f007d), [c6914f4](https://github.com/aurumorinc/koda/commit/c6914f4c), [dcf33e8](https://github.com/aurumorinc/koda/commit/dcf33e8f)
+* **Webhook Serialization**
+  Resolved a `RuntimeError` occurring during the serialization of `File` objects within `webhook_dispatch` by adding comprehensive test coverage.
+  Commits: [93d495b](https://github.com/aurumorinc/koda/commit/93d495bd), [0812def](https://github.com/aurumorinc/koda/commit/0812def7)
 
-## Other
+### Infrastructure
 
-* **Removal of S3 integration tests**
-  Integration tests that relied on live credentials and external infrastructure have been removed to streamline the test suite.
-  * **Commits:** [28a8fb4](https://github.com/aurumorinc/koda/commit/28a8fb46)
+* **Dependency Updates**
+  Updated core dependencies including `invisible-playwright`, `koda`, `oort-python`, and `playwright` to their latest stable versions.
+  Commit: [6d866cd](https://github.com/aurumorinc/koda/commit/6d866cdf)
+
+* **Cleanup of Development Dependencies**
+  Removed unused development dependencies to streamline the build environment and reduce package bloat.
+  Commit: [6d866cd](https://github.com/aurumorinc/koda/commit/6d866cdf)
+
+### Docs
+
+* **Koda API Documentation**
+  Published a comprehensive guide for the Koda web scraping engine, detailing async flow, data schemas, and full endpoint specifications.
+  Commit: [727465e](https://github.com/aurumorinc/koda/commit/727465ea)
