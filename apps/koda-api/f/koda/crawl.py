@@ -3,10 +3,24 @@
 #   "koda @ git+https://github.com/aurumorinc/koda.git@0.13.0#subdirectory=packages/koda",
 # ]
 # ///
+import os
+import wmill  # type: ignore
+
+try:
+    _s3 = wmill.get_resource("f/koda/default_s3")
+    if _s3:
+        os.environ["S3_BUCKET"] = _s3.get("bucket", "")
+        os.environ["S3_ENDPOINT_URL"] = _s3.get("endPoint", "")
+        os.environ["S3_REGION"] = _s3.get("region", "")
+        os.environ["S3_ACCESS_KEY"] = _s3.get("accessKey", "")
+        os.environ["S3_SECRET_KEY"] = _s3.get("secretKey", "")
+except Exception:
+    pass
+
 import asyncio
 from typing import Optional, List, Dict, Any
 
-from koda import Webhook
+from oort.webhook.schema import WebhookRequest as Webhook
 from koda.use_cases.crawl.schema import CrawlRequest, ScrapeOptions
 from koda.use_cases.crawl.service import crawl
 

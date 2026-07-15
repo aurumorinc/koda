@@ -12,7 +12,7 @@ __all__ = ["KodaClient"]
 class KodaClient:
     """Primary interface for the Koda extraction infrastructure."""
     
-    def __init__(self, s3_resource: dict | Any | None = None, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the KodaClient."""
 
         if kwargs:

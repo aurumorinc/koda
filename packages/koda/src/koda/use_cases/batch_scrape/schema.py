@@ -18,7 +18,6 @@ class BatchScrapeRequest(BaseModel):
     only_main_content: bool = Field(default=True, alias="onlyMainContent")
     actions: List[Action] = Field(default_factory=list)
     timeout: Optional[int] = None
-    s3_resource: Optional[Dict[str, Any]] = None
     webhook: Optional[WebhookRequest] = None
     max_concurrency: Optional[int] = Field(default=None, alias="maxConcurrency")
     ignore_invalid_urls: Optional[bool] = Field(default=True, alias="ignoreInvalidURLs")

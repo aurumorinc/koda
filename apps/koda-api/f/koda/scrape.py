@@ -3,12 +3,26 @@
 #   "koda @ git+https://github.com/aurumorinc/koda.git@0.13.0#subdirectory=packages/koda",
 # ]
 # ///
+import os
+import wmill  # type: ignore
+
+try:
+    _s3 = wmill.get_resource("f/koda/default_s3")
+    if _s3:
+        os.environ["S3_BUCKET"] = _s3.get("bucket", "")
+        os.environ["S3_ENDPOINT_URL"] = _s3.get("endPoint", "")
+        os.environ["S3_REGION"] = _s3.get("region", "")
+        os.environ["S3_ACCESS_KEY"] = _s3.get("accessKey", "")
+        os.environ["S3_SECRET_KEY"] = _s3.get("secretKey", "")
+except Exception:
+    pass
+
 import asyncio
 import uuid
-import wmill  # type: ignore
 from typing import Optional, List, Dict, Any, Union
 
-from koda import Webhook, settings
+from oort.webhook.schema import WebhookRequest as Webhook
+from koda import settings
 from koda.use_cases.schema import Action
 from koda.use_cases.scrape.schema import ScrapeRequest
 from koda.use_cases.scrape.service import scrape
@@ -19,21 +33,11 @@ def main(
     onlyMainContent: bool = True,
     actions: List[Action] = [],
     timeout: int = 60000,
-    s3_resource: Optional[str] = "f/koda/default_s3",
     webhook: Optional[Webhook] = None,
 ) -> dict:
     """
     Scrape a single URL and extract information using Koda infrastructure.
     """
-    s3_dict = None
-    if s3_resource:
-        try:
-            s3_dict = wmill.get_resource(s3_resource)
-        except Exception:
-            pass
-        if not s3_dict:
-            return {"success": False, "error": f"S3 Resource '{s3_resource}' not found."}
-
     normalized_formats = []
     if formats:
         for f in formats:
@@ -48,7 +52,6 @@ def main(
         onlyMainContent=onlyMainContent,
         timeout=timeout or settings.timeout,
         actions=actions,
-        s3_resource=s3_dict,
         webhook=webhook
     )
 

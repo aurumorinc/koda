@@ -104,7 +104,7 @@ class BatchScrapeJob:
         if self.request.only_main_content:
             run_config.content_filter = PruningContentFilter()
 
-        async with KodaClient(s3_resource=self.request.s3_resource) as client:
+        async with KodaClient() as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.actions or (
                     self.request.requests
