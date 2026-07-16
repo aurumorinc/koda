@@ -110,7 +110,7 @@ class BatchScrapeJob:
                     self.request.requests
                     and any(r.actions for r in self.request.requests)
                 ):
-                    crawler.crawler_strategy.set_hook(
+                    crawler.crawler_strategy.set_hook(  # type: ignore[missing-attribute]
                         "before_retrieve_html", self.execute_actions_hook
                     )  # type: ignore
 
@@ -223,7 +223,7 @@ async def _batch_scrape_dispatched(request: BatchScrapeRequest, webhook: Optiona
                     )
 
                     f = File.from_bytes(screenshot_bytes, object_name, "image/jpeg")
-                    s_resp.screenshot = await f.get_presigned_url_async()
+                    s_resp.screenshot = await f.presigned_url  # type: ignore[not-async]
 
         return response
 

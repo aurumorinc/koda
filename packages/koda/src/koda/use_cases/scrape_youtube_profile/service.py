@@ -165,7 +165,7 @@ async def tab_handler(context: PlaywrightCrawlingContext) -> None:
     slug = user_data.get("slug")
     full_page = user_data.get("full_page", False)
 
-    if not await _validate_redirect(page, slug):
+    if not await _validate_redirect(page, str(slug) if slug else None):
         return
 
     await wait_for_networkidle(page)
@@ -282,12 +282,12 @@ async def _scrape_youtube_profile_dispatched(
             data_list = []
 
             for item in items:
-                tab_data = {"url": item.get("url", "")}
+                tab_data: dict = {"url": str(item.get("url", ""))}
 
                 if "screenshot_base64" in item and "screenshot_filename" in item:
                     f = File.from_base64(
-                        item["screenshot_base64"],
-                        item["screenshot_filename"],
+                        str(item["screenshot_base64"]),
+                        str(item["screenshot_filename"]),
                         "image/png",
                     )
                     tab_data["screenshot"] = f

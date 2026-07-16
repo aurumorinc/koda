@@ -59,7 +59,7 @@ class ScrapeJob:
         async with KodaClient() as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.actions:
-                    crawler.crawler_strategy.set_hook(
+                    crawler.crawler_strategy.set_hook(  # type: ignore[missing-attribute]
                         "before_retrieve_html", self.execute_actions_hook
                     )  # type: ignore
 
@@ -133,7 +133,7 @@ async def _scrape_dispatched(request: ScrapeRequest, webhook: Optional[dict] = N
             object_name = f"{sanitize_filename(request.url)}_{uuid.uuid4().hex[:8]}.jpg"
 
             f = File.from_bytes(screenshot_bytes, object_name, "image/jpeg")
-            response.screenshot = await f.get_presigned_url_async()
+            response.screenshot = await f.presigned_url  # type: ignore[not-async]
 
         data: Dict[str, Any] = {}
         if response.markdown is not None:

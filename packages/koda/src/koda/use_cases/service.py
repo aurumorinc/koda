@@ -158,7 +158,7 @@ async def execute_actions(
                     f = File.from_bytes(
                         shot_bytes, f"screenshot.{ext}", f"image/{ext}"
                     )
-                    url = await f.get_presigned_url_async()
+                    url = await f.presigned_url  # type: ignore[not-async]
                     action_results["screenshots"].append(url or f.base64)
 
             elif action.type == "pdf":
@@ -173,7 +173,7 @@ async def execute_actions(
                     f = File.from_bytes(
                         pdf_bytes, "document.pdf", "application/pdf"
                     )
-                    url = await f.get_presigned_url_async()
+                    url = await f.presigned_url  # type: ignore[not-async]
                     action_results["pdfs"].append(url or f.base64)
 
             elif action.type == "scrape":
