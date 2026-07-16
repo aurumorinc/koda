@@ -23,7 +23,8 @@ async def test_crawlee_headed_propagation(monkeypatch, local_test_server):
     # Mock the internal launcher to just capture config
     from koda.modules.browser.service import _LAUNCHERS
     
-    original_launcher = _LAUNCHERS.get(settings.browser)
+    browser_setting = settings.browser or "cloakbrowser"
+    original_launcher = _LAUNCHERS[browser_setting]
     
     from contextlib import asynccontextmanager
     
@@ -45,7 +46,7 @@ async def test_crawlee_headed_propagation(monkeypatch, local_test_server):
         captured_config.update(config)
         yield MockContext()
         
-    _LAUNCHERS[settings.browser] = mock_launcher
+    _LAUNCHERS[browser_setting] = mock_launcher
     
     try:
         async with BrowserSession() as ctx:
@@ -53,7 +54,7 @@ async def test_crawlee_headed_propagation(monkeypatch, local_test_server):
             
         assert captured_config.get("headless") is False
     finally:
-        _LAUNCHERS[settings.browser] = original_launcher
+        _LAUNCHERS[browser_setting] = original_launcher
         settings.headless = original_headless
 
 

@@ -106,7 +106,7 @@ class CrawlJob:
         async with KodaClient() as client:
             async with AsyncWebCrawler(client=client, config=browser_config) as crawler:
                 if self.request.scrapeOptions.actions:
-                    crawler.crawler_strategy.set_hook(
+                    crawler.crawler_strategy.set_hook(  # type: ignore[missing-attribute]
                         "before_retrieve_html", self.execute_actions_hook
                     )  # type: ignore
 

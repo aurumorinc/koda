@@ -65,7 +65,7 @@ async def main():
                 # Use the original filename provided by the File object, fallback to uuid
                 save_name = getattr(f, "filename", None) or f"{uuid.uuid4().hex}.png"
                 filepath = save_base64_image(
-                    base64_string=f.presigned_url or f.base64,
+                    base64_string=await f.presigned_url or f.base64,  # type: ignore[not-async]
                     filename=save_name,
                     output_dir=os.path.join(os.path.dirname(__file__), "output")
                 )

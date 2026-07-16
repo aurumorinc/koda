@@ -1,7 +1,7 @@
 import pytest
 from koda.modules.browser.service import BrowserSession
 from koda.config.main import settings
-import png
+import png  # type: ignore[missing-import]
 
 @pytest.mark.asyncio
 async def test_invisible_screenshot_color_fidelity():
