@@ -205,7 +205,7 @@ class KodaPlaywrightCrawler(PlaywrightCrawler):
                 
                 # Replace upload with oort.file.main.File instantiation and URL generation
                 f = File.from_bytes(json_data, object_name, "application/json")
-                await f.get_presigned_url_async()
+                await f.presigned_url  # type: ignore[not-async]
 
 import sys
 import crawlee
