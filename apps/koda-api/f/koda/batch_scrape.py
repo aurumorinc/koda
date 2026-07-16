@@ -1,6 +1,6 @@
 # /// script
 # dependencies = [
-#   "koda @ git+https://github.com/aurumorinc/koda.git@0.15.0#subdirectory=packages/koda",
+#   "koda @ git+https://github.com/aurumorinc/koda.git@0.15.1#subdirectory=packages/koda",
 # ]
 # ///
 import os

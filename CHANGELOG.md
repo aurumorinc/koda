@@ -1,17 +1,19 @@
-# Changelog v0.15.0
+# Changelog v0.15.1
 
-## Features
+## Infrastructure
 
-* **Sync/Async Context Utility**
-  Introduced the `is_async_context()` utility to help developers detect the current execution environment, facilitating better handling of synchronous and asynchronous code paths.
-  Commits: [6f04705](https://github.com/aurumorinc/koda/commit/6f047059), [bb8c350](https://github.com/aurumorinc/koda/commit/bb8c3503), [175ead6](https://github.com/aurumorinc/koda/commit/175ead62)
+*   **Updated crawl4ai dependency**
+    Updated `crawl4ai` from version 0.9.1 to 0.9.2 in `pdm.lock`.
+    Commits: [4f30e01](https://github.com/aurumorinc/koda/commit/4f30e018)
 
-* **File Object API Update**
-  Updated `File` object interactions to utilize the `presigned_url` property directly instead of the deprecated `get_presigned_url_async()` method, simplifying access to file resources.
-  Commits: [6f04705](https://github.com/aurumorinc/koda/commit/6f047059), [bb8c350](https://github.com/aurumorinc/koda/commit/bb8c3503), [175ead6](https://github.com/aurumorinc/koda/commit/175ead62)
+*   **Updated crawlee dependency**
+    Updated `crawlee` from version 1.8.1 to 1.8.2 in `pdm.lock`.
+    Commits: [4f30e01](https://github.com/aurumorinc/koda/commit/4f30e018)
 
-## Fixes
+*   **Updated koda dependency**
+    Updated `koda` from version 0.14.1 to 0.15.0 in `pdm.lock`.
+    Commits: [50787dd](https://github.com/aurumorinc/koda/commit/50787dd5)
 
-* **Browser Configuration Defaulting**
-  Resolved a `KeyError` occurring when browser settings were missing by defaulting the configuration to "cloakbrowser".
-  Commit: [6d243c4](https://github.com/aurumorinc/koda/commit/6d243c44)
+*   **Updated oort-python dependency**
+    Updated `oort-python` from version 0.8.0 to 0.8.1 in `pdm.lock`.
+    Commits: [50787dd](https://github.com/aurumorinc/koda/commit/50787dd5)
