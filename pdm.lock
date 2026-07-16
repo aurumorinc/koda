@@ -1322,7 +1322,7 @@ files = [
 name = "invisible-core"
 version = "0.2.0"
 git = "https://github.com/feder-cr/invisible_core.git"
-revision = "352f90c13a9aaef276bdc4bf552d348cd7e15eea"
+revision = "7f977439ba8278c24853781a37f6556357784c83"
 summary = ""
 dependencies = [
     "maxminddb",
@@ -1489,7 +1489,7 @@ files = [
 
 [[package]]
 name = "koda"
-version = "0.13.0"
+version = "0.14.1"
 editable = true
 summary = ""
 dependencies = [
@@ -2107,9 +2107,9 @@ files = [
 
 [[package]]
 name = "oort-python"
-version = "0.6.0"
+version = "0.8.0"
 git = "https://github.com/aurumorinc/oort-python.git"
-revision = "0f77eaa42c5615badeff6001812661f15c0398bb"
+revision = "f4ef8e1a1f99fd15cf34dbfee5431c80c4c3563b"
 summary = ""
 dependencies = [
     "asgiref",
