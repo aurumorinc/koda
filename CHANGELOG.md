@@ -1,23 +1,17 @@
-# Changelog v0.14.1
+# Changelog v0.15.0
 
-### Fixes
+## Features
 
-* **Webhook Serialization**
-  Resolved a `RuntimeError` occurring during the serialization of `File` objects within `webhook_dispatch` by adding comprehensive test coverage.
-  Commits: [93d495b](https://github.com/aurumorinc/koda/commit/93d495bd), [0812def](https://github.com/aurumorinc/koda/commit/0812def7)
+* **Sync/Async Context Utility**
+  Introduced the `is_async_context()` utility to help developers detect the current execution environment, facilitating better handling of synchronous and asynchronous code paths.
+  Commits: [6f04705](https://github.com/aurumorinc/koda/commit/6f047059), [bb8c350](https://github.com/aurumorinc/koda/commit/bb8c3503), [175ead6](https://github.com/aurumorinc/koda/commit/175ead62)
 
-### Infrastructure
+* **File Object API Update**
+  Updated `File` object interactions to utilize the `presigned_url` property directly instead of the deprecated `get_presigned_url_async()` method, simplifying access to file resources.
+  Commits: [6f04705](https://github.com/aurumorinc/koda/commit/6f047059), [bb8c350](https://github.com/aurumorinc/koda/commit/bb8c3503), [175ead6](https://github.com/aurumorinc/koda/commit/175ead62)
 
-* **Dependency Updates**
-  Updated core dependencies including `invisible-playwright`, `koda`, `oort-python`, and `playwright` to their latest stable versions.
-  Commit: [6d866cd](https://github.com/aurumorinc/koda/commit/6d866cdf)
+## Fixes
 
-* **Cleanup of Development Dependencies**
-  Removed unused development dependencies to streamline the build environment and reduce package bloat.
-  Commit: [6d866cd](https://github.com/aurumorinc/koda/commit/6d866cdf)
-
-### Docs
-
-* **Koda API Documentation**
-  Published a comprehensive guide for the Koda web scraping engine, detailing async flow, data schemas, and full endpoint specifications.
-  Commit: [727465e](https://github.com/aurumorinc/koda/commit/727465ea)
+* **Browser Configuration Defaulting**
+  Resolved a `KeyError` occurring when browser settings were missing by defaulting the configuration to "cloakbrowser".
+  Commit: [6d243c4](https://github.com/aurumorinc/koda/commit/6d243c44)
