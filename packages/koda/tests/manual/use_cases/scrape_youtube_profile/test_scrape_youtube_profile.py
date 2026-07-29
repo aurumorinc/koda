@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import inspect
 import os
 
 # Force Koda to run headed before importing any Koda modules
@@ -17,7 +18,6 @@ def save_base64_image(base64_string: str, filename: str, output_dir: str = "outp
     os.makedirs(output_dir, exist_ok=True)
     filepath = os.path.join(output_dir, filename)
     
-    # Type guard if base64_string is inadvertently passed as bytes
     if isinstance(base64_string, bytes):
         base64_string = base64_string.decode("utf-8")
     
@@ -29,7 +29,6 @@ def save_base64_image(base64_string: str, filename: str, output_dir: str = "outp
             f.write(response.content)
         return filepath
         
-    # Strip data URI prefix if present
     if "," in base64_string:
         base64_string = base64_string.split(",", 1)[1]
         
@@ -39,12 +38,11 @@ def save_base64_image(base64_string: str, filename: str, output_dir: str = "outp
     return filepath
 
 async def main():
-    
     req = ScrapeYoutubeProfileRequest(
         url="https://www.youtube.com/@LinusTechTips",
         formats=["screenshot"],
         timeout=300000,
-        maxConcurrency=4
+        maxConcurrency=1
     )
 
     logger.info("Starting crawler...")
@@ -62,10 +60,15 @@ async def main():
         for tab_data in response.data:
             if "screenshot" in tab_data and isinstance(tab_data["screenshot"], File):
                 f = tab_data["screenshot"]
-                # Use the original filename provided by the File object, fallback to uuid
                 save_name = getattr(f, "filename", None) or f"{uuid.uuid4().hex}.png"
+                
+                presigned = f.presigned_url
+                if inspect.isawaitable(presigned):
+                    presigned = await presigned
+                
+                b64_val = presigned or f.base64
                 filepath = save_base64_image(
-                    base64_string=await f.presigned_url or f.base64,  # type: ignore[not-async]
+                    base64_string=b64_val,
                     filename=save_name,
                     output_dir=os.path.join(os.path.dirname(__file__), "output")
                 )
