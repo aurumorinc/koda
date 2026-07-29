@@ -61,6 +61,32 @@ async def _push_screenshot_data(
     )
 
 
+async def _hydrate_all_images(page) -> None:
+    """Forces all lazy-loaded thumbnails to load eagerly and waits for them to complete rendering."""
+    with suppress(Exception):
+        await page.evaluate("""async () => {
+            const imgs = Array.from(document.querySelectorAll('img, yt-img-shadow img, ytd-thumbnail img'));
+            for (const img of imgs) {
+                img.setAttribute('loading', 'eager');
+                if (img.dataset.src && (!img.src || img.src.includes('data:image'))) {
+                    img.src = img.dataset.src;
+                }
+            }
+            window.scrollBy(0, 50);
+            window.scrollBy(0, -50);
+            await Promise.all(
+                imgs.map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.addEventListener('load', resolve, { once: true });
+                        img.addEventListener('error', resolve, { once: true });
+                        setTimeout(resolve, 1500);
+                    });
+                })
+            );
+        }""")
+
+
 async def _capture_about_dialog_in_place(context: PlaywrightCrawlingContext, base_profile_url: str) -> None:
     page = context.page
     try:
@@ -170,13 +196,15 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
             await scroll_to(
                 page,
                 y=MAX_SCREENSHOT_HEIGHT,
-                wait_callback=lambda: page.wait_for_timeout(1000),
+                wait_callback=lambda: page.wait_for_timeout(500),
             )
+            await _hydrate_all_images(page)
             screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
         else:
             await scroll_to(
-                page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(1000)
+                page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(500)
             )
+            await _hydrate_all_images(page)
             screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
 
         await _push_screenshot_data(context, tab_url, screenshot_bytes)
