@@ -1,19 +1,7 @@
-# Changelog v0.15.1
+# Changelog v0.15.2
 
-## Infrastructure
+## Performance
 
-*   **Updated crawl4ai dependency**
-    Updated `crawl4ai` from version 0.9.1 to 0.9.2 in `pdm.lock`.
-    Commits: [4f30e01](https://github.com/aurumorinc/koda/commit/4f30e018)
-
-*   **Updated crawlee dependency**
-    Updated `crawlee` from version 1.8.1 to 1.8.2 in `pdm.lock`.
-    Commits: [4f30e01](https://github.com/aurumorinc/koda/commit/4f30e018)
-
-*   **Updated koda dependency**
-    Updated `koda` from version 0.14.1 to 0.15.0 in `pdm.lock`.
-    Commits: [50787dd](https://github.com/aurumorinc/koda/commit/50787dd5)
-
-*   **Updated oort-python dependency**
-    Updated `oort-python` from version 0.8.0 to 0.8.1 in `pdm.lock`.
-    Commits: [50787dd](https://github.com/aurumorinc/koda/commit/50787dd5)
+* **YouTube Scraping Optimization**
+  Refactored the profile scraping workflow to utilize in-place SPA navigation via Playwright, eliminating the overhead of separate tab and dialog requests. This change includes the removal of internal helpers `_validate_redirect` and `tab_handler` and optimizes concurrency settings for improved throughput.
+  * Commits: [e4bccf6](https://github.com/aurumorinc/koda/commit/e4bccf6e), [90fdf5c](https://github.com/aurumorinc/koda/commit/90fdf5c5), [5b2fa2e](https://github.com/aurumorinc/koda/commit/5b2fa2e0)
