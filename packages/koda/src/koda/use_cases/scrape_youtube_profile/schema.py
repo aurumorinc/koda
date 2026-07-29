@@ -11,8 +11,6 @@ class ScrapeYoutubeProfileRequest(BaseModel):
     )
     timeout: int = 300000
     webhook: Optional[WebhookRequest] = None
-    max_concurrency: int = Field(default=1, alias="maxConcurrency")
-
 
 class ScrapeYoutubeProfileResponse(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

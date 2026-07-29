@@ -29,7 +29,6 @@ def main(
     formats: List[Union[str, Dict[str, Any]]] = ["screenshot"],
     timeout: int = 600000,
     webhook: Optional[Webhook] = None,
-    max_concurrency: int = 1,
 ) -> dict:
     """
     Scrape a YouTube profile URL. Extracts the channel handle and performs a multi-tab scrape behind the scenes.
@@ -41,7 +40,6 @@ def main(
         "formats": formats,
         "timeout": timeout,
         "webhook": webhook,
-        "max_concurrency": max_concurrency,
     }
     request = ScrapeYoutubeProfileRequest(**kwargs_request)
     
