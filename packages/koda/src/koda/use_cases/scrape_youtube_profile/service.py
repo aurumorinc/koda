@@ -2,19 +2,18 @@ import asyncio
 import base64
 import uuid
 from contextlib import suppress
+from typing import Optional, List, Dict, Any, Union
 
 from crawlee.router import Router
 from crawlee.crawlers import PlaywrightCrawlingContext, PlaywrightCrawler
-from crawlee import Request, ConcurrencySettings
-from playwright.async_api import Page
+from crawlee import Request
 
 from koda.client import KodaClient
 from koda.exceptions import TimeoutError, BrowserLaunchError
 from oort.webhook.service import webhook_dispatch
-from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
+from koda.use_cases.service import scroll_to, screenshot
 from oort.file.main import File
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
-from typing import Optional
 
 __all__ = [
     "CHANNEL_PATH_PREFIXES",
@@ -62,6 +61,39 @@ async def _push_screenshot_data(
     )
 
 
+async def _capture_about_dialog_in_place(context: PlaywrightCrawlingContext, base_profile_url: str) -> None:
+    page = context.page
+    try:
+        await page.set_viewport_size({"width": VIEWPORT["width"], "height": MAX_SCROLL_Y})
+        more_button = page.get_by_role("button").filter(has_text="...more")
+        try:
+            await more_button.wait_for(state="visible", timeout=3000)
+            await more_button.click()
+        except Exception:
+            context.log.warning("No '...more' button found for About dialog.")
+            return
+
+        dialog = page.locator(
+            "tp-yt-paper-dialog:has(ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-about-channel']), tp-yt-paper-dialog:visible"
+        ).first
+        try:
+            await dialog.wait_for(state="visible", timeout=3000)
+        except Exception:
+            context.log.warning("About dialog did not appear.")
+            return
+
+        box = await dialog.bounding_box()
+        if box:
+            screenshot_bytes = await page.screenshot(clip=box)
+            await _push_screenshot_data(context, f"{base_profile_url}#about", screenshot_bytes)
+    except Exception as e:
+        context.log.error(f"Failed to capture About dialog: {e}")
+    finally:
+        with suppress(Exception):
+            await page.set_viewport_size(VIEWPORT)
+            await page.keyboard.press("Escape")
+
+
 @router.default_handler
 async def _handler(context: PlaywrightCrawlingContext) -> None:
     page = context.page
@@ -86,9 +118,8 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
     # Determine which tabs actually exist on the channel
     found_slugs = set()
     try:
-        # Wait a moment for tabs to render
         await page.wait_for_selector(
-            'yt-tab-shape, tp-yt-paper-tab, [role="tab"]', timeout=5000
+            'yt-tab-shape, tp-yt-paper-tab, [role="tab"]', timeout=3000
         )
         tab_texts = await page.evaluate("""() => {
             const tabs = Array.from(document.querySelectorAll('yt-tab-shape, tp-yt-paper-tab, [role="tab"]'));
@@ -103,130 +134,60 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
         pass
 
     if not found_slugs:
-        # Fallback to all if DOM parsing fails
         found_slugs = {tab["slug"] for tab in TABS}
 
-    user_data = context.request.user_data or {}
+    # 1. Capture About Dialog (In-place)
+    await _capture_about_dialog_in_place(context, base_profile_url)
 
-    # 1. Enqueue Dialogs (About)
-    await context.add_requests(
-        [
-            Request.from_url(
-                url=base_profile_url,
-                unique_key=f"{base_profile_url}#DIALOG",
-                label="DIALOG",
-                user_data=user_data,
-            )
-        ]
-    )
-
-    # 2. Enqueue Tab Handlers
+    # 2. Process Tabs (In-place SPA navigation)
     for tab in TABS:
         slug = tab["slug"]
         if slug not in found_slugs:
             continue
 
-        url = f"{base_profile_url}/{slug}"
-        await context.add_requests(
-            [
-                Request.from_url(
-                    url=url,
-                    unique_key=f"{url}#TAB",
-                    label="TAB",
-                    user_data={
-                        **user_data,
-                        "slug": slug,
-                        "full_page": tab["full_page"],
-                    },
-                )
-            ]
-        )
+        tab_url = f"{base_profile_url}/{slug}"
+        full_page = tab["full_page"]
+        tab_name_cap = tab["name"].capitalize()
 
-
-async def _validate_redirect(page: Page, expected_slug: str | None) -> bool:
-    # Allow time for YouTube's client-side router to resolve any redirects
-    with suppress(Exception):
-        await page.wait_for_load_state("networkidle", timeout=3000)
-
-    if not page.is_closed():
         with suppress(Exception):
-            await page.wait_for_timeout(2000)
+            tab_locator = page.locator(
+                f"yt-tab-shape:has-text('{tab_name_cap}'), tp-yt-paper-tab:has-text('{tab_name_cap}'), [role='tab']:has-text('{tab_name_cap}'), yt-tab-shape:has-text('{tab['name']}'), [role='tab']:has-text('{tab['name']}')"
+            ).first
+            if await tab_locator.is_visible(timeout=1000):
+                await tab_locator.click()
+            else:
+                await page.evaluate(f"window.location.href = '{tab_url}'")
 
-    current_url = page.url.split("?")[0].rstrip("/")
-    if expected_slug and not current_url.lower().endswith(f"/{expected_slug.lower()}"):
-        return False
-    return True
+        with suppress(Exception):
+            await page.wait_for_selector(
+                "ytd-rich-grid-renderer, ytd-section-list-renderer, ytd-tabbed-header-renderer",
+                timeout=2000,
+            )
+
+        if full_page:
+            await scroll_to(
+                page,
+                y=MAX_SCREENSHOT_HEIGHT,
+                wait_callback=lambda: page.wait_for_timeout(300),
+            )
+            screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
+        else:
+            await scroll_to(
+                page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(300)
+            )
+            screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
+
+        await _push_screenshot_data(context, tab_url, screenshot_bytes)
 
 
 @router.handler("TAB")
 async def tab_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-    user_data = context.request.user_data or {}
-    slug = user_data.get("slug")
-    full_page = user_data.get("full_page", False)
-
-    if not await _validate_redirect(page, str(slug) if slug else None):
-        return
-
-    await wait_for_networkidle(page)
-
-    if full_page:
-        await scroll_to(
-            page,
-            y=MAX_SCREENSHOT_HEIGHT,
-            wait_callback=lambda: page.wait_for_timeout(1000),
-        )
-        screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
-    else:
-        await scroll_to(
-            page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(1000)
-        )
-        screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
-
-    await _push_screenshot_data(context, context.request.url, screenshot_bytes)
+    pass
 
 
 @router.handler("DIALOG")
 async def dialog_handler(context: PlaywrightCrawlingContext) -> None:
-    page = context.page
-
-    await page.set_viewport_size({"width": VIEWPORT["width"], "height": MAX_SCROLL_Y})
-    try:
-        # Some channels don't have the "...more" button. Fail fast if it doesn't exist within 5 seconds.
-        more_button = page.get_by_role("button").filter(has_text="...more")
-        try:
-            await more_button.wait_for(state="visible", timeout=5000)
-            await more_button.click()
-        except Exception:
-            context.log.warning("No '...more' button found for About dialog.")
-            return
-
-        # In YouTube's DOM, there are multiple tp-yt-paper-dialog elements.
-        # We explicitly filter for the one that has the About channel content.
-        dialog = page.locator(
-            "tp-yt-paper-dialog:has(ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-about-channel']), tp-yt-paper-dialog:visible"
-        ).first
-        try:
-            await dialog.wait_for(state="visible", timeout=5000)
-        except Exception:
-            context.log.warning("About dialog did not appear.")
-            return
-
-        await wait_for_networkidle(page)
-
-        box = await dialog.bounding_box()
-        if not box:
-            raise Exception("Dialog bounding box is null (element hidden?)")
-
-        screenshot_bytes = await page.screenshot(clip=box)
-        await _push_screenshot_data(
-            context, f"{context.request.url}#about", screenshot_bytes
-        )
-    except Exception as e:
-        context.log.error(f"Failed to capture About dialog: {e}")
-    finally:
-        with suppress(Exception):
-            await page.set_viewport_size(VIEWPORT)
+    pass
 
 
 @webhook_dispatch(event_prefix="scrape_youtube_profile")
@@ -245,15 +206,10 @@ async def _scrape_youtube_profile_dispatched(
                 request_handler=router,
                 max_request_retries=3,
                 request_handler_timeout=timedelta(milliseconds=request.timeout),
-                concurrency_settings=ConcurrencySettings(
-                    max_concurrency=request.max_concurrency,
-                    desired_concurrency=min(10, request.max_concurrency),
-                ),
             )
 
             @crawler.pre_navigation_hook
             async def block_unnecessary_resources(context) -> None:
-                # Force viewport
                 await context.page.set_viewport_size(VIEWPORT)
 
                 # Add consent cookies
@@ -269,7 +225,13 @@ async def _scrape_youtube_profile_dispatched(
                         ]
                     )
 
-                # We deliberately do not block images, media, or stylesheets because screenshots are the primary objective.
+                with suppress(Exception):
+                    await context.page.route(
+                        "**/*.{mp4,webm,m4s,mp3}", lambda route: route.abort()
+                    )
+                    await context.page.route(
+                        "https://*.googlevideo.com/**", lambda route: route.abort()
+                    )
 
             # Start Crawl
             await crawler.run([Request.from_url(url=request.url)])
@@ -304,6 +266,7 @@ async def _scrape_youtube_profile_dispatched(
         return ScrapeYoutubeProfileResponse(success=False, error=f"Browser crash: {e}")
     except Exception as e:
         return ScrapeYoutubeProfileResponse(success=False, error=str(e))
+
 
 async def scrape_youtube_profile(
     request: ScrapeYoutubeProfileRequest,
