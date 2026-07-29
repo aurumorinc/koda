@@ -11,7 +11,7 @@ from crawlee import Request
 from koda.client import KodaClient
 from koda.exceptions import TimeoutError, BrowserLaunchError
 from oort.webhook.service import webhook_dispatch
-from koda.use_cases.service import scroll_to, screenshot
+from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
 from oort.file.main import File
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
 
@@ -61,13 +61,39 @@ async def _push_screenshot_data(
     )
 
 
+async def _hydrate_all_images(page) -> None:
+    """Forces all lazy-loaded thumbnails to load eagerly and waits for them to complete rendering."""
+    with suppress(Exception):
+        await page.evaluate("""async () => {
+            const imgs = Array.from(document.querySelectorAll('img, yt-img-shadow img, ytd-thumbnail img'));
+            for (const img of imgs) {
+                img.setAttribute('loading', 'eager');
+                if (img.dataset.src && (!img.src || img.src.includes('data:image'))) {
+                    img.src = img.dataset.src;
+                }
+            }
+            window.scrollBy(0, 50);
+            window.scrollBy(0, -50);
+            await Promise.all(
+                imgs.map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.addEventListener('load', resolve, { once: true });
+                        img.addEventListener('error', resolve, { once: true });
+                        setTimeout(resolve, 1500);
+                    });
+                })
+            );
+        }""")
+
+
 async def _capture_about_dialog_in_place(context: PlaywrightCrawlingContext, base_profile_url: str) -> None:
     page = context.page
     try:
         await page.set_viewport_size({"width": VIEWPORT["width"], "height": MAX_SCROLL_Y})
         more_button = page.get_by_role("button").filter(has_text="...more")
         try:
-            await more_button.wait_for(state="visible", timeout=3000)
+            await more_button.wait_for(state="visible", timeout=5000)
             await more_button.click()
         except Exception:
             context.log.warning("No '...more' button found for About dialog.")
@@ -77,7 +103,8 @@ async def _capture_about_dialog_in_place(context: PlaywrightCrawlingContext, bas
             "tp-yt-paper-dialog:has(ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-about-channel']), tp-yt-paper-dialog:visible"
         ).first
         try:
-            await dialog.wait_for(state="visible", timeout=3000)
+            await dialog.wait_for(state="visible", timeout=5000)
+            await page.wait_for_timeout(2000)
         except Exception:
             context.log.warning("About dialog did not appear.")
             return
@@ -92,6 +119,7 @@ async def _capture_about_dialog_in_place(context: PlaywrightCrawlingContext, bas
         with suppress(Exception):
             await page.set_viewport_size(VIEWPORT)
             await page.keyboard.press("Escape")
+            await page.wait_for_timeout(500)
 
 
 @router.default_handler
@@ -161,20 +189,22 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
         with suppress(Exception):
             await page.wait_for_selector(
                 "ytd-rich-grid-renderer, ytd-section-list-renderer, ytd-tabbed-header-renderer",
-                timeout=2000,
+                timeout=3000,
             )
 
         if full_page:
             await scroll_to(
                 page,
                 y=MAX_SCREENSHOT_HEIGHT,
-                wait_callback=lambda: page.wait_for_timeout(300),
+                wait_callback=lambda: page.wait_for_timeout(500),
             )
+            await _hydrate_all_images(page)
             screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
         else:
             await scroll_to(
-                page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(300)
+                page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(500)
             )
+            await _hydrate_all_images(page)
             screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
 
         await _push_screenshot_data(context, tab_url, screenshot_bytes)
@@ -210,6 +240,7 @@ async def _scrape_youtube_profile_dispatched(
 
             @crawler.pre_navigation_hook
             async def block_unnecessary_resources(context) -> None:
+                # Force viewport
                 await context.page.set_viewport_size(VIEWPORT)
 
                 # Add consent cookies
@@ -225,13 +256,7 @@ async def _scrape_youtube_profile_dispatched(
                         ]
                     )
 
-                with suppress(Exception):
-                    await context.page.route(
-                        "**/*.{mp4,webm,m4s,mp3}", lambda route: route.abort()
-                    )
-                    await context.page.route(
-                        "https://*.googlevideo.com/**", lambda route: route.abort()
-                    )
+                # We deliberately do not block images, media, or stylesheets because screenshots are the primary objective.
 
             # Start Crawl
             await crawler.run([Request.from_url(url=request.url)])
