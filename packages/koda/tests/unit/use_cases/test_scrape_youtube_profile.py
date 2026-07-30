@@ -6,7 +6,7 @@ from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileReq
 from koda.use_cases.scrape_youtube_profile.service import (
     scrape_youtube_profile,
     _handler,
-    _screenshot,
+    screenshot,
 )
 
 
@@ -55,7 +55,6 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
     req = ScrapeYoutubeProfileRequest(
         url="https://youtube.com/@test",
         formats=["screenshot"],
-        max_scroll_y=3072,
     )
     res = await scrape_youtube_profile(req)
 
@@ -67,7 +66,7 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
 
 
 @pytest.mark.asyncio
-@patch("koda.use_cases.scrape_youtube_profile.service._screenshot", autospec=True)
+@patch("koda.use_cases.scrape_youtube_profile.service.screenshot", autospec=True)
 async def test_default_handler_routing(mock_screenshot):
     mock_screenshot.return_value = b"fake_bytes"
     context_mock = AsyncMock()
@@ -98,7 +97,7 @@ async def test_default_handler_routing(mock_screenshot):
 
 
 @pytest.mark.asyncio
-@patch("koda.use_cases.scrape_youtube_profile.service._screenshot", autospec=True)
+@patch("koda.use_cases.scrape_youtube_profile.service.screenshot", autospec=True)
 async def test_default_handler_no_home_tab(mock_screenshot):
     mock_screenshot.return_value = b"fake_bytes"
     context_mock = AsyncMock()
@@ -130,8 +129,9 @@ async def test_screenshot_dynamic_viewport_bounds():
     page_mock = AsyncMock()
     page_mock.evaluate.return_value = 1200
     page_mock.screenshot.return_value = b"bytes_1200"
+    page_mock.viewport_size = {"width": 1366, "height": 768}
 
-    res = await _screenshot(page_mock, max_height_limit=3072)
+    res = await screenshot(page_mock, max_height=3072)
 
     assert res == b"bytes_1200"
-    page_mock.set_viewport_size.assert_called_once_with({"width": 1366, "height": 1200})
+    page_mock.set_viewport_size.assert_any_call({"width": 1366, "height": 1200})

@@ -12,7 +12,6 @@ class ScrapeYoutubeProfileRequest(BaseModel):
         default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"])
     )
     timeout: int = 300000
-    max_scroll_y: int = Field(default=3072, alias="maxScrollY")
     webhook: Optional[WebhookRequest] = None
 
 
