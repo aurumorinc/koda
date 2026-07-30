@@ -62,8 +62,19 @@ async def screenshot(page: Page, max_height: int = 3072) -> bytes:
     # This avoids the "static noise" bug caused by using clip + full_page in Firefox Nightly
     await page.set_viewport_size({"width": 1366, "height": capture_height})
 
-    # Small delay for Firefox to paint the expanded viewport
-    await page.wait_for_timeout(500)
+    # Force component observers (e.g. YouTube Polymer IntersectionObservers) to re-evaluate all images across the expanded canvas
+    try:
+        await page.evaluate("""() => {
+            window.dispatchEvent(new Event('resize'));
+            window.dispatchEvent(new Event('scroll'));
+            window.scrollBy(0, 1);
+            window.scrollBy(0, -1);
+        }""")
+    except Exception:
+        pass
+
+    # Delay for browser engine to paint the expanded viewport and hydrate images
+    await page.wait_for_timeout(800)
 
     shot_bytes = await page.screenshot(full_page=False)
 
