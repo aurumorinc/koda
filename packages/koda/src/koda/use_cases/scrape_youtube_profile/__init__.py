@@ -4,9 +4,8 @@ from koda.use_cases.scrape_youtube_profile.schema import (
     ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse,)
 from koda.use_cases.scrape_youtube_profile.service import (
     CHANNEL_PATH_PREFIXES, MAX_SCREENSHOT_HEIGHT, MAX_SCROLL_Y, TABS,
-    VIEWPORT, dialog_handler, router, scrape_youtube_profile, tab_handler,)
+    VIEWPORT, scrape_youtube_profile,)
 
 __all__ = ['CHANNEL_PATH_PREFIXES', 'MAX_SCREENSHOT_HEIGHT', 'MAX_SCROLL_Y',
            'ScrapeYoutubeProfileRequest', 'ScrapeYoutubeProfileResponse',
-           'TABS', 'VIEWPORT', 'dialog_handler', 'router',
-           'scrape_youtube_profile', 'tab_handler']
+           'TABS', 'VIEWPORT', 'scrape_youtube_profile']
