@@ -5,55 +5,10 @@
 groups = ["default", "dev"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:9dea4a2ee06c2cdebc4235744df47d71cffde97408c7e8cbc97276fe6710d728"
+content_hash = "sha256:4b0a9ae1a03347d8e4bb3b26ea03c25727652403445ebefbfad6f2335fdbaaa0"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
-
-[[package]]
-name = "aioboto3"
-version = "15.5.0"
-summary = ""
-dependencies = [
-    "aiobotocore[boto3]",
-    "aiofiles",
-]
-files = [
-    {file = "aioboto3-15.5.0-py3-none-any.whl", hash = "sha256:cc880c4d6a8481dd7e05da89f41c384dbd841454fc1998ae25ca9c39201437a6"},
-    {file = "aioboto3-15.5.0.tar.gz", hash = "sha256:ea8d8787d315594842fbfcf2c4dce3bac2ad61be275bc8584b2ce9a3402a6979"},
-]
-
-[[package]]
-name = "aiobotocore"
-version = "2.25.1"
-summary = ""
-dependencies = [
-    "aiohttp",
-    "aioitertools",
-    "botocore",
-    "jmespath",
-    "multidict",
-    "python-dateutil",
-    "wrapt",
-]
-files = [
-    {file = "aiobotocore-2.25.1-py3-none-any.whl", hash = "sha256:eb6daebe3cbef5b39a0bb2a97cffbe9c7cb46b2fcc399ad141f369f3c2134b1f"},
-    {file = "aiobotocore-2.25.1.tar.gz", hash = "sha256:ea9be739bfd7ece8864f072ec99bb9ed5c7e78ebb2b0b15f29781fbe02daedbc"},
-]
-
-[[package]]
-name = "aiobotocore"
-version = "2.25.1"
-extras = ["boto3"]
-summary = ""
-dependencies = [
-    "aiobotocore==2.25.1",
-    "boto3",
-]
-files = [
-    {file = "aiobotocore-2.25.1-py3-none-any.whl", hash = "sha256:eb6daebe3cbef5b39a0bb2a97cffbe9c7cb46b2fcc399ad141f369f3c2134b1f"},
-    {file = "aiobotocore-2.25.1.tar.gz", hash = "sha256:ea9be739bfd7ece8864f072ec99bb9ed5c7e78ebb2b0b15f29781fbe02daedbc"},
-]
 
 [[package]]
 name = "aiofiles"
@@ -185,15 +140,6 @@ files = [
 ]
 
 [[package]]
-name = "aioitertools"
-version = "0.13.0"
-summary = ""
-files = [
-    {file = "aioitertools-0.13.0-py3-none-any.whl", hash = "sha256:0be0292b856f08dfac90e31f4739432f4cb6d7520ab9eb73e143f4f2fa5259be"},
-    {file = "aioitertools-0.13.0.tar.gz", hash = "sha256:620bd241acc0bbb9ec819f1ab215866871b4bbd1f73836a55f799200ee86950c"},
-]
-
-[[package]]
 name = "aiosignal"
 version = "1.4.0"
 summary = ""
@@ -275,6 +221,15 @@ files = [
 ]
 
 [[package]]
+name = "asgiref"
+version = "3.12.1"
+summary = ""
+files = [
+    {file = "asgiref-3.12.1-py3-none-any.whl", hash = "sha256:fe386d1c2bff7259ea95929266d12a8cf9a8b5a1c2598402967d8792e7a7c094"},
+    {file = "asgiref-3.12.1.tar.gz", hash = "sha256:59dcb51c272ad209d59bed5708a64a333083e86017d7fcdd67498eeab7784340"},
+]
+
+[[package]]
 name = "async-timeout"
 version = "5.0.1"
 summary = ""
@@ -316,7 +271,7 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.40.61"
+version = "1.43.59"
 summary = ""
 dependencies = [
     "botocore",
@@ -324,13 +279,13 @@ dependencies = [
     "s3transfer",
 ]
 files = [
-    {file = "boto3-1.40.61-py3-none-any.whl", hash = "sha256:6b9c57b2a922b5d8c17766e29ed792586a818098efe84def27c8f582b33f898c"},
-    {file = "boto3-1.40.61.tar.gz", hash = "sha256:d6c56277251adf6c2bdd25249feae625abe4966831676689ff23b4694dea5b12"},
+    {file = "boto3-1.43.59-py3-none-any.whl", hash = "sha256:58b9635deebf075c1c3d76df78df08eb2979c2a74283194676783a0bff3b4557"},
+    {file = "boto3-1.43.59.tar.gz", hash = "sha256:4e9b14f89adc1a533c89312e86d8e00455a6f15d398796d92f9191b06e56b401"},
 ]
 
 [[package]]
 name = "botocore"
-version = "1.40.61"
+version = "1.43.59"
 summary = ""
 dependencies = [
     "jmespath",
@@ -338,8 +293,8 @@ dependencies = [
     "urllib3",
 ]
 files = [
-    {file = "botocore-1.40.61-py3-none-any.whl", hash = "sha256:17ebae412692fd4824f99cde0f08d50126dc97954008e5ba2b522eb049238aa7"},
-    {file = "botocore-1.40.61.tar.gz", hash = "sha256:a2487ad69b090f9cccd64cf07c7021cd80ee9c0655ad974f87045b02f3ef52cd"},
+    {file = "botocore-1.43.59-py3-none-any.whl", hash = "sha256:21393c35d23b19d7ba95cc4156b59f4013f80696d667997e1abd9d4e29651708"},
+    {file = "botocore-1.43.59.tar.gz", hash = "sha256:8016da69ecc1d705249a8ef13548d3c95eec87ac1cd26133a8bdfa73ca175be0"},
 ]
 
 [[package]]
@@ -793,6 +748,15 @@ summary = ""
 files = [
     {file = "distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2"},
     {file = "distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed"},
+]
+
+[[package]]
+name = "execnet"
+version = "2.1.2"
+summary = ""
+files = [
+    {file = "execnet-2.1.2-py3-none-any.whl", hash = "sha256:67fba928dd5a544b783f6056f449e5e3931a5c378b128bc18501f7ea79e296ec"},
+    {file = "execnet-2.1.2.tar.gz", hash = "sha256:63d83bfdd9a23e35b9c6a3261412324f964c2ec8dcd8d3c6916ee9373e0befcd"},
 ]
 
 [[package]]
@@ -1336,19 +1300,31 @@ files = [
 ]
 
 [[package]]
-name = "invisible-playwright"
-version = "0.2.0"
-git = "https://github.com/feder-cr/invisible_playwright.git"
-revision = "2184f6f3c296e5bedcf1539914b3a7d307ce9fe0"
+name = "invisible-core"
+version = "18.9.0"
 summary = ""
 dependencies = [
     "maxminddb",
     "platformdirs",
-    "playwright",
-    "pywin32; sys_platform == \"win32\"",
+    "psutil",
     "requests[socks]",
-    "tqdm",
     "tzdata",
+]
+files = [
+    {file = "invisible_core-18.9.0-py3-none-any.whl", hash = "sha256:2fb67e6c3d714b37b925b47400c90037330742054ea850e88c2ea799f1803238"},
+    {file = "invisible_core-18.9.0.tar.gz", hash = "sha256:8e956bbbb3afecb225e0b582c5029ae1ead2e2e42286958e3761437fc81724bb"},
+]
+
+[[package]]
+name = "invisible-playwright"
+version = "0.4.8"
+git = "https://github.com/feder-cr/invisible_playwright.git"
+revision = "e53308b67dffc2b5c43249f37ba8f720cd61083a"
+summary = ""
+dependencies = [
+    "invisible-core",
+    "playwright",
+    "psutil",
 ]
 
 [[package]]
@@ -1993,6 +1969,21 @@ files = [
 ]
 
 [[package]]
+name = "oort-python"
+version = "0.8.1"
+git = "https://github.com/aurumorinc/oort-python.git"
+revision = "218528d55ddab3e78fc78bd833342150bc1f7f21"
+summary = ""
+dependencies = [
+    "asgiref",
+    "boto3",
+    "httpx",
+    "pydantic",
+    "pydantic-settings",
+    "worldline",
+]
+
+[[package]]
 name = "openai"
 version = "2.38.0"
 summary = ""
@@ -2593,7 +2584,7 @@ files = [
 
 [[package]]
 name = "pydantic-settings"
-version = "2.14.1"
+version = "2.14.2"
 summary = ""
 dependencies = [
     "pydantic",
@@ -2601,8 +2592,8 @@ dependencies = [
     "typing-inspection",
 ]
 files = [
-    {file = "pydantic_settings-2.14.1-py3-none-any.whl", hash = "sha256:6e3c7edfd8277687cdc598f56e5cff0e9bfff0910a3749deaa8d4401c3a2b9de"},
-    {file = "pydantic_settings-2.14.1.tar.gz", hash = "sha256:e874d3bec7e787b0c9958277956ed9b4dd5de6a80e162188fdaff7c5e26fd5fa"},
+    {file = "pydantic_settings-2.14.2-py3-none-any.whl", hash = "sha256:a20c97b37910b6550d5ea50fbcc2d4187defe58cd57070b73863d069419c9440"},
+    {file = "pydantic_settings-2.14.2.tar.gz", hash = "sha256:c19dd64b19097f1de80184f0cc7b0272a13ae6e170cbf240a3e27e381ed14a5f"},
 ]
 
 [[package]]
@@ -2646,15 +2637,6 @@ summary = ""
 files = [
     {file = "pyotp-2.9.0-py3-none-any.whl", hash = "sha256:81c2e5865b8ac55e825b0358e496e1d9387c811e85bb40e71a3b29b288963612"},
     {file = "pyotp-2.9.0.tar.gz", hash = "sha256:346b6642e0dbdde3b4ff5a930b664ca82abfa116356ed48cc42c7d6590d36f63"},
-]
-
-[[package]]
-name = "pypng"
-version = "0.20220715.0"
-summary = ""
-files = [
-    {file = "pypng-0.20220715.0-py3-none-any.whl", hash = "sha256:4a43e969b8f5aaafb2a415536c1a8ec7e341cd6a3f957fd5b5f32a4cfeed902c"},
-    {file = "pypng-0.20220715.0.tar.gz", hash = "sha256:739c433ba96f078315de54c0db975aee537cbc3e1d0ae4ed9aab0ca1e427e2c1"},
 ]
 
 [[package]]
@@ -2715,6 +2697,19 @@ files = [
 ]
 
 [[package]]
+name = "pytest-xdist"
+version = "3.8.0"
+summary = ""
+dependencies = [
+    "execnet",
+    "pytest",
+]
+files = [
+    {file = "pytest_xdist-3.8.0-py3-none-any.whl", hash = "sha256:202ca578cfeb7370784a8c33d6d05bc6e13b4f25b5053c30a152269fd10f0b88"},
+    {file = "pytest_xdist-3.8.0.tar.gz", hash = "sha256:7e578125ec9bc6050861aa93f2d59f1d8d085595d6551c2c90b6f4fad8d3a9f1"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 summary = ""
@@ -2733,28 +2728,6 @@ summary = ""
 files = [
     {file = "python_dotenv-1.2.2-py3-none-any.whl", hash = "sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a"},
     {file = "python_dotenv-1.2.2.tar.gz", hash = "sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3"},
-]
-
-[[package]]
-name = "pywin32"
-version = "312"
-summary = ""
-files = [
-    {file = "pywin32-312-cp311-cp311-win32.whl", hash = "sha256:17948aeadbdb091f0ced6ef0841620794e68327b94ee415571c1203594b7215c"},
-    {file = "pywin32-312-cp311-cp311-win_amd64.whl", hash = "sha256:d11417d84412f859b722fad0841b3614459ed0047f7542d8362e77884f6b6e8a"},
-    {file = "pywin32-312-cp311-cp311-win_arm64.whl", hash = "sha256:b2200a054ca6d6625c4842fc56a4976a4b47f96b73dbe5538c3f813a80359f47"},
-    {file = "pywin32-312-cp312-cp312-win32.whl", hash = "sha256:dab4f65ac9c4e48400a2a0530c46c3c579cd5905ecd11b80692373915269208b"},
-    {file = "pywin32-312-cp312-cp312-win_amd64.whl", hash = "sha256:b457f6d628a47e8a7346ce22acb7e1a46a4a78b52e1d17e1af56871bd19a93bc"},
-    {file = "pywin32-312-cp312-cp312-win_arm64.whl", hash = "sha256:6017c58e12f6809fbb0555b75df144c2922a9ffd18e4b9b5afa863b6c1a9d950"},
-    {file = "pywin32-312-cp313-cp313-win32.whl", hash = "sha256:7a27df850933d16a8eabfbaeb73d52b273e2da667f80d70b01a89d1f6828d02c"},
-    {file = "pywin32-312-cp313-cp313-win_amd64.whl", hash = "sha256:c53e878d15a1c44788082bfe712a905433473aa38f86375b7cf8b45e3acbaaf9"},
-    {file = "pywin32-312-cp313-cp313-win_arm64.whl", hash = "sha256:59aba5d5940842075343a5ddc6b11f1cdf0d1567fe745290359dfbcc7c2eb831"},
-    {file = "pywin32-312-cp314-cp314-win32.whl", hash = "sha256:a77a90fbb6881238d2ca9c6fd797b25817f3768fe78d214a90137ff055a75f5b"},
-    {file = "pywin32-312-cp314-cp314-win_amd64.whl", hash = "sha256:a4dd3a848290ef724347b19f301045831d8e802fa4464f491b98b1e0a081432e"},
-    {file = "pywin32-312-cp314-cp314-win_arm64.whl", hash = "sha256:9fce94568364e0155e6dfb781ac5d95903be8baf28670632beab1b523f300daa"},
-    {file = "pywin32-312-cp315-cp315-win32.whl", hash = "sha256:5c1fbe4a937a73ae9297384a3da38518cbc694c68ad8a809b2e19acd350f03ed"},
-    {file = "pywin32-312-cp315-cp315-win_amd64.whl", hash = "sha256:c2f03a0f73f804a13c2735b99392b0cd426bb4f2c4d0178e5ac966a0f21618d5"},
-    {file = "pywin32-312-cp315-cp315-win_arm64.whl", hash = "sha256:a8597d28f267b39074aef51fa593530082b39cbe5a074226096857b1fed2dfb9"},
 ]
 
 [[package]]
@@ -3151,14 +3124,14 @@ files = [
 
 [[package]]
 name = "s3transfer"
-version = "0.14.0"
+version = "0.19.2"
 summary = ""
 dependencies = [
     "botocore",
 ]
 files = [
-    {file = "s3transfer-0.14.0-py3-none-any.whl", hash = "sha256:ea3b790c7077558ed1f02a3072fb3cb992bbbd253392f4b6e9e8976941c7d456"},
-    {file = "s3transfer-0.14.0.tar.gz", hash = "sha256:eff12264e7c8b4985074ccce27a3b38a485bb7f7422cc8046fee9be4983e4125"},
+    {file = "s3transfer-0.19.2-py3-none-any.whl", hash = "sha256:d8168eccca828cbb2cd573675333f3bddd254313a9c42494b84c76b539e8ba25"},
+    {file = "s3transfer-0.19.2.tar.gz", hash = "sha256:ba0309fd86be3c27dbf78cdd813c13c5e1df16e5874b99d2535ebbdfb9892993"},
 ]
 
 [[package]]
@@ -3598,9 +3571,9 @@ files = [
 
 [[package]]
 name = "worldline"
-version = "2.0.1"
+version = "2.1.0"
 git = "https://github.com/aurumorinc/worldline-python.git"
-revision = "c8158c5d99b7ba2e0b13f3179f60b6179c0bf55d"
+revision = "21f68ea933cc32c5056e6f11859fe6f77d5ae49a"
 summary = ""
 dependencies = [
     "colorama",
