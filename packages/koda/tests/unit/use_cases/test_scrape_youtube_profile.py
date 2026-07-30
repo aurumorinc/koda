@@ -6,6 +6,7 @@ from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileReq
 from koda.use_cases.scrape_youtube_profile.service import (
     scrape_youtube_profile,
     _handler,
+    _screenshot,
 )
 
 
@@ -54,6 +55,7 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
     req = ScrapeYoutubeProfileRequest(
         url="https://youtube.com/@test",
         formats=["screenshot"],
+        max_scroll_y=3072,
     )
     res = await scrape_youtube_profile(req)
 
@@ -65,9 +67,8 @@ async def test_scrape_youtube_profile_success(mock_crawlee, mock_koda_client):
 
 
 @pytest.mark.asyncio
-@patch("koda.use_cases.scrape_youtube_profile.service.scroll_to", autospec=True)
-@patch("koda.use_cases.scrape_youtube_profile.service.screenshot", autospec=True)
-async def test_default_handler_routing(mock_screenshot, mock_scroll_to):
+@patch("koda.use_cases.scrape_youtube_profile.service._screenshot", autospec=True)
+async def test_default_handler_routing(mock_screenshot):
     mock_screenshot.return_value = b"fake_bytes"
     context_mock = AsyncMock()
     context_mock.page = AsyncMock()
@@ -97,9 +98,8 @@ async def test_default_handler_routing(mock_screenshot, mock_scroll_to):
 
 
 @pytest.mark.asyncio
-@patch("koda.use_cases.scrape_youtube_profile.service.scroll_to", autospec=True)
-@patch("koda.use_cases.scrape_youtube_profile.service.screenshot", autospec=True)
-async def test_default_handler_no_home_tab(mock_screenshot, mock_scroll_to):
+@patch("koda.use_cases.scrape_youtube_profile.service._screenshot", autospec=True)
+async def test_default_handler_no_home_tab(mock_screenshot):
     mock_screenshot.return_value = b"fake_bytes"
     context_mock = AsyncMock()
     context_mock.page = AsyncMock()
@@ -123,3 +123,15 @@ async def test_default_handler_no_home_tab(mock_screenshot, mock_scroll_to):
     pushed_urls = [call[0][0]["url"] for call in context_mock.push_data.call_args_list]
     for url in pushed_urls:
         assert not url.endswith("/featured")
+
+
+@pytest.mark.asyncio
+async def test_screenshot_dynamic_viewport_bounds():
+    page_mock = AsyncMock()
+    page_mock.evaluate.return_value = 1200
+    page_mock.screenshot.return_value = b"bytes_1200"
+
+    res = await _screenshot(page_mock, max_height_limit=3072)
+
+    assert res == b"bytes_1200"
+    page_mock.set_viewport_size.assert_called_once_with({"width": 1366, "height": 1200})
