@@ -10,7 +10,7 @@ from crawlee import Request
 from koda.client import KodaClient
 from koda.exceptions import TimeoutError, BrowserLaunchError
 from oort.webhook.service import webhook_dispatch
-from koda.use_cases.service import screenshot
+from koda.use_cases.service import scroll_to, screenshot
 from oort.file.main import File
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
 
@@ -161,11 +161,11 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
 
         max_limit = MAX_SCREENSHOT_HEIGHT if full_page else MAX_SCROLL_Y
 
-        with suppress(Exception):
-            await page.evaluate(f"window.scrollTo({{ top: {max_limit // 2}, behavior: 'instant' }})")
-            await page.wait_for_timeout(150)
-            await page.evaluate(f"window.scrollTo({{ top: {max_limit}, behavior: 'instant' }})")
-            await page.wait_for_timeout(150)
+        await scroll_to(
+            page,
+            y=max_limit,
+            wait_callback=lambda: page.wait_for_timeout(200),
+        )
 
         screenshot_bytes = await screenshot(page, max_height=max_limit)
 
