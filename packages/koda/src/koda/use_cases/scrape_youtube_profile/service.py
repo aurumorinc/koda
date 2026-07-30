@@ -11,7 +11,6 @@ from crawlee import Request
 from koda.client import KodaClient
 from koda.exceptions import TimeoutError, BrowserLaunchError
 from oort.webhook.service import webhook_dispatch
-from koda.use_cases.service import wait_for_networkidle, scroll_to, screenshot
 from oort.file.main import File
 from koda.use_cases.scrape_youtube_profile.schema import ScrapeYoutubeProfileRequest, ScrapeYoutubeProfileResponse
 
@@ -61,30 +60,52 @@ async def _push_screenshot_data(
     )
 
 
-async def _hydrate_all_images(page) -> None:
+async def _hydrate_images(page) -> None:
     """Forces all lazy-loaded thumbnails to load eagerly and waits for them to complete rendering."""
     with suppress(Exception):
         await page.evaluate("""async () => {
-            const imgs = Array.from(document.querySelectorAll('img, yt-img-shadow img, ytd-thumbnail img'));
-            for (const img of imgs) {
-                img.setAttribute('loading', 'eager');
-                if (img.dataset.src && (!img.src || img.src.includes('data:image'))) {
-                    img.src = img.dataset.src;
-                }
-            }
             window.scrollBy(0, 50);
             window.scrollBy(0, -50);
-            await Promise.all(
-                imgs.map(img => {
-                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-                    return new Promise(resolve => {
+
+            const containers = Array.from(
+                document.querySelectorAll('yt-core-image, yt-img-shadow, ytd-thumbnail, img')
+            );
+            const imgPromises = [];
+
+            for (const el of containers) {
+                const img = el.tagName === 'IMG' ? el : el.querySelector('img');
+                if (!img) continue;
+
+                img.setAttribute('loading', 'eager');
+
+                const realSrc = el.src || el.getAttribute('src') || img.dataset.src || img.src;
+                if (realSrc && (!img.src || img.src.includes('data:image'))) {
+                    img.src = realSrc;
+                }
+
+                if (!img.complete) {
+                    imgPromises.push(new Promise(resolve => {
                         img.addEventListener('load', resolve, { once: true });
                         img.addEventListener('error', resolve, { once: true });
-                        setTimeout(resolve, 1500);
-                    });
-                })
-            );
+                        setTimeout(resolve, 300);
+                    }));
+                }
+            }
+            await Promise.all(imgPromises);
         }""")
+
+
+async def _screenshot(page, max_height_limit: int = MAX_SCROLL_Y) -> bytes:
+    """Dynamically calculates document scroll height, adjusts viewport bounds, hydrates images, and returns screenshot."""
+    doc_height = await page.evaluate(
+        "Math.max(document.documentElement.scrollHeight, document.body.scrollHeight || 0)"
+    )
+    target_height = min(max(doc_height, VIEWPORT["height"]), max_height_limit)
+
+    await page.set_viewport_size({"width": VIEWPORT["width"], "height": target_height})
+    await _hydrate_images(page)
+
+    return await page.screenshot(full_page=False)
 
 
 async def _capture_about_dialog_in_place(context: PlaywrightCrawlingContext, base_profile_url: str) -> None:
@@ -128,6 +149,9 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
 
     with suppress(Exception):
         await page.wait_for_load_state("domcontentloaded", timeout=5000)
+
+    user_data = context.request.user_data or {}
+    max_scroll_y = user_data.get("max_scroll_y", MAX_SCROLL_Y)
 
     resolved_url = page.url
 
@@ -189,23 +213,11 @@ async def _handler(context: PlaywrightCrawlingContext) -> None:
         with suppress(Exception):
             await page.wait_for_selector(
                 "ytd-rich-grid-renderer, ytd-section-list-renderer, ytd-tabbed-header-renderer",
-                timeout=3000,
+                timeout=2000,
             )
 
-        if full_page:
-            await scroll_to(
-                page,
-                y=MAX_SCREENSHOT_HEIGHT,
-                wait_callback=lambda: page.wait_for_timeout(500),
-            )
-            await _hydrate_all_images(page)
-            screenshot_bytes = await screenshot(page, max_height=MAX_SCREENSHOT_HEIGHT)
-        else:
-            await scroll_to(
-                page, y=MAX_SCROLL_Y, wait_callback=lambda: page.wait_for_timeout(500)
-            )
-            await _hydrate_all_images(page)
-            screenshot_bytes = await screenshot(page, max_height=MAX_SCROLL_Y)
+        max_limit = MAX_SCREENSHOT_HEIGHT if full_page else max_scroll_y
+        screenshot_bytes = await _screenshot(page, max_height_limit=max_limit)
 
         await _push_screenshot_data(context, tab_url, screenshot_bytes)
 
@@ -256,10 +268,13 @@ async def _scrape_youtube_profile_dispatched(
                         ]
                     )
 
-                # We deliberately do not block images, media, or stylesheets because screenshots are the primary objective.
-
             # Start Crawl
-            await crawler.run([Request.from_url(url=request.url)])
+            await crawler.run([
+                Request.from_url(
+                    url=request.url,
+                    user_data={"max_scroll_y": request.max_scroll_y},
+                )
+            ])
 
             # Post Crawl Formatting
             dataset = await crawler.get_dataset()
