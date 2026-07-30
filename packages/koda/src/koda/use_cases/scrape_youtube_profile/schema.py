@@ -3,6 +3,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from oort.webhook.schema import WebhookRequest
 
 __all__ = ["ScrapeYoutubeProfileRequest", "ScrapeYoutubeProfileResponse"]
+
+
 class ScrapeYoutubeProfileRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     url: str
@@ -10,7 +12,9 @@ class ScrapeYoutubeProfileRequest(BaseModel):
         default_factory=lambda: cast(List[Union[str, Dict[str, Any]]], ["markdown"])
     )
     timeout: int = 300000
+    max_scroll_y: int = Field(default=3072, alias="maxScrollY")
     webhook: Optional[WebhookRequest] = None
+
 
 class ScrapeYoutubeProfileResponse(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
