@@ -23,7 +23,7 @@ from typing import Optional, List, Dict, Any, Union
 
 from oort.webhook.schema import WebhookRequest as Webhook
 from koda import settings
-from koda.use_cases.schema import Action
+from koda.modules.page.schema import Action
 from koda.use_cases.scrape.schema import ScrapeRequest
 from koda.use_cases.scrape.service import scrape
 
