@@ -48,7 +48,7 @@ async def test_csp_bypass_via_network_interception():
             response = await page.goto("http://localhost:8081/")
             
             # Wait a moment for network and script execution
-            from koda.use_cases.service import wait_for_networkidle, scroll_to
+            from koda.modules.page.service import wait_for_networkidle, scroll_to
             await wait_for_networkidle(page)
             
             # The inline script should have been executed if CSP was entirely disabled natively.
