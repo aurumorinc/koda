@@ -1,7 +1,7 @@
 import asyncio
-from typing import Dict, List, Callable, Optional, Awaitable
+from typing import Dict, List, Callable, Optional, Awaitable, Any
 from playwright.async_api import Page
-from koda.use_cases.schema import Action
+from koda.modules.page.schema import Action
 
 
 async def wait_for_networkidle(
@@ -18,7 +18,6 @@ async def wait_for_networkidle(
 async def scroll_to(
     page: Page,
     y: Optional[int] = None,
-    viewport_height: int = 768,
     wait_callback: Optional[Callable[[], Awaitable[None]]] = None,
 ) -> None:
     """Scrolls down utilizing PageDown. If y is provided, terminates once window.scrollY >= y.
@@ -45,7 +44,7 @@ async def scroll_to(
 
 
 async def screenshot(page: Page, max_height: int = 3072) -> bytes:
-    """Calculates exactly document.documentElement.scrollHeight and takes clipped screenshot bounded by max_height."""
+    """Calculates document.documentElement.scrollHeight and takes clipped screenshot bounded by max_height."""
     # Bring the page to the front to avoid WSL/Headed Firefox occlusion bugs
     try:
         await page.bring_to_front()
@@ -86,7 +85,7 @@ async def screenshot(page: Page, max_height: int = 3072) -> bytes:
 
 
 async def execute_actions(
-    page, actions: List[Action], action_results: Dict[str, list]
+    page: Page, actions: List[Action], action_results: Dict[str, list]
 ) -> None:
     for action in actions:
         try:

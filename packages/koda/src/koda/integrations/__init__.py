@@ -12,12 +12,12 @@ from koda.integrations import crawlee
 from koda.integrations import posthog
 from koda.integrations import stagehand
 
-from koda.integrations.crawl4ai import (Crawl4AiTool, KodaBrowserManager, KodaAsyncWebCrawler)
+from koda.integrations.crawl4ai import (Crawl4AiBrowserTool, KodaBrowserManager, KodaAsyncWebCrawler)
 from koda.integrations.crawlee import (KodaBrowserController,
                                        KodaBrowserPlugin, KodaPlaywrightCrawler)
 from koda.integrations.stagehand import (StagehandTool, KodaStagehand)
 
-__all__ = ['Crawl4AiTool', 'KodaAsyncWebCrawler', 'KodaBrowserController', 'KodaBrowserManager',
+__all__ = ['Crawl4AiBrowserTool', 'KodaAsyncWebCrawler', 'KodaBrowserController', 'KodaBrowserManager',
            'KodaBrowserPlugin', 'KodaPlaywrightCrawler', 'KodaStagehand', 'StagehandTool',
            'crawl4ai', 'crawlee', 'flush_telemetry',
            'handle_playwright_request', 'inject_posthog_monolith', 'logger',

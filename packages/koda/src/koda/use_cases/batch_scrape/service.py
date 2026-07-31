@@ -9,7 +9,7 @@ from crawl4ai.content_filter_strategy import PruningContentFilter
 from koda.client import KodaClient
 from koda.config.main import settings
 from koda.utils import sanitize_filename
-from koda.use_cases.service import execute_actions
+from koda.modules.page.service import execute_actions
 from oort.webhook.service import webhook_dispatch
 from oort.file.main import File
 from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse

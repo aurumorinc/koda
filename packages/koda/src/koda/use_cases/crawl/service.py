@@ -9,7 +9,7 @@ from crawl4ai.async_url_seeder import AsyncUrlSeeder
 
 from koda.client import KodaClient
 from oort.webhook.service import webhook_dispatch
-from koda.use_cases.service import execute_actions
+from koda.modules.page.service import execute_actions
 from koda.use_cases.crawl.schema import CrawlRequest, CrawlResponse
 from typing import Optional
 
