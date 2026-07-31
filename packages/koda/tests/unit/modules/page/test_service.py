@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock
-from koda.use_cases.schema import Action
-from koda.use_cases.service import execute_actions, wait_for_networkidle, scroll_to, screenshot
+from koda.modules.page.schema import Action
+from koda.modules.page.service import execute_actions, wait_for_networkidle, scroll_to, screenshot
 
 
 @pytest.mark.asyncio

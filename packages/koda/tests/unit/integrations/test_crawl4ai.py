@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from koda.integrations.crawl4ai import KodaBrowserManager, Crawl4AiTool, KodaAsyncWebCrawler
+from koda.integrations.crawl4ai import KodaBrowserManager, Crawl4AiBrowserTool, KodaAsyncWebCrawler
 
 def test_crawl4ai_module_patching():
     # Verify that the native crawl4ai library has been patched
@@ -62,7 +62,7 @@ async def test_crawl4ai_tool_single_url(mock_crawler_cls):
     
     mock_context = AsyncMock()
     
-    tool = Crawl4AiTool()
+    tool = Crawl4AiBrowserTool()
     request = {
         "url": "https://example.com",
         "run_config": MagicMock()
@@ -81,7 +81,7 @@ async def test_crawl4ai_tool_batch_urls(mock_crawler_cls):
     
     mock_context = AsyncMock()
     
-    tool = Crawl4AiTool()
+    tool = Crawl4AiBrowserTool()
     request = {
         "urls": ["https://example.com/1", "https://example.com/2"],
         "run_config": MagicMock()
