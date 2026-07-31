@@ -110,7 +110,7 @@ crawl4ai.AsyncWebCrawler = KodaAsyncWebCrawler  # type: ignore[attr-defined]
 if 'crawl4ai' in sys.modules:
     sys.modules['crawl4ai'].AsyncWebCrawler = KodaAsyncWebCrawler  # type: ignore[attr-defined]
 
-class Crawl4AiTool(BrowserTool):
+class Crawl4AiBrowserTool(BrowserTool):
     """
     Adapter for crawl4ai that implements the BrowserTool protocol.
     DEPRECATED: Use the native KodaAsyncWebCrawler wrapper instead.
