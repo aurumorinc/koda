@@ -1,18 +1,19 @@
-# Changelog v0.19.0
+# Changelog v0.20.0
 
 ## Breaking Changes
 
-*   **Reorganization of `koda.use_cases` module**
-    The `koda.use_cases` module has been removed. The `Action` schema and `execute_actions` service have been relocated to `koda.modules.page`.
-    *   **Migration:** Update all import statements from `koda.use_cases` to `koda.modules.page`.
-    *   **Commits:** [46f754e](https://github.com/aurumorinc/koda/commit/46f754e3), [025ba38](https://github.com/aurumorinc/koda/commit/025ba38e), [9f67a20](https://github.com/aurumorinc/koda/commit/9f67a20d)
+* **Refactor of YouTube profile scraper architecture**
+  The previous service-based architecture for YouTube profile scraping has been removed and replaced with an inline `Crawlee` `PlaywrightCrawler` implementation.
+  * **Migration Path:** If your integration relied on the previous service-based interface, you must update your implementation to utilize the new `Crawlee`-based handler. Ensure all data ingestion logic is updated to leverage the new Pydantic validation models for schema enforcement.
 
-*   **Rename of `Crawl4AiTool` to `Crawl4AiBrowserTool`**
-    The `Crawl4AiTool` class has been renamed to `Crawl4AiBrowserTool` to improve naming consistency.
-    *   **Migration:** Update all references and class instantiations of `Crawl4AiTool` to `Crawl4AiBrowserTool` in your codebase.
-    *   **Commits:** [0547333](https://github.com/aurumorinc/koda/commit/05473331), [d2fe7fd](https://github.com/aurumorinc/koda/commit/d2fe7fda), [bf5f620](https://github.com/aurumorinc/koda/commit/bf5f6202)
+## New Features
 
-*   **Removal of YouTube profile scraping functionality**
-    The `scrape_youtube_profile` use case module and all associated files have been removed from the codebase.
-    *   **Migration:** Remove any calls to `scrape_youtube_profile` from your integration logic.
-    *   **Commits:** [d2fe7fd](https://github.com/aurumorinc/koda/commit/d2fe7fda), [6c1aabf](https://github.com/aurumorinc/koda/commit/6c1aabf5)
+* **YouTube Scraper Architecture Migration**
+  The YouTube profile scraper has been migrated to use `Crawlee` `PlaywrightCrawler`, enabling multi-tab support, improved SPA navigation handling, and robust data validation via Pydantic.
+  * Commits: [6f3346c](https://github.com/aurumorinc/koda/commit/6f3346c4), [00ffa76](https://github.com/aurumorinc/koda/commit/00ffa76e), [13a18db](https://github.com/aurumorinc/koda/commit/13a18db3)
+
+## Other
+
+* **Unit Test Coverage for YouTube Scraper**
+  Added comprehensive unit tests for the `scrape_youtube_profile` module, specifically validating request defaults and handler routing logic.
+  * Commits: [1996c46](https://github.com/aurumorinc/koda/commit/1996c463)
