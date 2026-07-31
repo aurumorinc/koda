@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, Field
 from oort.webhook.schema import WebhookRequest
-from koda.use_cases.schema import Action
+from koda.modules.page.schema import Action
 from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse
 
 

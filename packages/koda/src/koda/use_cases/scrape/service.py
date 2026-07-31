@@ -11,7 +11,7 @@ from koda.config.main import settings
 from oort.file.main import File
 from koda.utils import sanitize_filename
 from oort.webhook.service import webhook_dispatch
-from koda.use_cases.service import execute_actions
+from koda.modules.page.service import execute_actions
 from koda.use_cases.scrape.schema import ScrapeRequest, ScrapeResponse, ScrapeResult
 from typing import Optional
 

@@ -12,7 +12,7 @@ from koda.client import KodaClient
 from koda.config import Settings, main, settings
 from koda.exceptions import Error, ScrapeError, SessionExhaustedError
 from koda.integrations import (
-    Crawl4AiTool,
+    Crawl4AiBrowserTool,
     KodaAsyncWebCrawler,
     KodaBrowserController,
     KodaBrowserManager,
@@ -36,7 +36,7 @@ from koda.modules.browser.service import BrowserSession
 
 __all__ = [
     "BrowserSession",
-    "Crawl4AiTool",
+    "Crawl4AiBrowserTool",
     "KodaAsyncWebCrawler",
     "KodaBrowserController",
     "KodaBrowserManager",
