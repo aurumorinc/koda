@@ -25,6 +25,8 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, ConfigDict, Field
+
+import koda.integrations.crawlee
 from crawlee import Request
 from crawlee.crawlers import PlaywrightCrawlingContext, PlaywrightCrawler
 
