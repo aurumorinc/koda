@@ -12,7 +12,7 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "worldline @ git+https://github.com/aurumorinc/worldline-python.git",
     "oort-python @ git+https://github.com/aurumorinc/oort-python.git",
-    "invisible-playwright @ git+https://github.com/feder-cr/invisible_playwright.git",
+    "invisible-playwright>=0.4.9",
     "crawl4ai",
     "httpx>=0.28.1",
     "upstash-redis>=1.7.0",
